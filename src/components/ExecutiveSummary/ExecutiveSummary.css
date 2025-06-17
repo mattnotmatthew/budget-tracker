@@ -1,0 +1,146 @@
+/* ExecutiveSummary.css */
+.executive-summary {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+  padding: 2rem;
+  margin: 2rem auto;
+  max-width: 900px;
+  font-family: "Segoe UI", Arial, sans-serif;
+}
+.executive-summary h2 {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  color: #2d3a4a;
+}
+.kpi-cards {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+.kpi-card {
+  background: #f5f8fa;
+  border-radius: 8px;
+  padding: 1rem 1.5rem;
+  flex: 1;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+.kpi-card span {
+  display: block;
+  color: #6b7a8f;
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem;
+}
+.kpi-card strong {
+  font-size: 1.3rem;
+  color: #1a2b3c;
+}
+.variance-table-section {
+  margin-bottom: 2rem;
+}
+.variance-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #f9fafb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.variance-table th,
+.variance-table td {
+  padding: 0.7rem 1rem;
+  text-align: left;
+}
+.variance-table th {
+  background: #e6ecf3;
+  color: #2d3a4a;
+}
+.variance-table tr.over td {
+  color: #c0392b;
+  font-weight: bold;
+}
+.variance-table tr.under td {
+  color: #27ae60;
+  font-weight: bold;
+}
+.trend-chart-section {
+  margin-bottom: 2rem;
+}
+.trend-chart-placeholder {
+  height: 180px;
+  background: repeating-linear-gradient(
+    135deg,
+    #e6ecf3,
+    #e6ecf3 10px,
+    #f9fafb 10px,
+    #f9fafb 20px
+  );
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #b0b8c1;
+  font-size: 1.1rem;
+}
+.alerts-section {
+  margin-bottom: 2rem;
+}
+.alerts-section ul {
+  list-style: none;
+  padding: 0;
+}
+.alerts-section li {
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+}
+.alerts-section li.critical {
+  background: #ffeaea;
+  color: #c0392b;
+}
+.alerts-section li.warning {
+  background: #fff7e6;
+  color: #e67e22;
+}
+.alerts-section li.info {
+  background: #eaf6ff;
+  color: #2980b9;
+}
+.commentary-section {
+  margin-bottom: 2rem;
+}
+.auto-commentary {
+  background: #f5f8fa;
+  border-radius: 6px;
+  padding: 0.7rem 1rem;
+  margin-bottom: 0.7rem;
+  color: #2d3a4a;
+}
+.commentary-section textarea {
+  width: 100%;
+  min-height: 60px;
+  border-radius: 6px;
+  border: 1px solid #d1dbe6;
+  padding: 0.7rem 1rem;
+  font-size: 1rem;
+  resize: vertical;
+}
+.summary-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+.summary-actions button {
+  background: #2d3a4a;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.7rem 1.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.summary-actions button:hover {
+  background: #1a2b3c;
+}

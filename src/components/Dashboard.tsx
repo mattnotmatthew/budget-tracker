@@ -12,6 +12,7 @@ import {
   generateSummaryReport,
 } from "../utils/dataExport";
 import "../styles/App.css";
+import { useNavigate } from "react-router-dom";
 
 // Utility function to get current quarter
 const getCurrentQuarter = (): number => {
@@ -37,6 +38,7 @@ const Dashboard: React.FC = () => {
   const [collapseAll, setCollapseAll] = useState(true);
   const [selectedQuarters, setSelectedQuarters] = useState<number[]>([]);
   const [showHotkeysHelp, setShowHotkeysHelp] = useState(false);
+  const navigate = useNavigate();
 
   const handleQuarterToggle = (quarter: number) => {
     setSelectedQuarters((prev) => {
@@ -216,95 +218,14 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="dashboard">
-      {/* Hotkeys Help Overlay */}
-      {showHotkeysHelp && (
-        <div
-          className="hotkeys-overlay"
-          onClick={() => setShowHotkeysHelp(false)}
-        >
-          <div className="hotkeys-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="hotkeys-header">
-              <h2>⌨️ Keyboard Shortcuts</h2>
-              <button
-                className="close-btn"
-                onClick={() => setShowHotkeysHelp(false)}
-                title="Close (Esc)"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="hotkeys-content">
-              <div className="hotkeys-section">
-                <h3>Views & Navigation</h3>
-                <div className="hotkey-item">
-                  <kbd>Ctrl</kbd> + <kbd>Q</kbd>
-                  <span>Switch to Quarterly View</span>
-                </div>
-                <div className="hotkey-item">
-                  <kbd>Ctrl</kbd> + <kbd>M</kbd>
-                  <span>Switch to Monthly View</span>
-                </div>
-                <div className="hotkey-item">
-                  <kbd>Ctrl</kbd> + <kbd>1</kbd>
-                  <span>Switch to Year 2024</span>
-                </div>
-                <div className="hotkey-item">
-                  <kbd>Ctrl</kbd> + <kbd>2</kbd>
-                  <span>Switch to Year 2025</span>
-                </div>
-                <div className="hotkey-item">
-                  <kbd>Ctrl</kbd> + <kbd>3</kbd>
-                  <span>Switch to Year 2026</span>
-                </div>
-              </div>
-
-              <div className="hotkeys-section">
-                <h3>Data Management</h3>
-                <div className="hotkey-item">
-                  <kbd>Ctrl</kbd> + <kbd>E</kbd>
-                  <span>Toggle Edit Data Panel</span>
-                </div>
-                <div className="hotkey-item">
-                  <kbd>Ctrl</kbd> + <kbd>F</kbd>
-                  <span>Toggle File Manager</span>
-                </div>
-                <div className="hotkey-item">
-                  <kbd>Ctrl</kbd> + <kbd>S</kbd>
-                  <span>Export to CSV</span>
-                </div>
-                <div className="hotkey-item">
-                  <kbd>Ctrl</kbd> + <kbd>R</kbd>
-                  <span>Generate Report</span>
-                </div>
-              </div>
-
-              <div className="hotkeys-section">
-                <h3>View Controls</h3>
-                <div className="hotkey-item">
-                  <kbd>Alt</kbd> + <kbd>C</kbd>
-                  <span>Toggle Collapse All</span>
-                </div>
-                <div className="hotkey-item">
-                  <kbd>Alt</kbd> + <kbd>T</kbd>
-                  <span>Toggle Current Quarter (Monthly View)</span>
-                </div>
-                <div className="hotkey-item">
-                  <kbd>Esc</kbd>
-                  <span>Close Modals/Panels</span>
-                </div>
-              </div>
-
-              <div className="hotkeys-section">
-                <h3>Help</h3>
-                <div className="hotkey-item">
-                  <kbd>F1</kbd> or <kbd>Ctrl</kbd> + <kbd>?</kbd>
-                  <span>Show/Hide This Help</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Executive Summary Button */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          marginBottom: 16,
+        }}
+      ></div>
 
       <div className="dashboard-header">
         <div className="view-controls">
@@ -349,6 +270,23 @@ const Dashboard: React.FC = () => {
         </div>
 
         <div className="action-controls">
+          <button
+            className="executive-summary-btn"
+            onClick={() => navigate("/executive-summary")}
+            title="View Executive Summary"
+            style={{
+              background: "#2d3a4a",
+              color: "#fff",
+              border: "none",
+              borderRadius: 6,
+              padding: "0.7rem 1.5rem",
+              fontSize: "1rem",
+              cursor: "pointer",
+              marginRight: 8,
+            }}
+          >
+            Executive Summary
+          </button>
           <button
             className="input-btn"
             onClick={handleEditDataClick}
