@@ -46,6 +46,13 @@ const exportExecutiveSummary = ({
 const ExecutiveSummary = () => {
   const { state } = useBudget();
   const [userNotes, setUserNotes] = useState("");
+  const [isStrategicContextExpanded, setIsStrategicContextExpanded] =
+    useState(false);
+  const [isYTDPerformanceExpanded, setIsYTDPerformanceExpanded] =
+    useState(false);
+  const [isForwardLookingExpanded, setIsForwardLookingExpanded] =
+    useState(false);
+  const [isRiskVelocityExpanded, setIsRiskVelocityExpanded] = useState(false);
   const [tooltip, setTooltip] = useState<{
     visible: boolean;
     content: any;
@@ -735,187 +742,374 @@ const ExecutiveSummary = () => {
         {state.selectedQuarter ? ` Q${state.selectedQuarter}` : ""}
       </h2>{" "}
       <div className="kpi-grid">
-        {/* Row 1 - Strategic Context */}
-        <div className="kpi-row">
-          <h4 className="row-title">Strategic Context</h4>{" "}
-          <div className="kpi-cards">
-            <div
-              className="kpi-card"
-              onMouseEnter={(e) => handleMouseEnter(e, "annualBudgetTarget")}
-              onMouseLeave={handleMouseLeave}
-            >
-              <span>Annual Budget Target</span>
-              <strong>{formatCurrencyFull(kpis.annualBudgetTarget)}</strong>
-            </div>
-            <div
-              className="kpi-card"
-              onMouseEnter={(e) => handleMouseEnter(e, "ytdActual")}
-              onMouseLeave={handleMouseLeave}
-            >
-              <span>YTD Actual</span>
-              <strong>{formatCurrencyFull(kpis.ytdActual)}</strong>
-            </div>
-            <div
-              className="kpi-card"
-              onMouseEnter={(e) => handleMouseEnter(e, "remainingBudget")}
-              onMouseLeave={handleMouseLeave}
-            >
-              <span>Remaining Budget</span>
-              <strong>{formatCurrencyFull(kpis.remainingBudget)}</strong>
-            </div>
-          </div>
-        </div>{" "}
-        {/* Row 2 - Strategic Context (Row 2) */}
-        <div className="kpi-row">
-          <div className="kpi-cards">
+        {/* Strategic Context - Collapsible */}
+        <div className="kpi-section strategic-context">
+          <div
+            className="section-header"
+            onClick={() =>
+              setIsStrategicContextExpanded(!isStrategicContextExpanded)
+            }
+          >
             {" "}
-            <div
-              className={`kpi-card ${getPerformanceClass(
-                "annualVariance",
-                kpis.annualVariance,
-                kpis.annualVariancePct
-              )}`}
-              onMouseEnter={(e) => handleMouseEnter(e, "annualVariance")}
-              onMouseLeave={handleMouseLeave}
-            >
-              <span>Annual Variance</span>
-              <strong>
-                {formatCurrencyFull(kpis.annualVariance)}{" "}
-                {kpis.annualVariancePct >= 0 ? "+" : ""}
-                {kpis.annualVariancePct.toFixed(1)}%
-              </strong>
-            </div>
-            <div
-              className={`kpi-card ${getPerformanceClass(
-                "budgetUtilization",
-                kpis.budgetUtilization
-              )}`}
-              onMouseEnter={(e) => handleMouseEnter(e, "budgetUtilization")}
-              onMouseLeave={handleMouseLeave}
-            >
-              <span>Budget Utilization</span>
-              <strong>{kpis.budgetUtilization.toFixed(1)}%</strong>
-            </div>
-            <div
-              className={`kpi-card ${getPerformanceClass(
-                "targetAchievement",
-                kpis.targetAchievement
-              )}`}
-              onMouseEnter={(e) => handleMouseEnter(e, "targetAchievement")}
-              onMouseLeave={handleMouseLeave}
-            >
-              <span>Target Achievement</span>
-              <strong>{kpis.targetAchievement.toFixed(1)}%</strong>
-            </div>
+            <h4 className="section-title">
+              <span className="expand-icon">
+                {isStrategicContextExpanded ? "−" : "+"}
+              </span>
+              Strategic Context
+            </h4>
+            {!isStrategicContextExpanded && (
+              <div className="compact-summary">
+                <span className="compact-metric">
+                  Budget:{" "}
+                  <strong>{formatCurrencyFull(kpis.annualBudgetTarget)}</strong>
+                </span>
+                <span className="compact-metric">
+                  YTD: <strong>{formatCurrencyFull(kpis.ytdActual)}</strong>
+                </span>
+                <span className="compact-metric">
+                  Remaining:{" "}
+                  <strong>{formatCurrencyFull(kpis.remainingBudget)}</strong>
+                </span>
+              </div>
+            )}
           </div>
-        </div>
-        {/* Row 3 - YTD Performance */}
-        <div className="kpi-row">
-          <h4 className="row-title">
-            YTD Performance (thru {getLastFinalMonthName()})
-          </h4>{" "}
-          <div className="kpi-cards">
-            <div
-              className="kpi-card"
-              onMouseEnter={(e) => handleMouseEnter(e, "ytdBudget")}
-              onMouseLeave={handleMouseLeave}
-            >
-              <span>YTD Budget</span>
-              <strong>{formatCurrencyFull(kpis.ytdBudget)}</strong>
-            </div>{" "}
-            <div
-              className={`kpi-card ${getPerformanceClass(
-                "ytdVariance",
-                kpis.variance,
-                kpis.variancePct
-              )}`}
-              onMouseEnter={(e) => handleMouseEnter(e, "ytdVariance")}
-              onMouseLeave={handleMouseLeave}
-            >
-              <span>YTD Variance</span>
-              <strong>
-                {formatCurrencyFull(kpis.variance)}{" "}
-                {kpis.variancePct >= 0 ? "+" : ""}
-                {kpis.variancePct.toFixed(1)}%
-              </strong>
-            </div>
-          </div>
-        </div>
-        {/* Row 4 - Forward Looking */}
-        <div className="kpi-row">
-          <h4 className="row-title">Forward Looking</h4>{" "}
-          <div className="kpi-cards">
-            <div
-              className="kpi-card"
-              onMouseEnter={(e) => handleMouseEnter(e, "fullYearForecast")}
-              onMouseLeave={handleMouseLeave}
-            >
-              <span>Full-Year Forecast</span>
-              <strong>{formatCurrencyFull(kpis.fullYearForecast)}</strong>
-            </div>{" "}
-            <div
-              className={`kpi-card ${getPerformanceClass(
-                "forecastVariance",
-                kpis.forecastVsTargetVariance
-              )}`}
-              onMouseEnter={(e) => handleMouseEnter(e, "forecastVsTarget")}
-              onMouseLeave={handleMouseLeave}
-            >
-              <span>Forecast vs Target</span>
-              <strong>
-                {kpis.forecastVsTargetVariance >= 0 ? "+" : ""}
-                {formatCurrencyFull(kpis.forecastVsTargetVariance)}
-              </strong>
-            </div>
-          </div>
+
+          {isStrategicContextExpanded && (
+            <>
+              {/* Row 1 - Strategic Context */}
+              <div className="kpi-row">
+                <div className="kpi-cards">
+                  <div
+                    className="kpi-card"
+                    onMouseEnter={(e) =>
+                      handleMouseEnter(e, "annualBudgetTarget")
+                    }
+                    onMouseLeave={handleMouseLeave}
+                  >
+                    <span>Annual Budget Target</span>
+                    <strong>
+                      {formatCurrencyFull(kpis.annualBudgetTarget)}
+                    </strong>
+                  </div>
+                  <div
+                    className="kpi-card"
+                    onMouseEnter={(e) => handleMouseEnter(e, "ytdActual")}
+                    onMouseLeave={handleMouseLeave}
+                  >
+                    <span>YTD Actual</span>
+                    <strong>{formatCurrencyFull(kpis.ytdActual)}</strong>
+                  </div>
+                  <div
+                    className="kpi-card"
+                    onMouseEnter={(e) => handleMouseEnter(e, "remainingBudget")}
+                    onMouseLeave={handleMouseLeave}
+                  >
+                    <span>Remaining Budget</span>
+                    <strong>{formatCurrencyFull(kpis.remainingBudget)}</strong>
+                  </div>
+                </div>
+              </div>
+
+              {/* Row 2 - Strategic Context (Row 2) */}
+              <div className="kpi-row">
+                <div className="kpi-cards">
+                  <div
+                    className={`kpi-card ${getPerformanceClass(
+                      "annualVariance",
+                      kpis.annualVariance,
+                      kpis.annualVariancePct
+                    )}`}
+                    onMouseEnter={(e) => handleMouseEnter(e, "annualVariance")}
+                    onMouseLeave={handleMouseLeave}
+                  >
+                    <span>Annual Variance</span>
+                    <strong>
+                      {formatCurrencyFull(kpis.annualVariance)}{" "}
+                      {kpis.annualVariancePct >= 0 ? "+" : ""}
+                      {kpis.annualVariancePct.toFixed(1)}%
+                    </strong>
+                  </div>
+                  <div
+                    className={`kpi-card ${getPerformanceClass(
+                      "budgetUtilization",
+                      kpis.budgetUtilization
+                    )}`}
+                    onMouseEnter={(e) =>
+                      handleMouseEnter(e, "budgetUtilization")
+                    }
+                    onMouseLeave={handleMouseLeave}
+                  >
+                    <span>Budget Utilization</span>
+                    <strong>{kpis.budgetUtilization.toFixed(1)}%</strong>
+                  </div>
+                  <div
+                    className={`kpi-card ${getPerformanceClass(
+                      "targetAchievement",
+                      kpis.targetAchievement
+                    )}`}
+                    onMouseEnter={(e) =>
+                      handleMouseEnter(e, "targetAchievement")
+                    }
+                    onMouseLeave={handleMouseLeave}
+                  >
+                    <span>Target Achievement</span>
+                    <strong>{kpis.targetAchievement.toFixed(1)}%</strong>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>{" "}
-        {/* Row 5 - Risk & Velocity */}
-        <div className="kpi-row">
-          <h4 className="row-title">Risk & Velocity</h4>{" "}
-          <div className="kpi-cards">
-            <div
-              className="kpi-card"
-              onMouseEnter={(e) => handleMouseEnter(e, "burnRate")}
-              onMouseLeave={handleMouseLeave}
-            >
-              <span>Monthly Burn Rate</span>
-              <strong>{formatCurrencyFull(kpis.burnRate)}</strong>
-            </div>{" "}
-            <div
-              className={`kpi-card ${getPerformanceClass(
-                "monthsRemaining",
-                kpis.monthsRemaining
-              )}`}
-              onMouseEnter={(e) => handleMouseEnter(e, "monthsRemaining")}
-              onMouseLeave={handleMouseLeave}
-            >
-              <span>Months Remaining</span>
-              <strong>
-                {kpis.monthsRemaining > 0
-                  ? kpis.monthsRemaining.toFixed(1)
-                  : "∞"}{" "}
-                months
-              </strong>
-            </div>
-            <div
-              className="kpi-card"
-              onMouseEnter={(e) => handleMouseEnter(e, "varianceTrend")}
-              onMouseLeave={handleMouseLeave}
-            >
-              <span>Variance Trend</span>{" "}
-              <strong
-                className={`trend-${kpis.varianceTrend
-                  .toLowerCase()
-                  .replace(/\s+/g, "-")}`}
-              >
-                {kpis.varianceTrend}
-              </strong>
-            </div>
+        {/* YTD Performance - Collapsible */}
+        <div className="kpi-section ytd-performance">
+          <div
+            className="section-header"
+            onClick={() =>
+              setIsYTDPerformanceExpanded(!isYTDPerformanceExpanded)
+            }
+          >
+            {" "}
+            <h4 className="section-title">
+              <span className="expand-icon">
+                {isYTDPerformanceExpanded ? "−" : "+"}
+              </span>
+              YTD Performance (thru {getLastFinalMonthName()})
+            </h4>
+            {!isYTDPerformanceExpanded && (
+              <div className="compact-summary">
+                <span className="compact-metric">
+                  Budget: <strong>{formatCurrencyFull(kpis.ytdBudget)}</strong>
+                </span>
+                <span className="compact-metric">
+                  Variance:{" "}
+                  <strong>
+                    {formatCurrencyFull(kpis.variance)} (
+                    {kpis.variancePct >= 0 ? "+" : ""}
+                    {kpis.variancePct.toFixed(1)}%)
+                  </strong>
+                </span>
+              </div>
+            )}
           </div>
+
+          {isYTDPerformanceExpanded && (
+            <div className="kpi-row">
+              <div className="kpi-cards">
+                <div
+                  className="kpi-card"
+                  onMouseEnter={(e) => handleMouseEnter(e, "ytdBudget")}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  <span>YTD Budget</span>
+                  <strong>{formatCurrencyFull(kpis.ytdBudget)}</strong>
+                </div>
+                <div
+                  className={`kpi-card ${getPerformanceClass(
+                    "ytdVariance",
+                    kpis.variance,
+                    kpis.variancePct
+                  )}`}
+                  onMouseEnter={(e) => handleMouseEnter(e, "ytdVariance")}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  <span>YTD Variance</span>
+                  <strong>
+                    {formatCurrencyFull(kpis.variance)}{" "}
+                    {kpis.variancePct >= 0 ? "+" : ""}
+                    {kpis.variancePct.toFixed(1)}%
+                  </strong>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>{" "}
+        {/* Forward Looking - Collapsible */}
+        <div className="kpi-section forward-looking">
+          <div
+            className="section-header"
+            onClick={() =>
+              setIsForwardLookingExpanded(!isForwardLookingExpanded)
+            }
+          >
+            {" "}
+            <h4 className="section-title">
+              <span className="expand-icon">
+                {isForwardLookingExpanded ? "−" : "+"}
+              </span>
+              Forward Looking
+            </h4>
+            {!isForwardLookingExpanded && (
+              <div className="compact-summary">
+                <span className="compact-metric">
+                  Forecast:{" "}
+                  <strong>{formatCurrencyFull(kpis.fullYearForecast)}</strong>
+                </span>
+                <span className="compact-metric">
+                  vs Target:{" "}
+                  <strong>
+                    {kpis.forecastVsTargetVariance >= 0 ? "+" : ""}
+                    {formatCurrencyFull(kpis.forecastVsTargetVariance)}
+                  </strong>
+                </span>
+              </div>
+            )}
+          </div>
+
+          {isForwardLookingExpanded && (
+            <div className="kpi-row">
+              <div className="kpi-cards">
+                <div
+                  className="kpi-card"
+                  onMouseEnter={(e) => handleMouseEnter(e, "fullYearForecast")}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  <span>Full-Year Forecast</span>
+                  <strong>{formatCurrencyFull(kpis.fullYearForecast)}</strong>
+                </div>
+                <div
+                  className={`kpi-card ${getPerformanceClass(
+                    "forecastVariance",
+                    kpis.forecastVsTargetVariance
+                  )}`}
+                  onMouseEnter={(e) => handleMouseEnter(e, "forecastVsTarget")}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  <span>Forecast vs Target</span>
+                  <strong>
+                    {kpis.forecastVsTargetVariance >= 0 ? "+" : ""}
+                    {formatCurrencyFull(kpis.forecastVsTargetVariance)}
+                  </strong>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-      </div>{" "}
+        {/* Risk & Velocity - Collapsible */}
+        <div className="kpi-section risk-velocity">
+          <div
+            className="section-header"
+            onClick={() => setIsRiskVelocityExpanded(!isRiskVelocityExpanded)}
+          >
+            <h4 className="section-title">
+              <span className="expand-icon">
+                {isRiskVelocityExpanded ? "−" : "+"}
+              </span>
+              Risk & Velocity
+            </h4>
+            {!isRiskVelocityExpanded && (
+              <div className="compact-summary">
+                <span className="compact-metric">
+                  Burn Rate:{" "}
+                  <strong>{formatCurrencyFull(kpis.burnRate)}</strong>
+                </span>
+                <span className="compact-metric">
+                  Months Left:{" "}
+                  <strong>
+                    {kpis.monthsRemaining > 0
+                      ? kpis.monthsRemaining.toFixed(1)
+                      : "∞"}{" "}
+                    months
+                  </strong>
+                </span>
+              </div>
+            )}
+          </div>
+          {isRiskVelocityExpanded && (
+            <div className="kpi-row">
+              <div className="kpi-cards">
+                <div
+                  className="kpi-card"
+                  onMouseEnter={(e) => handleMouseEnter(e, "burnRate")}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  <span>Monthly Burn Rate</span>
+                  <strong>{formatCurrencyFull(kpis.burnRate)}</strong>
+                </div>
+                <div
+                  className={`kpi-card ${getPerformanceClass(
+                    "monthsRemaining",
+                    kpis.monthsRemaining
+                  )}`}
+                  onMouseEnter={(e) => handleMouseEnter(e, "monthsRemaining")}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  <span>Months Remaining</span>
+                  <strong>
+                    {kpis.monthsRemaining > 0
+                      ? kpis.monthsRemaining.toFixed(1)
+                      : "∞"}{" "}
+                    months
+                  </strong>
+                </div>
+                <div
+                  className="kpi-card"
+                  onMouseEnter={(e) => handleMouseEnter(e, "varianceTrend")}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  <span>Variance Trend</span>
+                  <strong
+                    className={`trend-${kpis.varianceTrend
+                      .toLowerCase()
+                      .replace(/\s+/g, "-")}`}
+                  >
+                    {kpis.varianceTrend}
+                  </strong>
+                </div>
+              </div>
+            </div>
+          )}{" "}
+        </div>
+      </div>
+      <div className="trend-chart-section">
+        <h2>Budget vs Actual Trend</h2>
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={trend}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="period" />
+            <YAxis
+              tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+            />{" "}
+            <Tooltip
+              formatter={(value: number, name: string) => [
+                formatCurrencyFull(value),
+                name === "Actual"
+                  ? "Actual"
+                  : name === "Forecast"
+                  ? "Forecast"
+                  : "Budget",
+              ]}
+              labelFormatter={(label) => `Through ${label}`}
+            />
+            <Legend />{" "}
+            <Line
+              type="monotone"
+              dataKey="budget"
+              stroke="#0000FF"
+              strokeWidth={2}
+              name="Budget"
+            />{" "}
+            <Line
+              type="monotone"
+              dataKey="actual"
+              stroke="#004526"
+              strokeWidth={2}
+              name="Actual"
+              connectNulls={false}
+            />{" "}
+            <Line
+              type="monotone"
+              dataKey="forecast"
+              stroke="#FF8C00"
+              strokeWidth={2}
+              strokeDasharray="5 5"
+              name="Forecast"
+              connectNulls={false}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
       <div className="resource-allocation-section">
-        <h3>Resource Allocation & Hiring Capacity</h3>
+        <h2>Resource Allocation & Hiring Capacity</h2>
         <div className="resource-overview">
           <div className="resource-summary-cards">
             <div className="resource-card total-compensation">
@@ -945,33 +1139,7 @@ const ExecutiveSummary = () => {
                     )}
                   </span>
                 </div>
-              </div>
-            </div>
-
-            <div className="resource-card base-pay">
-              <h4>Base Pay</h4>
-              <div className="resource-metrics">
-                <div className="metric">
-                  <span className="metric-label">YTD Actual</span>
-                  <span className="metric-value">
-                    {formatCurrencyFull(getResourceData().basePay.ytdActual)}
-                  </span>
-                </div>
-                <div className="metric">
-                  <span className="metric-label">Monthly Avg</span>
-                  <span className="metric-value">
-                    {formatCurrencyFull(
-                      getResourceData().basePay.monthlyAverage
-                    )}
-                  </span>
-                </div>
-                <div className="metric">
-                  <span className="metric-label">Utilization</span>
-                  <span className="metric-value">
-                    {getResourceData().basePay.utilization.toFixed(1)}%
-                  </span>
-                </div>
-              </div>
+              </div>{" "}
             </div>
 
             <div className="resource-card capitalized-salaries">
@@ -1007,7 +1175,6 @@ const ExecutiveSummary = () => {
               </div>
             </div>
           </div>
-
           <div className="hiring-capacity-analysis">
             <h4>Hiring Runway Analysis</h4>{" "}
             <div className="capacity-table">
@@ -1134,54 +1301,8 @@ const ExecutiveSummary = () => {
                 </span>
               </div>
             </div>
-          </div>
+          </div>{" "}
         </div>
-      </div>{" "}
-      <div className="trend-chart-section">
-        <h3>Budget vs Actual Trend</h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={trend}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="period" />
-            <YAxis
-              tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
-            />{" "}
-            <Tooltip
-              formatter={(value: number, name: string) => [
-                formatCurrencyFull(value),
-                name === "YTD Actual"
-                  ? "YTD Actual"
-                  : name === "YTD Forecast"
-                  ? "YTD Forecast"
-                  : "YTD Budget",
-              ]}
-              labelFormatter={(label) => `Through ${label}`}
-            />
-            <Legend />{" "}
-            <Line
-              type="monotone"
-              dataKey="budget"
-              stroke="#0000FF"
-              strokeWidth={2}
-              name="YTD Budget"
-            />{" "}
-            <Line
-              type="monotone"
-              dataKey="actual"
-              stroke="#004526"
-              strokeWidth={2}
-              name="YTD Actual"
-            />
-            <Line
-              type="monotone"
-              dataKey="forecast"
-              stroke="#FF8C00"
-              strokeWidth={2}
-              strokeDasharray="5 5"
-              name="YTD Forecast"
-            />
-          </LineChart>
-        </ResponsiveContainer>
       </div>
       <div className="alerts-section">
         <h3>Alerts</h3>
@@ -1565,13 +1686,16 @@ const getTrendData = (state: any) => {
 
       // Check if this month is in "Final" mode (true) or "Forecast" mode (false)
       const isFinalMonth =
-        state.monthlyForecastModes[state.selectedYear]?.[month] ?? false;
-
-      // Add to cumulative totals
+        state.monthlyForecastModes[state.selectedYear]?.[month] ?? false; // Add to cumulative totals
       cumulativeBudget += monthlyBudget;
-      cumulativeActual += monthlyActual;
+
+      // Only add to cumulative actual if this month is final
+      if (isFinalMonth) {
+        cumulativeActual += monthlyActual;
+      }
 
       // For forecast line: use actual for final months, forecast for non-final months
+      // Only show cumulative forecast for non-final months
       if (isFinalMonth) {
         cumulativeForecast += monthlyActual;
       } else {
@@ -1581,15 +1705,20 @@ const getTrendData = (state: any) => {
       return {
         period: monthNames[month],
         budget: cumulativeBudget,
-        actual: cumulativeActual,
-        forecast: cumulativeForecast,
+        actual: isFinalMonth ? cumulativeActual : null, // Only show actual for final months
+        forecast: !isFinalMonth ? cumulativeForecast : null, // Only show forecast for non-final months
         monthlyBudget,
         monthlyActual,
         monthlyReforecast,
         isFinalMonth,
       };
     })
-    .filter((data) => data.budget > 0 || data.actual > 0 || data.forecast > 0); // Only show months with data
+    .filter(
+      (data) =>
+        data.budget > 0 ||
+        (data.actual && data.actual > 0) ||
+        (data.forecast && data.forecast > 0)
+    ); // Only show months with data
 };
 
 const getAlerts = (state: any) =>

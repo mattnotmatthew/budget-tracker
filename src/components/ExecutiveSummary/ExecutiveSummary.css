@@ -547,8 +547,128 @@
   font-style: italic;
 }
 
+/* Collapsible Section Styles */
+.kpi-section {
+  margin-bottom: 1.5rem;
+  border-radius: 12px;
+  border: 2px solid #e1e8ed;
+  background: #ffffff;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.section-header {
+  padding: 1.25rem 1.5rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+  background: #f8fafe;
+  border-bottom: 1px solid #e1e8ed;
+  transition: all 0.2s ease;
+}
+
+.section-header:hover {
+  background: #eef6ff;
+}
+
+.section-title {
+  font-size: 1.1rem;
+  color: #2d3a4a;
+  margin: 0;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.expand-icon {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #3498db;
+  min-width: 20px;
+  text-align: center;
+}
+
+.compact-summary {
+  display: flex;
+  flex-direction: row;
+  gap: 2rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.compact-metric {
+  font-size: 0.9rem;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 200px;
+}
+
+.compact-metric strong {
+  color: #2d3a4a;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.strategic-context .kpi-row {
+  margin-bottom: 1rem;
+  padding: 0 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.strategic-context .kpi-row:first-child {
+  margin-top: 1.5rem;
+}
+
+.strategic-context .kpi-row:last-child {
+  margin-bottom: 1.5rem;
+}
+
+.ytd-performance .kpi-row,
+.forward-looking .kpi-row {
+  margin-bottom: 1rem;
+  padding: 0 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.ytd-performance .kpi-row:first-child,
+.forward-looking .kpi-row:first-child {
+  margin-top: 1.5rem;
+}
+
+.ytd-performance .kpi-row:last-child,
+.forward-looking .kpi-row:last-child {
+  margin-bottom: 1.5rem;
+}
+
+.risk-velocity .kpi-row {
+  margin-bottom: 1rem;
+  padding: 0 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.risk-velocity .kpi-row:first-child {
+  margin-top: 1.5rem;
+}
+
+.risk-velocity .kpi-row:last-child {
+  margin-bottom: 1.5rem;
+}
+
 /* Mobile responsive adjustments */
 @media (max-width: 768px) {
+  .compact-summary {
+    gap: 1rem;
+  }
+
+  .compact-metric {
+    min-width: auto;
+  }
+
   .resource-summary-cards {
     grid-template-columns: 1fr;
   }
