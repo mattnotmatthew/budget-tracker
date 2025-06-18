@@ -32,7 +32,11 @@ export interface BudgetDataFile {
 export const saveBudgetData = (
   state: Omit<
     BudgetState,
-    "categories" | "viewMode" | "selectedQuarter" | "selectedMonth"
+    | "categories"
+    | "viewMode"
+    | "selectedQuarter"
+    | "selectedMonth"
+    | "persistence"
   >
 ) => {
   const { entries, selectedYear } = state;
@@ -203,7 +207,11 @@ export const supportsFileSystemAccess = (): boolean => {
 export const saveToFileHandle = async (
   state: Omit<
     BudgetState,
-    "categories" | "viewMode" | "selectedQuarter" | "selectedMonth"
+    | "categories"
+    | "viewMode"
+    | "selectedQuarter"
+    | "selectedMonth"
+    | "persistence"
   >,
   fileHandle?: FileSystemFileHandle
 ): Promise<{
@@ -310,7 +318,11 @@ export const saveToFileHandle = async (
 export const smartAutoSave = async (
   state: Omit<
     BudgetState,
-    "categories" | "viewMode" | "selectedQuarter" | "selectedMonth"
+    | "categories"
+    | "viewMode"
+    | "selectedQuarter"
+    | "selectedMonth"
+    | "persistence"
   >,
   currentFile?: {
     name: string;

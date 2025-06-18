@@ -6,11 +6,7 @@ import BudgetInput from "./BudgetInput";
 import AlertPanel from "./AlertPanel";
 import FileManager from "./FileManager";
 import YearlyBudgetDashboard from "./YearlyBudgetDashboard";
-import {
-  exportToCSV,
-  downloadCSV,
-  generateSummaryReport,
-} from "../utils/dataExport";
+
 import "../styles/App.css";
 import { useNavigate } from "react-router-dom";
 
@@ -67,26 +63,6 @@ const Dashboard: React.FC = () => {
     setShowInput(true);
   };
 
-  const handleExportCSV = () => {
-    const csvContent = exportToCSV(state.entries, state.categories);
-    downloadCSV(csvContent, `budget-data-${state.selectedYear}.csv`);
-  };
-
-  const handleExportReport = () => {
-    const report = generateSummaryReport(
-      state.entries,
-      state.categories,
-      state.selectedYear
-    );
-    const blob = new Blob([report], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `budget-report-${state.selectedYear}.txt`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
-
   // Hotkey handlers
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
@@ -132,16 +108,6 @@ const Dashboard: React.FC = () => {
           case "F":
             event.preventDefault();
             setShowFileManager(!showFileManager);
-            break;
-          case "s":
-          case "S":
-            event.preventDefault();
-            handleExportCSV();
-            break;
-          case "r":
-          case "R":
-            event.preventDefault();
-            handleExportReport();
             break;
         }
       }
@@ -274,18 +240,8 @@ const Dashboard: React.FC = () => {
             className="executive-summary-btn"
             onClick={() => navigate("/executive-summary")}
             title="View Executive Summary"
-            style={{
-              background: "#2d3a4a",
-              color: "#fff",
-              border: "none",
-              borderRadius: 6,
-              padding: "0.7rem 1.5rem",
-              fontSize: "1rem",
-              cursor: "pointer",
-              marginRight: 8,
-            }}
           >
-            Executive Summary
+            📎 Executive Summary
           </button>
           <button
             className="input-btn"
@@ -301,20 +257,7 @@ const Dashboard: React.FC = () => {
           >
             💾 File Manager <small>(Ctrl+F)</small>
           </button>
-          <button
-            className="export-btn"
-            onClick={handleExportCSV}
-            title="Export data to CSV (Ctrl+S)"
-          >
-            📊 Export CSV <small>(Ctrl+S)</small>
-          </button>
-          <button
-            className="export-btn"
-            onClick={handleExportReport}
-            title="Generate summary report (Ctrl+R)"
-          >
-            📋 Report <small>(Ctrl+R)</small>
-          </button>
+
           <button
             className="help-btn"
             onClick={() => setShowHotkeysHelp(!showHotkeysHelp)}

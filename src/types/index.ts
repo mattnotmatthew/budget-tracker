@@ -107,4 +107,12 @@ export interface BudgetState {
       [month: number]: boolean; // true = final (use actual), false = forecast (use forecast)
     };
   };
+  // Persistence state
+  persistence: {
+    hasUnsavedChanges: boolean;
+    lastCacheUpdate: Date | null;
+    lastFileSave: Date | null;
+    isFirstTimeUser: boolean;
+    cacheAutoSaveInterval: number; // in milliseconds
+  };
 }

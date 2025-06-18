@@ -2825,7 +2825,18 @@ button small {
   transition: all 0.2s ease;
 }
 
-.file-manager-btn:hover {
+.executive-summary-btn {
+  background: #172a3a;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.executive-summary-btn:hover {
   background: #334915;
 }
 
@@ -2981,4 +2992,54 @@ button small {
 .restore-btn:disabled {
   background: #999;
   cursor: not-allowed;
+}
+
+/* Year Selector Styles */
+.year-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.year-selector label {
+  font-weight: 500;
+  color: #3f3a35;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.year-selector select {
+  padding: 0.75rem 1rem;
+  border: 1px solid #5d6a5c;
+  background: #ffffff;
+  color: #434947;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 80px;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23434947' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6,9 12,15 18,9'></polyline></svg>");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 16px;
+  padding-right: 2.5rem;
+}
+
+.year-selector select:hover {
+  border-color: #334915;
+  background-color: #f8f9fa;
+}
+
+.year-selector select:focus {
+  outline: none;
+  border-color: #334915;
+  box-shadow: 0 0 0 3px rgba(51, 73, 21, 0.1);
+}
+
+.year-selector select option {
+  padding: 0.5rem;
+  background: #ffffff;
+  color: #434947;
 }

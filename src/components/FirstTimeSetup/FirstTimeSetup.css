@@ -1,0 +1,241 @@
+.first-time-setup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(3px);
+}
+
+.first-time-setup-modal {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 800px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.setup-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.setup-header h2 {
+  color: #333;
+  margin: 0 0 12px 0;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.setup-header p {
+  color: #666;
+  margin: 0;
+  font-size: 16px;
+}
+
+.setup-options {
+  display: grid;
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+@media (min-width: 768px) {
+  .setup-options {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 1024px) {
+  .setup-options {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+.option-card {
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+  transition: all 0.2s ease;
+  background: #fafafa;
+}
+
+.option-card:hover {
+  border-color: #007bff;
+  background: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+}
+
+.option-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.option-card h3 {
+  margin: 0 0 12px 0;
+  color: #333;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.option-card p {
+  margin: 0 0 20px 0;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 60px;
+}
+
+.option-button {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  width: 100%;
+}
+
+.option-button:hover:not(:disabled) {
+  background: #0056b3;
+}
+
+.option-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.load-button {
+  background: #28a745;
+}
+
+.load-button:hover:not(:disabled) {
+  background: #1e7e34;
+}
+
+.new-button {
+  background: #007bff;
+}
+
+.new-button:hover:not(:disabled) {
+  background: #0056b3;
+}
+
+.skip-button {
+  background: #6c757d;
+}
+
+.skip-button:hover:not(:disabled) {
+  background: #545b62;
+}
+
+.setup-info {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.setup-info h4 {
+  margin: 0 0 12px 0;
+  color: #333;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.setup-info ul {
+  margin: 0;
+  padding-left: 20px;
+  color: #666;
+}
+
+.setup-info li {
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.setup-info strong {
+  color: #333;
+}
+
+.loading-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.95);
+  padding: 20px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-indicator span {
+  color: #333;
+  font-weight: 500;
+}
+
+/* Mobile adjustments */
+@media (max-width: 767px) {
+  .first-time-setup-modal {
+    padding: 24px;
+    width: 95%;
+    max-height: 95vh;
+  }
+
+  .setup-header h2 {
+    font-size: 24px;
+  }
+
+  .option-card {
+    padding: 20px;
+  }
+
+  .option-icon {
+    font-size: 40px;
+  }
+
+  .option-card h3 {
+    font-size: 16px;
+  }
+
+  .option-card p {
+    min-height: auto;
+  }
+}

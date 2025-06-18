@@ -195,16 +195,12 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
         const contentHash = btoa(content.substring(0, 1000))
           .replace(/[^a-zA-Z0-9]/g, "")
           .substring(0, 20);
-
         dispatch({
           type: "SET_CURRENT_FILE",
           payload: {
             name: fileName,
             handle: fileHandle,
             lastSaved: new Date(),
-            size: fileObj.size,
-            lastModified: new Date(fileObj.lastModified),
-            contentHash: contentHash,
           },
         });
       }

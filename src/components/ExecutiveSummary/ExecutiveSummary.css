@@ -1,5 +1,6 @@
 /* ExecutiveSummary.css */
 .executive-summary {
+  position: relative;
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
@@ -222,6 +223,7 @@
   font-size: 1rem;
   resize: vertical;
   margin: 1rem;
+  height: 300px;
 }
 .summary-actions {
   display: flex;
@@ -962,4 +964,106 @@
   border-bottom: 2px solid #3d52d5;
   padding-bottom: 0.5rem;
   margin-top: 0;
+}
+
+/* Floating Back Button */
+.floating-back-button {
+  position: sticky;
+  top: 20px;
+  left: -140px;
+  background: #334915;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  float: left;
+  margin-left: -150px;
+  margin-bottom: 20px;
+  width: 120px;
+}
+
+.floating-back-button:hover {
+  background: #172a3a;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.floating-back-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Floating Export Button - positioned below back button */
+.floating-export-button {
+  position: sticky;
+  top: 80px; /* Position below the back button (20px + button height + margin) */
+  left: -140px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  float: left;
+  margin-left: -150px;
+  margin-bottom: 20px;
+  clear: left; /* Ensure it clears the back button */
+  width: 120px;
+}
+
+.floating-export-button:hover {
+  background: #1d4ed8;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.floating-export-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Mobile adjustments for floating back button */
+@media (max-width: 768px) {
+  .floating-back-button {
+    position: relative;
+    top: 0;
+    left: 0;
+    margin-bottom: 20px;
+    padding: 10px 16px;
+    font-size: 13px;
+    align-self: flex-start;
+    float: none;
+    margin-left: 0;
+  }
+
+  .floating-export-button {
+    position: relative;
+    top: 0;
+    left: 0;
+    margin-bottom: 20px;
+    padding: 10px 16px;
+    font-size: 13px;
+    align-self: flex-start;
+    float: none;
+    margin-left: 0;
+  }
 }

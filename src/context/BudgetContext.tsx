@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import { BudgetEntry, BudgetCategory, ViewMode, BudgetState } from "../types";
 import { attemptRestoreCachedFile } from "../utils/fileManager";
+import { PersistenceManager } from "../services/persistenceManager";
 
 type BudgetAction =
   | { type: "ADD_ENTRY"; payload: BudgetEntry }
@@ -33,7 +34,12 @@ type BudgetAction =
   | {
       type: "SET_MONTHLY_FORECAST_MODE";
       payload: { year: number; month: number; isFinal: boolean };
-    };
+    }
+  | { type: "MARK_UNSAVED_CHANGES" }
+  | { type: "MARK_SAVED_TO_FILE" }
+  | { type: "UPDATE_CACHE_TIMESTAMP" }
+  | { type: "LOAD_FROM_CACHE"; payload: any }
+  | { type: "SET_FIRST_TIME_USER"; payload: boolean };
 
 const initialCategories: BudgetCategory[] = [
   // Cost of Sales
@@ -171,6 +177,7 @@ const clearFileInfoFromCache = () => {
 // Initialize state with cached file info if available
 const getInitialState = (): BudgetState => {
   const cachedFileInfo = loadFileInfoFromCache();
+  const persistenceManager = PersistenceManager.getInstance();
 
   return {
     entries: [],
@@ -187,6 +194,13 @@ const getInitialState = (): BudgetState => {
           // The app will need to prompt user to re-select the file for new file system access
         }
       : undefined,
+    persistence: {
+      hasUnsavedChanges: false,
+      lastCacheUpdate: null,
+      lastFileSave: null,
+      isFirstTimeUser: persistenceManager.isFirstTimeUser(),
+      cacheAutoSaveInterval: 5 * 60 * 1000, // 5 minutes
+    },
   };
 };
 
@@ -198,18 +212,33 @@ const budgetReducer = (
 ): BudgetState => {
   switch (action.type) {
     case "ADD_ENTRY":
-      return { ...state, entries: [...state.entries, action.payload] };
+      return {
+        ...state,
+        entries: [...state.entries, action.payload],
+        persistence: {
+          ...state.persistence,
+          hasUnsavedChanges: true,
+        },
+      };
     case "UPDATE_ENTRY":
       return {
         ...state,
         entries: state.entries.map((entry) =>
           entry.id === action.payload.id ? action.payload : entry
         ),
+        persistence: {
+          ...state.persistence,
+          hasUnsavedChanges: true,
+        },
       };
     case "DELETE_ENTRY":
       return {
         ...state,
         entries: state.entries.filter((entry) => entry.id !== action.payload),
+        persistence: {
+          ...state.persistence,
+          hasUnsavedChanges: true,
+        },
       };
     case "SET_VIEW_MODE":
       return { ...state, viewMode: action.payload };
@@ -255,6 +284,10 @@ const budgetReducer = (
           ...state.yearlyBudgetTargets,
           [action.payload.year]: action.payload.amount,
         },
+        persistence: {
+          ...state.persistence,
+          hasUnsavedChanges: true,
+        },
       };
     case "SET_MONTHLY_FORECAST_MODE":
       const { year, month, isFinal } = action.payload;
@@ -267,6 +300,55 @@ const budgetReducer = (
             [month]: isFinal,
           },
         },
+        persistence: {
+          ...state.persistence,
+          hasUnsavedChanges: true,
+        },
+      };
+    case "MARK_UNSAVED_CHANGES":
+      return {
+        ...state,
+        persistence: {
+          ...state.persistence,
+          hasUnsavedChanges: true,
+        },
+      };
+    case "MARK_SAVED_TO_FILE":
+      return {
+        ...state,
+        persistence: {
+          ...state.persistence,
+          hasUnsavedChanges: false,
+          lastFileSave: new Date(),
+        },
+      };
+    case "UPDATE_CACHE_TIMESTAMP":
+      return {
+        ...state,
+        persistence: {
+          ...state.persistence,
+          lastCacheUpdate: new Date(),
+        },
+      };
+    case "LOAD_FROM_CACHE":
+      return {
+        ...state,
+        entries: action.payload.entries || [],
+        selectedYear: action.payload.selectedYear || state.selectedYear,
+        yearlyBudgetTargets: action.payload.yearlyBudgetTargets || {},
+        monthlyForecastModes: action.payload.monthlyForecastModes || {},
+        persistence: {
+          ...state.persistence,
+          hasUnsavedChanges: false,
+        },
+      };
+    case "SET_FIRST_TIME_USER":
+      return {
+        ...state,
+        persistence: {
+          ...state.persistence,
+          isFirstTimeUser: action.payload,
+        },
       };
     default:
       return state;
@@ -276,94 +358,395 @@ const budgetReducer = (
 const BudgetContext = createContext<{
   state: BudgetState;
   dispatch: React.Dispatch<BudgetAction>;
+  // Persistence functions
+  saveToFile: () => Promise<boolean>;
+  loadFromFile: () => Promise<boolean>;
+  createNewFile: () => Promise<boolean>;
+  saveToCache: () => void;
+  loadFromCache: () => boolean;
+  clearAllData: () => void;
+  // Utility functions
+  hasUnsavedChanges: () => boolean;
+  getTimeSinceLastSave: () => string | null;
+  getCacheStats: () => any;
 } | null>(null);
 
 export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [state, dispatch] = useReducer(budgetReducer, initialState);
+  const persistenceManager = PersistenceManager.getInstance();
 
-  // Attempt to restore cached file on app load
+  // Initialize persistence manager and load cached data on startup
   useEffect(() => {
-    const restoreCachedFile = async () => {
-      // Only attempt restore if we have cached file info but no current data
-      if (state.currentFile && state.entries.length === 0) {
-        try {
-          const result = await attemptRestoreCachedFile();
+    persistenceManager.initialize();
 
-          if (result.success && result.data) {
-            // Load the restored data
-            dispatch({ type: "LOAD_ENTRIES", payload: result.data.entries });
+    // Always try to load cached data on startup, regardless of first-time user status
+    const cachedData = persistenceManager.getCachedData();
+    if (cachedData) {
+      console.log("Found cached data, loading...", cachedData);
+      dispatch({ type: "LOAD_FROM_CACHE", payload: cachedData });
+      console.log("Loaded data from cache on startup");
+    } else {
+      console.log("No cached data found");
+    }
 
-            // Load yearly budget targets if they exist
-            if (result.data.yearlyBudgetTargets) {
-              Object.entries(result.data.yearlyBudgetTargets).forEach(
-                ([year, amount]) => {
-                  dispatch({
-                    type: "SET_YEARLY_BUDGET_TARGET",
-                    payload: { year: parseInt(year), amount: amount as number },
-                  });
-                }
-              );
-            }
+    return () => {
+      persistenceManager.cleanup();
+    };
+  }, []); // REMOVED: Save current state to cache after loading (was causing data loss)
+  // useEffect(() => {
+  //   // Small delay to ensure state is fully updated after cache load
+  //   const timeoutId = setTimeout(() => {
+  //     console.log('Initial state save to cache after load');
+  //     persistenceManager.saveToCache(state);
+  //   }, 100);
 
-            // Load monthly forecast modes if they exist
-            if (result.data.monthlyForecastModes) {
-              Object.entries(result.data.monthlyForecastModes).forEach(
-                ([year, monthModes]) => {
-                  if (monthModes && typeof monthModes === "object") {
-                    Object.entries(
-                      monthModes as { [month: number]: boolean }
-                    ).forEach(([month, isFinal]) => {
-                      dispatch({
-                        type: "SET_MONTHLY_FORECAST_MODE",
-                        payload: {
-                          year: parseInt(year),
-                          month: parseInt(month),
-                          isFinal: isFinal as boolean,
-                        },
-                      });
-                    });
-                  }
-                }
-              );
-            }
+  //   return () => clearTimeout(timeoutId);
+  // }, [state.entries.length]); // Only trigger when entries count changes
+  // REMOVED: Force cache save when first-time user status changes (was causing data loss)
+  // useEffect(() => {
+  //   if (!state.persistence.isFirstTimeUser) {
+  //     console.log('User is no longer first-time, saving state to cache');
+  //     persistenceManager.saveToCache(state);
+  //     // Also mark user as returning in persistence manager
+  //     persistenceManager.markUserAsReturning();
+  //   }
+  // }, [state.persistence.isFirstTimeUser]);
+  // DISABLED: Set up auto-save to cache after state is loaded (causing issues)
+  // useEffect(() => {
+  //   const autoSaveToCache = () => {
+  //     persistenceManager.saveToCache(state);
+  //     dispatch({ type: "UPDATE_CACHE_TIMESTAMP" });
+  //   };
 
-            // Update selected year to the loaded year
-            if (result.data.year) {
+  //   persistenceManager.startAutoSave(autoSaveToCache, state.persistence.cacheAutoSaveInterval);
+
+  //   return () => {
+  //     persistenceManager.stopAutoSave();
+  //   };
+  // }, [state.persistence.cacheAutoSaveInterval]);// Auto-save to cache whenever important data changes (immediate)
+  useEffect(() => {
+    // Skip on very first render with empty state
+    if (state === initialState) {
+      console.log("Skipping cache save - still on initial state");
+      return;
+    }
+
+    console.log("Data changed, immediately saving to cache:", {
+      entriesCount: state.entries.length,
+      yearlyTargetsCount: Object.keys(state.yearlyBudgetTargets).length,
+      monthlyModesCount: Object.keys(state.monthlyForecastModes).length,
+      currentFile: state.currentFile?.name,
+      hasUnsavedChanges: state.persistence.hasUnsavedChanges,
+      stackTrace: new Error().stack?.split("\n").slice(0, 5).join("\n"),
+    });
+
+    // Don't save empty data to cache
+    if (
+      state.entries.length === 0 &&
+      Object.keys(state.yearlyBudgetTargets).length === 0 &&
+      Object.keys(state.monthlyForecastModes).length === 0
+    ) {
+      console.warn("PREVENTED saving empty data to cache!");
+      return;
+    }
+
+    persistenceManager.saveToCache(state);
+    dispatch({ type: "UPDATE_CACHE_TIMESTAMP" });
+  }, [state.entries, state.yearlyBudgetTargets, state.monthlyForecastModes]);
+
+  // Persistence functions
+  const saveToFile = async (): Promise<boolean> => {
+    try {
+      const fileManager = await import("../utils/fileManager");
+
+      let result;
+      if (fileManager.supportsFileSystemAccess()) {
+        result = await fileManager.saveToFileHandle(
+          {
+            entries: state.entries,
+            selectedYear: state.selectedYear,
+            yearlyBudgetTargets: state.yearlyBudgetTargets,
+            monthlyForecastModes: state.monthlyForecastModes,
+          },
+          state.currentFile?.handle
+        );
+
+        if (result.saved && result.fileHandle) {
+          dispatch({
+            type: "SET_CURRENT_FILE",
+            payload: {
+              name: result.fileName,
+              handle: result.fileHandle,
+              lastSaved: new Date(),
+            },
+          });
+
+          // Save file info to persistence manager
+          persistenceManager.saveFileInfo({
+            name: result.fileName,
+            handle: result.fileHandle,
+            lastSaved: new Date(),
+          });
+        }
+      } else {
+        // Fallback to traditional download
+        fileManager.saveBudgetData({
+          entries: state.entries,
+          selectedYear: state.selectedYear,
+          yearlyBudgetTargets: state.yearlyBudgetTargets,
+          monthlyForecastModes: state.monthlyForecastModes,
+        });
+        result = { saved: true };
+      }
+
+      if (result.saved) {
+        dispatch({ type: "MARK_SAVED_TO_FILE" });
+        persistenceManager.markAsSavedToFile();
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Failed to save file:", error);
+      return false;
+    }
+  };
+
+  const loadFromFile = async (): Promise<boolean> => {
+    try {
+      const fileManager = await import("../utils/fileManager");
+
+      if (fileManager.supportsFileSystemAccess()) {
+        const fileHandles = await window.showOpenFilePicker?.({
+          types: [
+            {
+              description: "JSON files",
+              accept: {
+                "application/json": [".json"],
+              },
+            },
+          ],
+        });
+
+        if (!fileHandles || fileHandles.length === 0) {
+          return false;
+        }
+
+        const selectedFileHandle = fileHandles[0];
+        const file = await selectedFileHandle.getFile?.();
+
+        if (!file) {
+          throw new Error("Could not read file");
+        }
+
+        const content = await file.text();
+        const loadedData = JSON.parse(content);
+
+        // Validate and convert dates
+        if (
+          !loadedData.version ||
+          !loadedData.entries ||
+          !Array.isArray(loadedData.entries)
+        ) {
+          throw new Error("Invalid file format");
+        }
+
+        loadedData.entries = loadedData.entries.map((entry: any) => ({
+          ...entry,
+          createdAt: new Date(entry.createdAt),
+          updatedAt: new Date(entry.updatedAt),
+        }));
+
+        // Load data into state
+        dispatch({ type: "LOAD_ENTRIES", payload: loadedData.entries });
+
+        // Load yearly budget targets
+        if (loadedData.yearlyBudgetTargets) {
+          Object.entries(loadedData.yearlyBudgetTargets).forEach(
+            ([year, amount]) => {
               dispatch({
-                type: "SET_SELECTED_PERIOD",
-                payload: { year: result.data.year as number },
+                type: "SET_YEARLY_BUDGET_TARGET",
+                payload: { year: parseInt(year), amount: amount as number },
               });
             }
-
-            // Update current file info with the restored file name
-            dispatch({
-              type: "SET_CURRENT_FILE",
-              payload: {
-                name: result.fileName || state.currentFile.name,
-                lastSaved: new Date(),
-              },
-            });
-
-            console.log("Successfully restored cached file:", result.fileName);
-          } else if (result.error && !result.error.includes("User declined")) {
-            console.warn("Failed to restore cached file:", result.error);
-          }
-        } catch (error) {
-          console.error("Error during file restoration:", error);
+          );
         }
+
+        // Load monthly forecast modes
+        if (loadedData.monthlyForecastModes) {
+          Object.entries(loadedData.monthlyForecastModes).forEach(
+            ([year, monthModes]) => {
+              if (monthModes && typeof monthModes === "object") {
+                Object.entries(
+                  monthModes as { [month: number]: boolean }
+                ).forEach(([month, isFinal]) => {
+                  dispatch({
+                    type: "SET_MONTHLY_FORECAST_MODE",
+                    payload: {
+                      year: parseInt(year),
+                      month: parseInt(month),
+                      isFinal: isFinal as boolean,
+                    },
+                  });
+                });
+              }
+            }
+          );
+        }
+
+        // Update selected year
+        dispatch({
+          type: "SET_SELECTED_PERIOD",
+          payload: { year: loadedData.year as number },
+        });
+
+        // Set current file
+        dispatch({
+          type: "SET_CURRENT_FILE",
+          payload: {
+            name: file.name,
+            handle: selectedFileHandle,
+            lastSaved: new Date(),
+          },
+        });
+
+        // Save file info to persistence manager
+        persistenceManager.saveFileInfo({
+          name: file.name,
+          handle: selectedFileHandle,
+          lastSaved: new Date(),
+          size: file.size,
+          lastModified: new Date(file.lastModified),
+        });
+
+        // Mark as no longer first-time user
+        persistenceManager.markUserAsReturning();
+        dispatch({ type: "SET_FIRST_TIME_USER", payload: false });
+
+        // Save to cache
+        persistenceManager.saveToCache(state);
+        dispatch({ type: "MARK_SAVED_TO_FILE" });
+
+        return true;
       }
-    };
+      return false;
+    } catch (error) {
+      console.error("Failed to load file:", error);
+      return false;
+    }
+  };
 
-    // Run restoration after a short delay to ensure component is mounted
-    const timeoutId = setTimeout(restoreCachedFile, 1000);
+  const createNewFile = async (): Promise<boolean> => {
+    try {
+      const fileManager = await import("../utils/fileManager");
 
-    return () => clearTimeout(timeoutId);
-  }, []); // Only run once on mount
+      if (fileManager.supportsFileSystemAccess()) {
+        const fileHandle = await window.showSaveFilePicker?.({
+          types: [
+            {
+              description: "JSON files",
+              accept: {
+                "application/json": [".json"],
+              },
+            },
+          ],
+          suggestedName: `budget-${state.selectedYear}.json`,
+        });
 
+        if (!fileHandle) {
+          return false;
+        }
+
+        // Set current file
+        dispatch({
+          type: "SET_CURRENT_FILE",
+          payload: {
+            name: fileHandle.name,
+            handle: fileHandle,
+            lastSaved: new Date(),
+          },
+        });
+
+        // Save file info to persistence manager
+        persistenceManager.saveFileInfo({
+          name: fileHandle.name,
+          handle: fileHandle,
+          lastSaved: new Date(),
+        });
+
+        // Mark as no longer first-time user
+        persistenceManager.markUserAsReturning();
+        dispatch({ type: "SET_FIRST_TIME_USER", payload: false });
+
+        // Save initial empty state to file
+        await saveToFile();
+
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Failed to create new file:", error);
+      return false;
+    }
+  };
+  const saveToCache = (): void => {
+    console.log("Manual save to cache called with state:", {
+      entriesCount: state.entries.length,
+      hasUnsavedChanges: state.persistence.hasUnsavedChanges,
+    });
+    persistenceManager.saveToCache(state);
+    dispatch({ type: "UPDATE_CACHE_TIMESTAMP" });
+  };
+
+  const loadFromCache = (): boolean => {
+    const cachedData = persistenceManager.getCachedData();
+    if (cachedData) {
+      dispatch({ type: "LOAD_FROM_CACHE", payload: cachedData });
+      return true;
+    }
+    return false;
+  };
+
+  const clearAllData = (): void => {
+    persistenceManager.clearCache();
+    persistenceManager.clearFileInfo();
+    dispatch({ type: "CLEAR_ALL_DATA" });
+  };
+
+  const hasUnsavedChanges = (): boolean => {
+    return state.persistence.hasUnsavedChanges;
+  };
+
+  const getTimeSinceLastSave = (): string | null => {
+    return persistenceManager.getTimeSinceLastFileSave();
+  };
+
+  const getCacheStats = () => {
+    return persistenceManager.getCacheStats();
+  };
+
+  // Skip first-time setup (for demo/testing purposes)
+  const skipFirstTimeSetup = () => {
+    persistenceManager.markUserAsReturning();
+    dispatch({ type: "SET_FIRST_TIME_USER", payload: false });
+  };
   return (
-    <BudgetContext.Provider value={{ state, dispatch }}>
+    <BudgetContext.Provider
+      value={{
+        state,
+        dispatch,
+        saveToFile,
+        loadFromFile,
+        createNewFile,
+        saveToCache,
+        loadFromCache,
+        clearAllData,
+        hasUnsavedChanges,
+        getTimeSinceLastSave,
+        getCacheStats,
+      }}
+    >
       {children}
     </BudgetContext.Provider>
   );

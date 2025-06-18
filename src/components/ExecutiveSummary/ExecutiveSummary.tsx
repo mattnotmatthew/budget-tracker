@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useBudget } from "../../context/BudgetContext";
 import {
   ComposedChart,
@@ -46,7 +47,9 @@ const exportExecutiveSummary = ({
 
 const ExecutiveSummary = () => {
   const { state } = useBudget();
-  const [userNotes, setUserNotes] = useState("");
+  const navigate = useNavigate();
+
+  // State for UI toggles
   const [isStrategicContextExpanded, setIsStrategicContextExpanded] =
     useState(false);
   const [isYTDPerformanceExpanded, setIsYTDPerformanceExpanded] =
@@ -121,17 +124,9 @@ const ExecutiveSummary = () => {
     }
 
     return lastFinalMonth > 0 ? monthNames[lastFinalMonth] : "Current";
-  }; // Memoized calculations
-  const kpis = useMemo(() => getKPIData(state), [state]);
-  const topVariance = useMemo(
-    () => getTopVarianceCategories(state, 3),
-    [state]
-  );
-  const trend = useMemo(() => getTrendData(state), [state]);
-  const alerts = useMemo(() => getAlerts(state), [state]);
-  const commentary = useMemo(() => getAutoCommentary(state), [state]);
+  };
 
-  // Resource allocation data calculation
+  // Helper function to get resource allocation data
   const getResourceData = () => {
     const ytdData = calculateYTDData(
       state.entries,
@@ -284,13 +279,305 @@ const ExecutiveSummary = () => {
     };
   };
 
+  // Generate intelligent summary and initialize userNotes with it
+  const intelligentSummary = useMemo(() => {
+    // Get comprehensive KPI data
+    const kpiData = getKPIData(state);
+
+    // Get category-level variances for additional context
+    const catMap: {
+      [key: string]: {
+        name: string;
+        actual: number;
+        budget: number;
+        variance: number;
+      };
+    } = {};
+    state.entries.forEach((e: any) => {
+      if (!catMap[e.categoryId]) {
+        const cat = state.categories.find((c: any) => c.id === e.categoryId);
+        catMap[e.categoryId] = {
+          name: cat ? cat.name : e.categoryId,
+          actual: 0,
+          budget: 0,
+          variance: 0,
+        };
+      }
+      catMap[e.categoryId].actual += e.actualAmount || 0;
+      catMap[e.categoryId].budget += e.budgetAmount;
+      catMap[e.categoryId].variance =
+        catMap[e.categoryId].actual - catMap[e.categoryId].budget;
+    });
+
+    // Get last month with data for context
+    const lastMonthName = getLastFinalMonthName();
+
+    // Generate comprehensive summary
+    let summary = `Executive Summary for ${state.selectedYear}:\n\n`; // Strategic Context
+    summary += `Our annual budget target is ${formatCurrencyFull(
+      kpiData.annualBudgetTarget
+    )} for ${state.selectedYear}. `;
+    summary += `Year-to-date through ${lastMonthName}, we have spent ${formatCurrencyFull(
+      kpiData.ytdActual
+    )}, `;
+    summary += `leaving ${formatCurrencyFull(
+      kpiData.remainingBudget
+    )} remaining in our budget allocation. `;
+
+    // YTD Performance Analysis - now part of paragraph 1
+    if (kpiData.variance > 0) {
+      summary += `We are currently ahead of our year-to-date budget by ${formatCurrencyFull(
+        kpiData.variance
+      )}, demonstrating disciplined spending management. `;
+    } else if (kpiData.variance < 0) {
+      summary += `We are currently behind our year-to-date budget by ${formatCurrencyFull(
+        Math.abs(kpiData.variance)
+      )}, indicating we are spending above our planned trajectory. `;
+    } else {
+      summary += `We are exactly on track with our year-to-date budget expectations. `;
+    }
+
+    // Forecast vs Target Analysis - continues in paragraph 1
+    const forecastVariance = kpiData.forecastVsTargetVariance;
+    summary += `Based on our current forecast, we project total annual spending of ${formatCurrencyFull(
+      kpiData.fullYearForecast
+    )}. `;
+
+    if (forecastVariance > 1000000) {
+      summary += `This puts us ahead of budget by ${formatCurrencyFull(
+        forecastVariance
+      )}, which requires careful attention as we want to avoid significant underspending that could impact our operational objectives. `;
+    } else if (forecastVariance < -1000000) {
+      summary += `This puts us over budget by ${formatCurrencyFull(
+        Math.abs(forecastVariance)
+      )}, creating a dangerous overspending situation that demands immediate corrective action. `;
+    } else if (forecastVariance > 0) {
+      summary += `This puts us slightly ahead of budget by ${formatCurrencyFull(
+        forecastVariance
+      )}, which represents good budget management and positions us well for the remainder of the year. `;
+    } else {
+      summary += `This indicates we are forecasting to spend slightly over budget by ${formatCurrencyFull(
+        Math.abs(forecastVariance)
+      )}, requiring monitoring to ensure we stay within acceptable variance ranges. `;
+    } // Capitalized Salaries Context (if applicable) - separate paragraph
+    const resourceData = getResourceData();
+    const capitalizedSalariesYTD = resourceData.capitalizedSalaries.ytdActual;
+    const totalCompensationYTD = resourceData.totalCompensation.ytdActual;
+    if (Math.abs(capitalizedSalariesYTD) > 1000) {
+      // Only mention if over $1K
+      summary += `\n\nYear-to-date we have ${formatCurrencyFull(
+        Math.abs(capitalizedSalariesYTD)
+      )} in salary capitalization. The annual budget above factors in capitalization, and so does our year-to-date actual number. Additionally, adjustments were made to our actual spend numbers to ensure accurate financial reporting. `;
+    } // Hiring Runway Analysis - third paragraph
+    const hiringData = resourceData.hiringCapacity;
+    const projectedTotalSpend =
+      resourceData.totalCompensation.ytdActual +
+      hiringData.projectedRemainingSpend;
+
+    summary += `\n\nAs of ${lastMonthName} finalized, we have ${formatCurrencyFull(
+      hiringData.netCompensationAvailable
+    )} remaining in our compensation budget. Taking an average of the last three months of compensation spending at ${formatCurrencyFull(
+      hiringData.lastThreeMonthAverage
+    )} per month and with ${
+      hiringData.remainingMonths
+    } months left in the year, the projected spend for the remainder of the year will be ${formatCurrencyFull(
+      hiringData.projectedRemainingSpend
+    )}. This brings our annual total spend on compensation to ${formatCurrencyFull(
+      projectedTotalSpend
+    )}. `;
+
+    if (hiringData.budgetVsProjection > 0) {
+      if (hiringData.budgetVsProjection >= 2000000) {
+        summary += `We are ahead of budget by ${formatCurrencyFull(
+          hiringData.budgetVsProjection
+        )}, which is positive for our financial position, though this significant surplus may indicate we are lagging in our ability to hire at the pace we had originally planned.`;
+      } else {
+        summary += `We are ahead of budget by ${formatCurrencyFull(
+          hiringData.budgetVsProjection
+        )}, which demonstrates good budget management and disciplined hiring practices.`;
+      }
+    } else {
+      summary += `We are behind budget by ${formatCurrencyFull(
+        Math.abs(hiringData.budgetVsProjection)
+      )}, which indicates our compensation spending is exceeding our planned trajectory and requires attention.`;
+    }
+
+    summary += "";
+
+    return summary;
+  }, [state.entries, state.categories, state.selectedYear]);
+  // User notes state - initialize with intelligent summary
+  const [userNotes, setUserNotes] = useState(intelligentSummary);
+
+  // Update userNotes when intelligent summary changes (e.g., year change)
+  useEffect(() => {
+    setUserNotes(intelligentSummary);
+  }, [intelligentSummary]);
+
+  // Memoized calculations
+  const kpis = useMemo(() => getKPIData(state), [state]);
+  const topVariance = useMemo(
+    () => getTopVarianceCategories(state, 3),
+    [state]
+  );
+  const trend = useMemo(() => getTrendData(state), [state]);
+  const alerts = useMemo(
+    () => generateAlerts(state.entries, state.categories, state.selectedYear),
+    [state.entries, state.categories, state.selectedYear]
+  );
+  //   const commentary = useMemo(() => {
+  //     // Generate automatic commentary based on key insights
+  //     const totalVariance = kpis.variance;
+  //     const variancePct = kpis.variancePct;
+
+  //     let autoText = "";
+  //     if (Math.abs(variancePct) < 2) {
+  //       autoText = "Performance is tracking closely to budget expectations.";
+  //     } else if (variancePct > 5) {
+  //       autoText =
+  //         "Significant budget overruns require immediate attention and corrective action.";
+  //     } else if (variancePct < -5) {
+  //       autoText =
+  //         "Substantial under-spending may indicate delayed projects or conservative execution.";
+  //     } else {
+  //       autoText =
+  //         "Budget performance shows moderate variance requiring monitoring.";
+  //     }
+  //     return autoText;  //   }, [kpis]);
+
+  // Generate intelligent executive summary based on KPI data
+  const generateExecutiveNotes = (): string => {
+    const resourceData = getResourceData();
+    const lastFinalMonth = getLastFinalMonthName();
+
+    // Format currency for readability
+    const formatCurrency = (amount: number) => {
+      return `$${(amount / 1000).toFixed(0)}K`;
+    };
+
+    let summary = `Executive Summary for ${state.selectedYear} (Through ${lastFinalMonth})\n\n`;
+
+    // 1. Overall Performance Assessment
+    summary += "PERFORMANCE OVERVIEW:\n";
+
+    if (Math.abs(kpis.variancePct) < 5) {
+      summary += `• Budget performance is on track with YTD variance of ${kpis.variancePct.toFixed(
+        1
+      )}%\n`;
+    } else if (kpis.variancePct > 5) {
+      summary += `• Strong performance - currently under budget by ${formatCurrency(
+        Math.abs(kpis.variance)
+      )} (${kpis.variancePct.toFixed(1)}%)\n`;
+    } else {
+      summary += `• Attention needed - over budget by ${formatCurrency(
+        Math.abs(kpis.variance)
+      )} (${Math.abs(kpis.variancePct).toFixed(1)}%)\n`;
+    }
+
+    // 2. Budget Utilization Analysis
+    if (kpis.budgetUtilization > 80) {
+      summary += `• High budget utilization at ${kpis.budgetUtilization.toFixed(
+        1
+      )}% - monitor remaining spend carefully\n`;
+    } else if (kpis.budgetUtilization < 30) {
+      summary += `• Low budget utilization at ${kpis.budgetUtilization.toFixed(
+        1
+      )}% - opportunity to accelerate initiatives\n`;
+    } else {
+      summary += `• Budget utilization at ${kpis.budgetUtilization.toFixed(
+        1
+      )}% is appropriate for this point in the year\n`;
+    }
+
+    // 3. Forecast Analysis
+    summary += `• Full-year forecast: ${formatCurrency(
+      kpis.fullYearForecast
+    )} vs target ${formatCurrency(kpis.annualBudgetTarget)}\n`;
+
+    if (Math.abs(kpis.forecastVsTargetVariance) > 1000000) {
+      const forecastDirection =
+        kpis.forecastVsTargetVariance > 0 ? "under" : "over";
+      summary += `• Significant variance projected - ${forecastDirection} target by ${formatCurrency(
+        Math.abs(kpis.forecastVsTargetVariance)
+      )}\n`;
+    }
+
+    summary += "\nRISK FACTORS:\n";
+
+    // 4. Runway Analysis
+    if (kpis.monthsRemaining < 3) {
+      summary += `• CRITICAL: Only ${kpis.monthsRemaining.toFixed(
+        1
+      )} months of budget runway remaining\n`;
+    } else if (kpis.monthsRemaining < 6) {
+      summary += `• CAUTION: ${kpis.monthsRemaining.toFixed(
+        1
+      )} months of budget runway - plan accordingly\n`;
+    } else {
+      summary += `• Adequate runway with ${kpis.monthsRemaining.toFixed(
+        1
+      )} months of budget remaining\n`;
+    }
+
+    // 5. Variance Trend
+    summary += `• Performance trend: ${kpis.varianceTrend}\n`;
+
+    // 6. Hiring Capacity Analysis
+    summary += "\nHIRING CAPACITY:\n";
+    summary += `• Net compensation available: ${formatCurrency(
+      resourceData.hiringCapacity.netCompensationAvailable
+    )}\n`;
+
+    if (resourceData.hiringCapacity.potentialNewHires > 0) {
+      summary += `• Estimated hiring capacity: ~${resourceData.hiringCapacity.potentialNewHires} new hires possible\n`;
+    } else {
+      summary += `• Limited hiring capacity - compensation budget nearly exhausted\n`;
+    }
+
+    if (resourceData.hiringCapacity.isProjectedOverBudget) {
+      summary += `• WARNING: Projected to exceed compensation budget by ${formatCurrency(
+        Math.abs(resourceData.hiringCapacity.budgetVsProjection)
+      )}\n`;
+    }
+
+    // 7. Key Variances
+    if (topVariance.length > 0) {
+      summary += "\nTOP VARIANCES:\n";
+      topVariance.slice(0, 2).forEach((variance, idx) => {
+        const direction = variance.variance > 0 ? "over" : "under";
+        summary += `• ${variance.name}: ${direction} by ${formatCurrency(
+          Math.abs(variance.variance)
+        )}\n`;
+      });
+    }
+
+    // 8. Recommendations
+    summary += "\nRECOMMENDATIONS:\n";
+
+    if (kpis.variancePct < -10) {
+      summary += `• Implement cost control measures immediately\n• Review and prioritize critical initiatives\n`;
+    } else if (kpis.variancePct > 10) {
+      summary += `• Consider accelerating strategic initiatives\n• Evaluate opportunities for additional investments\n`;
+    }
+
+    if (kpis.monthsRemaining < 6) {
+      summary += `• Develop contingency plans for budget constraints\n`;
+    }
+
+    if (resourceData.hiringCapacity.isProjectedOverBudget) {
+      summary += `• Review hiring plans and compensation projections\n`;
+    }
+
+    return summary;
+  };
+
   const handleExport = () => {
     exportExecutiveSummary({
       kpis,
       topVariance,
       trend,
       alerts,
-      commentary,
+      //   commentary,
       userNotes,
     });
   };
@@ -323,8 +610,9 @@ const ExecutiveSummary = () => {
         return ""; // Neutral for small variances
 
       case "forecastVariance":
-        if (Math.abs(value) < 500000) return "performance-good"; // Within $500K is good
-        if (Math.abs(value) > 2000000) return "performance-danger"; // Over $2M variance is concerning
+        if (value > 1000000) return "performance-warning "; // greater than $1M variance is concerning
+        if (value < -1000000) return "performance-danger"; // less than -$250k is over spend
+        if (value > 0 && value <= 1000000) return "performance-good"; // under budget is good
         return "performance-warning";
 
       case "monthsRemaining":
@@ -596,7 +884,7 @@ const ExecutiveSummary = () => {
           )} remaining from your annual compensation budget of ${formatCurrencyFull(
             resourceData.totalCompensation.annualBudget
           )}`,
-          formula: "Annual Compensation Budget - YTD Actual Spend",
+          formula: "Annual Compensation Budget - YTD Actual Comp Spend",
           calculation: `${formatCurrencyFull(
             resourceData.totalCompensation.annualBudget
           )} - ${formatCurrencyFull(
@@ -659,7 +947,7 @@ const ExecutiveSummary = () => {
           interpretation: `Based on current trends, you're projected to spend ${formatCurrencyFull(
             totalProjectedSpend
           )} total on compensation this year`,
-          formula: "YTD Actual + Projected Remaining Spend",
+          formula: "YTD Actual Comp Spend + Projected Remaining Spend",
           calculation: `${formatCurrencyFull(
             ytdActualCompensation
           )} + ${formatCurrencyFull(
@@ -738,13 +1026,43 @@ const ExecutiveSummary = () => {
       showBelow: false,
     });
   };
-
   return (
     <div className="executive-summary">
+      {" "}
+      {/* Floating Back Button */}
+      <button
+        className="floating-back-button"
+        onClick={() => navigate("/")}
+        title="Back to Dashboard"
+      >
+        ← Back
+      </button>
+      {/* Floating Export Button */}
+      <button
+        className="floating-export-button"
+        onClick={() => {
+          /* TODO: Hook up export functionality */
+        }}
+        title="Export Executive Summary"
+      >
+        📊 Export
+      </button>
       <h2>
         Executive Summary – {state.selectedYear}
-        {state.selectedQuarter ? ` Q${state.selectedQuarter}` : ""}
+        {state.selectedQuarter ? ` Q${state.selectedQuarter}` : ""}{" "}
       </h2>{" "}
+      {/* Executive Commentary - Moved to top */}
+      <div className="commentary-section">
+        <div className="commentary-header">
+          <h3>Executive Commentary</h3>
+        </div>
+        {/* <div className="auto-commentary">{commentary}</div> */}
+        <textarea
+          placeholder="Add your notes for leadership..."
+          value={userNotes}
+          onChange={(e) => setUserNotes(e.target.value)}
+        />
+      </div>{" "}
       <div className="kpi-grid">
         {/* Strategic Context - Collapsible */}
         <div className="kpi-section strategic-context">
@@ -1448,23 +1766,8 @@ const ExecutiveSummary = () => {
             <li key={idx} className={alert.type}>
               {alert.message}
             </li>
-          ))}
+          ))}{" "}
         </ul>
-      </div>{" "}
-      <div className="commentary-section">
-        <div className="commentary-header">
-          <h3>Executive Commentary</h3>
-        </div>
-        <div className="auto-commentary">{commentary}</div>
-        <textarea
-          placeholder="Add your notes for leadership..."
-          value={userNotes}
-          onChange={(e) => setUserNotes(e.target.value)}
-        />
-      </div>{" "}
-      <div className="summary-actions">
-        <button onClick={() => window.location.reload()}>Refresh</button>
-        <button onClick={handleExport}>Export</button>
       </div>{" "}
       {/* Tooltip */}
       {tooltip.visible && tooltip.content && (
