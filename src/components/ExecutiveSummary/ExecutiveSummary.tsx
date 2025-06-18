@@ -46,6 +46,20 @@ const exportExecutiveSummary = ({
 const ExecutiveSummary = () => {
   const { state } = useBudget();
   const [userNotes, setUserNotes] = useState("");
+  const [tooltip, setTooltip] = useState<{
+    visible: boolean;
+    content: any;
+    x: number;
+    y: number;
+    showBelow?: boolean;
+  }>({
+    visible: false,
+    content: null,
+    x: 0,
+    y: 0,
+    showBelow: false,
+  });
+
   // Helper to get the last month with Final data
   const getLastFinalMonthName = () => {
     const monthNames = [
@@ -106,6 +120,159 @@ const ExecutiveSummary = () => {
   const alerts = useMemo(() => getAlerts(state), [state]);
   const commentary = useMemo(() => getAutoCommentary(state), [state]);
 
+  // Resource allocation data calculation
+  const getResourceData = () => {
+    const ytdData = calculateYTDData(
+      state.entries,
+      state.categories,
+      state.selectedYear
+    ).data;
+
+    // Find base pay and capitalized salaries categories
+    const basePayCategory = state.categories.find(
+      (cat) => cat.id === "opex-base-pay"
+    );
+    const capSalariesCategory = state.categories.find(
+      (cat) => cat.id === "opex-capitalized-salaries"
+    ); // Get YTD data for base pay and capitalized salaries
+    const basePayData = ytdData.opex.subGroups
+      .find((sg: any) => sg.id === "ytd-comp-and-benefits")
+      ?.categories.find((cat: any) => cat.categoryId === "opex-base-pay") || {
+      actual: 0,
+      budget: 0,
+    };
+
+    const capSalariesData = ytdData.opex.subGroups
+      .find((sg: any) => sg.id === "ytd-comp-and-benefits")
+      ?.categories.find(
+        (cat: any) => cat.categoryId === "opex-capitalized-salaries"
+      ) || { actual: 0, budget: 0 }; // Get all compensation categories from Comp and Benefits subgroup
+    const compBenefitsSubgroup = ytdData.opex.subGroups.find(
+      (sg: any) => sg.id === "ytd-comp-and-benefits"
+    );
+    const totalCompYTD = compBenefitsSubgroup?.total.actual || 0;
+
+    // Calculate ANNUAL budget for all compensation categories (full year, not just YTD)
+    const compAndBenefitsCategories = [
+      "opex-base-pay",
+      "opex-capitalized-salaries",
+      "opex-commissions",
+      "opex-reclass-cogs",
+      "opex-bonus",
+      "opex-benefits",
+      "opex-payroll-taxes",
+      "opex-other-compensation",
+    ];
+
+    const totalCompAnnualBudget = compAndBenefitsCategories.reduce(
+      (total, categoryId) => {
+        // Sum budget amounts for all 12 months for this category
+        const categoryAnnualBudget = state.entries
+          .filter(
+            (entry) =>
+              entry.categoryId === categoryId &&
+              entry.year === state.selectedYear
+          )
+          .reduce((sum, entry) => sum + entry.budgetAmount, 0);
+        return total + categoryAnnualBudget;
+      },
+      0
+    );
+
+    // Calculate monthly averages
+    const monthsElapsed = calculateYTDData(
+      state.entries,
+      state.categories,
+      state.selectedYear
+    ).lastMonthWithActuals;
+    const basePayMonthly =
+      monthsElapsed > 0 ? basePayData.actual / monthsElapsed : 0;
+    const capSalariesMonthly =
+      monthsElapsed > 0 ? capSalariesData.actual / monthsElapsed : 0;
+
+    // Calculate metrics
+    const basePayUtilization =
+      basePayData.budget > 0
+        ? (basePayData.actual / basePayData.budget) * 100
+        : 0;
+    const capSalariesOffset =
+      basePayData.actual > 0
+        ? (Math.abs(capSalariesData.actual) / basePayData.actual) * 100
+        : 0; // Hiring capacity calculations
+    // Note: If budget already accounts for capitalized salaries as offsets,
+    // we should NOT add them back (they're already reflected in the net budget)
+    const netCompAvailable = totalCompAnnualBudget - totalCompYTD;
+    const estimatedHiringBudget = netCompAvailable * 0.75; // Conservative 75% available for hiring
+    const avgNewHireComp = 120000; // $120k average annual compensation
+    const potentialHires = Math.floor(estimatedHiringBudget / avgNewHireComp);
+    const currentCompBurnRate =
+      monthsElapsed > 0 ? totalCompYTD / monthsElapsed : 0;
+    const monthsRunway =
+      currentCompBurnRate > 0 ? netCompAvailable / currentCompBurnRate : 12;
+
+    // Calculate last 3-month average for more accurate projection
+    const getLastThreeMonthsAverage = () => {
+      if (monthsElapsed < 3) return currentCompBurnRate;
+
+      // Get the last 3 months with data
+      const lastThreeMonthsStart = Math.max(1, monthsElapsed - 2);
+      const lastThreeMonthsSpend = compAndBenefitsCategories.reduce(
+        (total, categoryId) => {
+          const categorySpend = state.entries
+            .filter(
+              (entry) =>
+                entry.categoryId === categoryId &&
+                entry.year === state.selectedYear &&
+                entry.month >= lastThreeMonthsStart &&
+                entry.month <= monthsElapsed
+            )
+            .reduce((sum, entry) => sum + (entry.actualAmount || 0), 0);
+          return total + categorySpend;
+        },
+        0
+      );
+
+      const monthsInPeriod = monthsElapsed - lastThreeMonthsStart + 1;
+      return monthsInPeriod > 0 ? lastThreeMonthsSpend / monthsInPeriod : 0;
+    };
+    const lastThreeMonthAvg = getLastThreeMonthsAverage();
+    const remainingMonths = 12 - monthsElapsed;
+    const projectedRemainingSpend = lastThreeMonthAvg * remainingMonths;
+    const projectedTotalSpend = totalCompYTD + projectedRemainingSpend;
+    const budgetVsProjection =
+      (projectedTotalSpend - totalCompAnnualBudget) * -1;
+    const isProjectedOverBudget = budgetVsProjection < 0;
+
+    return {
+      totalCompensation: {
+        ytdActual: totalCompYTD,
+        annualBudget: totalCompAnnualBudget,
+        remaining: totalCompAnnualBudget - totalCompYTD,
+      },
+      basePay: {
+        ytdActual: basePayData.actual,
+        monthlyAverage: basePayMonthly,
+        utilization: basePayUtilization,
+      },
+      capitalizedSalaries: {
+        ytdActual: capSalariesData.actual,
+        monthlyAverage: capSalariesMonthly,
+        offsetRate: capSalariesOffset,
+      },
+      hiringCapacity: {
+        netCompensationAvailable: netCompAvailable,
+        estimatedHiringBudget: estimatedHiringBudget,
+        potentialNewHires: potentialHires,
+        monthsOfRunway: monthsRunway,
+        lastThreeMonthAverage: lastThreeMonthAvg,
+        projectedRemainingSpend: projectedRemainingSpend,
+        budgetVsProjection: budgetVsProjection,
+        isProjectedOverBudget: isProjectedOverBudget,
+        remainingMonths: remainingMonths,
+      },
+    };
+  };
+
   const handleExport = () => {
     exportExecutiveSummary({
       kpis,
@@ -159,6 +326,408 @@ const ExecutiveSummary = () => {
     }
   };
 
+  // Helper to generate tooltip content for each KPI
+  const getKPITooltipContent = (kpiType: string, kpis: any) => {
+    const currentMonth = new Date().getMonth() + 1;
+    const monthsElapsed = Math.min(currentMonth, 12);
+    const yearProgress = monthsElapsed / 12;
+
+    switch (kpiType) {
+      case "annualBudgetTarget":
+        return {
+          definition: "The total budget allocated for the entire fiscal year",
+          interpretation: `Your organization has set aside ${formatCurrencyFull(
+            kpis.annualBudgetTarget
+          )} as the target budget for ${state.selectedYear}`,
+          formula: "Annual Budget Target",
+          calculation: `${formatCurrencyFull(
+            kpis.annualBudgetTarget
+          )} (set target)`,
+        };
+
+      case "ytdActual":
+        return {
+          definition:
+            "Total amount actually spent from the beginning of the fiscal year to date",
+          interpretation: `You have spent ${formatCurrencyFull(
+            kpis.ytdActual
+          )} so far this year, which is ${(
+            (kpis.ytdActual / kpis.annualBudgetTarget) *
+            100
+          ).toFixed(1)}% of your annual budget`,
+          formula: "Sum of all actual expenses YTD",
+          calculation: `${formatCurrencyFull(
+            kpis.ytdActual
+          )} (actual spend through ${getLastFinalMonthName()})`,
+        };
+
+      case "remainingBudget":
+        return {
+          definition: "Amount of annual budget still available to spend",
+          interpretation: `You have ${formatCurrencyFull(
+            kpis.remainingBudget
+          )} remaining to spend, which should last ${kpis.monthsRemaining.toFixed(
+            1
+          )} months at current spending rate`,
+          formula: "Annual Budget Target - YTD Actual",
+          calculation: `${formatCurrencyFull(
+            kpis.annualBudgetTarget
+          )} - ${formatCurrencyFull(kpis.ytdActual)} = ${formatCurrencyFull(
+            kpis.remainingBudget
+          )}`,
+        };
+
+      case "annualVariance":
+        const isUnder = kpis.annualVariancePct > 0;
+        return {
+          definition:
+            "Difference between YTD actual spending and annual budget target",
+          interpretation: `You are currently ${
+            isUnder ? "under" : "over"
+          } your annual budget by ${formatCurrencyFull(
+            Math.abs(kpis.annualVariance)
+          )} (${Math.abs(kpis.annualVariancePct).toFixed(1)}%)`,
+          formula: "(YTD Actual - Annual Budget Target) × -1",
+          calculation: `(${formatCurrencyFull(
+            kpis.ytdActual
+          )} - ${formatCurrencyFull(
+            kpis.annualBudgetTarget
+          )}) × -1 = ${formatCurrencyFull(kpis.annualVariance)}`,
+        };
+
+      case "budgetUtilization":
+        return {
+          definition: "Percentage of annual budget consumed year-to-date",
+          interpretation: `You have used ${kpis.budgetUtilization.toFixed(
+            1
+          )}% of your annual budget in ${monthsElapsed} months`,
+          formula: "(YTD Actual ÷ Annual Budget Target) × 100",
+          calculation: `(${formatCurrencyFull(
+            kpis.ytdActual
+          )} ÷ ${formatCurrencyFull(
+            kpis.annualBudgetTarget
+          )}) × 100 = ${kpis.budgetUtilization.toFixed(1)}%`,
+        };
+
+      case "targetAchievement":
+        const expectedSpend = kpis.annualBudgetTarget * yearProgress;
+        return {
+          definition:
+            "How well you're pacing toward your annual budget target based on time elapsed",
+          interpretation: `You're spending at ${kpis.targetAchievement.toFixed(
+            1
+          )}% of the pace needed to reach your annual target`,
+          formula: "(YTD Actual ÷ Expected YTD Target) × 100",
+          calculation: `(${formatCurrencyFull(
+            kpis.ytdActual
+          )} ÷ ${formatCurrencyFull(
+            expectedSpend
+          )}) × 100 = ${kpis.targetAchievement.toFixed(1)}%`,
+        };
+
+      case "ytdBudget":
+        return {
+          definition:
+            "Total amount planned to be spent from beginning of fiscal year to date",
+          interpretation: `You planned to spend ${formatCurrencyFull(
+            kpis.ytdBudget
+          )} by this point in the year`,
+          formula: "Sum of all budgeted amounts YTD",
+          calculation: `${formatCurrencyFull(
+            kpis.ytdBudget
+          )} (planned spend through ${getLastFinalMonthName()})`,
+        };
+
+      case "ytdVariance":
+        const ytdIsUnder = kpis.variancePct > 0;
+        return {
+          definition:
+            "Difference between YTD actual spending and YTD planned budget",
+          interpretation: `You are ${
+            ytdIsUnder ? "under" : "over"
+          } your YTD budget by ${formatCurrencyFull(
+            Math.abs(kpis.variance)
+          )} (${Math.abs(kpis.variancePct).toFixed(1)}%)`,
+          formula: "(YTD Actual - YTD Budget) × -1",
+          calculation: `(${formatCurrencyFull(
+            kpis.ytdActual
+          )} - ${formatCurrencyFull(
+            kpis.ytdBudget
+          )}) × -1 = ${formatCurrencyFull(kpis.variance)}`,
+        };
+
+      case "fullYearForecast":
+        return {
+          definition:
+            "Projected total spending for the entire fiscal year based on current data",
+          interpretation: `Based on current trends, you're projected to spend ${formatCurrencyFull(
+            kpis.fullYearForecast
+          )} by year-end`,
+          formula: "Sum of actual (final months) + forecast (non-final months)",
+          calculation: `${formatCurrencyFull(
+            kpis.fullYearForecast
+          )} (calculated using IOSToggle states)`,
+        };
+
+      case "forecastVsTarget":
+        const forecastIsUnder = kpis.forecastVsTargetVariance > 0;
+        return {
+          definition:
+            "Difference between full-year forecast and annual budget target",
+          interpretation: `You're projected to finish ${
+            forecastIsUnder ? "under" : "over"
+          } target by ${formatCurrencyFull(
+            Math.abs(kpis.forecastVsTargetVariance)
+          )}`,
+          formula: "(Full-Year Forecast - Annual Budget Target) × -1",
+          calculation: `(${formatCurrencyFull(
+            kpis.fullYearForecast
+          )} - ${formatCurrencyFull(
+            kpis.annualBudgetTarget
+          )}) × -1 = ${formatCurrencyFull(kpis.forecastVsTargetVariance)}`,
+        };
+
+      case "burnRate":
+        return {
+          definition: "Average amount spent per month year-to-date",
+          interpretation: `You're spending an average of ${formatCurrencyFull(
+            kpis.burnRate
+          )} per month`,
+          formula: "YTD Actual ÷ Months Elapsed",
+          calculation: `${formatCurrencyFull(
+            kpis.ytdActual
+          )} ÷ ${monthsElapsed} months = ${formatCurrencyFull(kpis.burnRate)}`,
+        };
+
+      case "monthsRemaining":
+        return {
+          definition:
+            "How many months the remaining budget will last at current spending rate",
+          interpretation: `At your current burn rate, you have ${kpis.monthsRemaining.toFixed(
+            1
+          )} months of budget remaining`,
+          formula: "Remaining Budget ÷ Monthly Burn Rate",
+          calculation: `${formatCurrencyFull(
+            kpis.remainingBudget
+          )} ÷ ${formatCurrencyFull(
+            kpis.burnRate
+          )} = ${kpis.monthsRemaining.toFixed(1)} months`,
+        };
+
+      case "varianceTrend":
+        return {
+          definition:
+            "Direction of budget variance performance over recent months",
+          interpretation: `Your budget performance trend is "${kpis.varianceTrend}" based on recent variance patterns`,
+          formula: "Historical variance analysis over last 2-3 months",
+          calculation: `${kpis.varianceTrend} (calculated from monthly variance trends)`,
+        };
+
+      default:
+        return {
+          definition: "Key performance indicator",
+          interpretation: "This metric helps track budget performance",
+          formula: "N/A",
+          calculation: "N/A",
+        };
+    }
+  }; // Tooltip event handlers
+  const handleMouseEnter = (event: React.MouseEvent, kpiType: string) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const content = getKPITooltipContent(kpiType, kpis);
+
+    // Simple but reliable positioning logic
+    const tooltipHeight = 320;
+    const minSpaceRequired = 350; // Total space needed above element
+
+    // Check space above the element in viewport
+    const spaceAbove = rect.top;
+    const shouldShowBelow = spaceAbove < minSpaceRequired;
+    // Position tooltip
+    const tooltipY = shouldShowBelow
+      ? rect.bottom + 15 // Show below with more spacing
+      : rect.top - 15; // Show above with more spacing
+
+    setTooltip({
+      visible: true,
+      content,
+      x: rect.left + rect.width / 2,
+      y: tooltipY,
+      showBelow: shouldShowBelow,
+    });
+  };
+  const handleMouseLeave = () => {
+    setTooltip({
+      visible: false,
+      content: null,
+      x: 0,
+      y: 0,
+      showBelow: false,
+    });
+  };
+
+  // Helper to generate tooltip content for hiring runway metrics
+  const getHiringTooltipContent = (metricType: string) => {
+    const resourceData = getResourceData();
+    const monthsElapsed = calculateYTDData(
+      state.entries,
+      state.categories,
+      state.selectedYear
+    ).lastMonthWithActuals;
+
+    switch (metricType) {
+      case "netCompAvailable":
+        return {
+          definition:
+            "Amount of annual compensation budget still available to spend",
+          interpretation: `You have ${formatCurrencyFull(
+            resourceData.hiringCapacity.netCompensationAvailable
+          )} remaining from your annual compensation budget of ${formatCurrencyFull(
+            resourceData.totalCompensation.annualBudget
+          )}`,
+          formula: "Annual Compensation Budget - YTD Actual Spend",
+          calculation: `${formatCurrencyFull(
+            resourceData.totalCompensation.annualBudget
+          )} - ${formatCurrencyFull(
+            resourceData.totalCompensation.ytdActual
+          )} = ${formatCurrencyFull(
+            resourceData.hiringCapacity.netCompensationAvailable
+          )}`,
+        };
+
+      case "lastThreeMonthAvg":
+        return {
+          definition:
+            "Average monthly compensation spend over the most recent 3-month period",
+          interpretation: `Your recent compensation spending trend is ${formatCurrencyFull(
+            resourceData.hiringCapacity.lastThreeMonthAverage
+          )} per month, which may differ from your overall YTD average`,
+          formula: "Sum of last 3 months compensation spend ÷ 3",
+          calculation: `${formatCurrencyFull(
+            resourceData.hiringCapacity.lastThreeMonthAverage
+          )}/month (based on months ${Math.max(
+            1,
+            monthsElapsed - 2
+          )} through ${monthsElapsed})`,
+        };
+
+      case "remainingMonths":
+        return {
+          definition: "Number of months remaining in the current fiscal year",
+          interpretation: `There are ${resourceData.hiringCapacity.remainingMonths} months left in ${state.selectedYear} for compensation spending and hiring decisions`,
+          formula: "12 - Months Elapsed",
+          calculation: `12 - ${monthsElapsed} = ${resourceData.hiringCapacity.remainingMonths} months`,
+        };
+
+      case "projectedRemainingSpend":
+        return {
+          definition:
+            "Estimated compensation spend for the remainder of the fiscal year",
+          interpretation: `If you continue spending at the recent 3-month average pace, you'll spend ${formatCurrencyFull(
+            resourceData.hiringCapacity.projectedRemainingSpend
+          )} in the remaining ${
+            resourceData.hiringCapacity.remainingMonths
+          } months`,
+          formula: "Last 3-Month Average × Remaining Months",
+          calculation: `${formatCurrencyFull(
+            resourceData.hiringCapacity.lastThreeMonthAverage
+          )} × ${
+            resourceData.hiringCapacity.remainingMonths
+          } = ${formatCurrencyFull(
+            resourceData.hiringCapacity.projectedRemainingSpend
+          )}`,
+        };
+      case "projectedTotalSpend":
+        const ytdActualCompensation = resourceData.totalCompensation.ytdActual;
+        const totalProjectedSpend =
+          ytdActualCompensation +
+          resourceData.hiringCapacity.projectedRemainingSpend;
+        return {
+          definition:
+            "Estimated total compensation spend for the entire fiscal year",
+          interpretation: `Based on current trends, you're projected to spend ${formatCurrencyFull(
+            totalProjectedSpend
+          )} total on compensation this year`,
+          formula: "YTD Actual + Projected Remaining Spend",
+          calculation: `${formatCurrencyFull(
+            ytdActualCompensation
+          )} + ${formatCurrencyFull(
+            resourceData.hiringCapacity.projectedRemainingSpend
+          )} = ${formatCurrencyFull(totalProjectedSpend)}`,
+        };
+      case "budgetVsProjection":
+        const isUnder = resourceData.hiringCapacity.budgetVsProjection > 0;
+        const fullYearProjection =
+          resourceData.totalCompensation.ytdActual +
+          resourceData.hiringCapacity.projectedRemainingSpend;
+        return {
+          definition:
+            "Difference between annual budget and projected total spend (positive = under budget)",
+          interpretation: `You are projected to finish ${
+            isUnder ? "under" : "over"
+          } budget by ${formatCurrencyFull(
+            Math.abs(resourceData.hiringCapacity.budgetVsProjection)
+          )}, ${
+            isUnder
+              ? "providing additional hiring capacity"
+              : "requiring budget adjustments or spending cuts"
+          }`,
+          formula: "(Projected Total Spend - Annual Compensation Budget) × -1",
+          calculation: `(${formatCurrencyFull(
+            fullYearProjection
+          )} - ${formatCurrencyFull(
+            resourceData.totalCompensation.annualBudget
+          )}) × -1 = ${formatCurrencyFull(
+            resourceData.hiringCapacity.budgetVsProjection
+          )}`,
+        };
+
+      default:
+        return {
+          definition: "Hiring runway metric",
+          interpretation:
+            "This metric helps track compensation budget and hiring capacity",
+          formula: "N/A",
+          calculation: "N/A",
+        };
+    }
+  };
+
+  // Hiring tooltip event handlers
+  const handleHiringMouseEnter = (
+    event: React.MouseEvent,
+    metricType: string
+  ) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const content = getHiringTooltipContent(metricType);
+
+    // Simple but reliable positioning logic
+    const tooltipHeight = 320;
+    const minSpaceRequired = 350;
+
+    const spaceAbove = rect.top;
+    const shouldShowBelow = spaceAbove < minSpaceRequired;
+
+    const tooltipY = shouldShowBelow ? rect.bottom + 15 : rect.top - 15;
+
+    setTooltip({
+      visible: true,
+      content,
+      x: rect.left + rect.width / 2,
+      y: tooltipY,
+      showBelow: shouldShowBelow,
+    });
+  };
+  const handleHiringMouseLeave = () => {
+    setTooltip({
+      visible: false,
+      content: null,
+      x: 0,
+      y: 0,
+      showBelow: false,
+    });
+  };
+
   return (
     <div className="executive-summary">
       <h2>
@@ -170,15 +739,27 @@ const ExecutiveSummary = () => {
         <div className="kpi-row">
           <h4 className="row-title">Strategic Context</h4>{" "}
           <div className="kpi-cards">
-            <div className="kpi-card">
+            <div
+              className="kpi-card"
+              onMouseEnter={(e) => handleMouseEnter(e, "annualBudgetTarget")}
+              onMouseLeave={handleMouseLeave}
+            >
               <span>Annual Budget Target</span>
               <strong>{formatCurrencyFull(kpis.annualBudgetTarget)}</strong>
             </div>
-            <div className="kpi-card">
+            <div
+              className="kpi-card"
+              onMouseEnter={(e) => handleMouseEnter(e, "ytdActual")}
+              onMouseLeave={handleMouseLeave}
+            >
               <span>YTD Actual</span>
               <strong>{formatCurrencyFull(kpis.ytdActual)}</strong>
             </div>
-            <div className="kpi-card">
+            <div
+              className="kpi-card"
+              onMouseEnter={(e) => handleMouseEnter(e, "remainingBudget")}
+              onMouseLeave={handleMouseLeave}
+            >
               <span>Remaining Budget</span>
               <strong>{formatCurrencyFull(kpis.remainingBudget)}</strong>
             </div>
@@ -187,12 +768,15 @@ const ExecutiveSummary = () => {
         {/* Row 2 - Strategic Context (Row 2) */}
         <div className="kpi-row">
           <div className="kpi-cards">
+            {" "}
             <div
               className={`kpi-card ${getPerformanceClass(
                 "annualVariance",
                 kpis.annualVariance,
                 kpis.annualVariancePct
               )}`}
+              onMouseEnter={(e) => handleMouseEnter(e, "annualVariance")}
+              onMouseLeave={handleMouseLeave}
             >
               <span>Annual Variance</span>
               <strong>
@@ -206,6 +790,8 @@ const ExecutiveSummary = () => {
                 "budgetUtilization",
                 kpis.budgetUtilization
               )}`}
+              onMouseEnter={(e) => handleMouseEnter(e, "budgetUtilization")}
+              onMouseLeave={handleMouseLeave}
             >
               <span>Budget Utilization</span>
               <strong>{kpis.budgetUtilization.toFixed(1)}%</strong>
@@ -215,6 +801,8 @@ const ExecutiveSummary = () => {
                 "targetAchievement",
                 kpis.targetAchievement
               )}`}
+              onMouseEnter={(e) => handleMouseEnter(e, "targetAchievement")}
+              onMouseLeave={handleMouseLeave}
             >
               <span>Target Achievement</span>
               <strong>{kpis.targetAchievement.toFixed(1)}%</strong>
@@ -225,9 +813,13 @@ const ExecutiveSummary = () => {
         <div className="kpi-row">
           <h4 className="row-title">
             YTD Performance (thru {getLastFinalMonthName()})
-          </h4>
+          </h4>{" "}
           <div className="kpi-cards">
-            <div className="kpi-card">
+            <div
+              className="kpi-card"
+              onMouseEnter={(e) => handleMouseEnter(e, "ytdBudget")}
+              onMouseLeave={handleMouseLeave}
+            >
               <span>YTD Budget</span>
               <strong>{formatCurrencyFull(kpis.ytdBudget)}</strong>
             </div>{" "}
@@ -237,6 +829,8 @@ const ExecutiveSummary = () => {
                 kpis.variance,
                 kpis.variancePct
               )}`}
+              onMouseEnter={(e) => handleMouseEnter(e, "ytdVariance")}
+              onMouseLeave={handleMouseLeave}
             >
               <span>YTD Variance</span>
               <strong>
@@ -251,7 +845,11 @@ const ExecutiveSummary = () => {
         <div className="kpi-row">
           <h4 className="row-title">Forward Looking</h4>{" "}
           <div className="kpi-cards">
-            <div className="kpi-card">
+            <div
+              className="kpi-card"
+              onMouseEnter={(e) => handleMouseEnter(e, "fullYearForecast")}
+              onMouseLeave={handleMouseLeave}
+            >
               <span>Full-Year Forecast</span>
               <strong>{formatCurrencyFull(kpis.fullYearForecast)}</strong>
             </div>{" "}
@@ -260,6 +858,8 @@ const ExecutiveSummary = () => {
                 "forecastVariance",
                 kpis.forecastVsTargetVariance
               )}`}
+              onMouseEnter={(e) => handleMouseEnter(e, "forecastVsTarget")}
+              onMouseLeave={handleMouseLeave}
             >
               <span>Forecast vs Target</span>
               <strong>
@@ -271,9 +871,13 @@ const ExecutiveSummary = () => {
         </div>{" "}
         {/* Row 5 - Risk & Velocity */}
         <div className="kpi-row">
-          <h4 className="row-title">Risk & Velocity</h4>
+          <h4 className="row-title">Risk & Velocity</h4>{" "}
           <div className="kpi-cards">
-            <div className="kpi-card">
+            <div
+              className="kpi-card"
+              onMouseEnter={(e) => handleMouseEnter(e, "burnRate")}
+              onMouseLeave={handleMouseLeave}
+            >
               <span>Monthly Burn Rate</span>
               <strong>{formatCurrencyFull(kpis.burnRate)}</strong>
             </div>{" "}
@@ -282,6 +886,8 @@ const ExecutiveSummary = () => {
                 "monthsRemaining",
                 kpis.monthsRemaining
               )}`}
+              onMouseEnter={(e) => handleMouseEnter(e, "monthsRemaining")}
+              onMouseLeave={handleMouseLeave}
             >
               <span>Months Remaining</span>
               <strong>
@@ -291,7 +897,11 @@ const ExecutiveSummary = () => {
                 months
               </strong>
             </div>
-            <div className="kpi-card">
+            <div
+              className="kpi-card"
+              onMouseEnter={(e) => handleMouseEnter(e, "varianceTrend")}
+              onMouseLeave={handleMouseLeave}
+            >
               <span>Variance Trend</span>{" "}
               <strong
                 className={`trend-${kpis.varianceTrend
@@ -303,32 +913,229 @@ const ExecutiveSummary = () => {
             </div>
           </div>
         </div>
-      </div>
-      <div className="variance-table-section">
-        <h3>Top 3 Over/Under Categories</h3>
-        <table className="variance-table">
-          <thead>
-            <tr>
-              <th>Category</th>
-              <th>Actual</th>
-              <th>Budget</th>
-              <th>Variance</th>
-            </tr>
-          </thead>
-          <tbody>
-            {topVariance.map((cat: any) => (
-              <tr
-                key={cat.name}
-                className={cat.variance > 0 ? "over" : "under"}
+      </div>{" "}
+      <div className="resource-allocation-section">
+        <h3>Resource Allocation & Hiring Capacity</h3>
+        <div className="resource-overview">
+          <div className="resource-summary-cards">
+            <div className="resource-card total-compensation">
+              <h4>Total Compensation</h4>
+              <div className="resource-metrics">
+                <div className="metric">
+                  <span className="metric-label">YTD Actual</span>
+                  <span className="metric-value">
+                    {formatCurrencyFull(
+                      getResourceData().totalCompensation.ytdActual
+                    )}
+                  </span>
+                </div>
+                <div className="metric">
+                  <span className="metric-label">Annual Budget</span>
+                  <span className="metric-value">
+                    {formatCurrencyFull(
+                      getResourceData().totalCompensation.annualBudget
+                    )}
+                  </span>
+                </div>
+                <div className="metric">
+                  <span className="metric-label">Remaining</span>
+                  <span className="metric-value remaining">
+                    {formatCurrencyFull(
+                      getResourceData().totalCompensation.remaining
+                    )}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="resource-card base-pay">
+              <h4>Base Pay</h4>
+              <div className="resource-metrics">
+                <div className="metric">
+                  <span className="metric-label">YTD Actual</span>
+                  <span className="metric-value">
+                    {formatCurrencyFull(getResourceData().basePay.ytdActual)}
+                  </span>
+                </div>
+                <div className="metric">
+                  <span className="metric-label">Monthly Avg</span>
+                  <span className="metric-value">
+                    {formatCurrencyFull(
+                      getResourceData().basePay.monthlyAverage
+                    )}
+                  </span>
+                </div>
+                <div className="metric">
+                  <span className="metric-label">Utilization</span>
+                  <span className="metric-value">
+                    {getResourceData().basePay.utilization.toFixed(1)}%
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="resource-card capitalized-salaries">
+              <h4>Capitalized Salaries</h4>
+              <div className="resource-metrics">
+                <div className="metric">
+                  <span className="metric-label">YTD Actual</span>
+                  <span className="metric-value">
+                    {formatCurrencyFull(
+                      Math.abs(getResourceData().capitalizedSalaries.ytdActual)
+                    )}
+                  </span>
+                </div>
+                <div className="metric">
+                  <span className="metric-label">Monthly Avg</span>
+                  <span className="metric-value">
+                    {formatCurrencyFull(
+                      Math.abs(
+                        getResourceData().capitalizedSalaries.monthlyAverage
+                      )
+                    )}
+                  </span>
+                </div>
+                <div className="metric">
+                  <span className="metric-label">Offset Rate</span>
+                  <span className="metric-value">
+                    {getResourceData().capitalizedSalaries.offsetRate.toFixed(
+                      1
+                    )}
+                    %
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="hiring-capacity-analysis">
+            <h4>Hiring Runway Analysis</h4>{" "}
+            <div className="capacity-table">
+              <div
+                className="capacity-row"
+                onMouseEnter={(e) =>
+                  handleHiringMouseEnter(e, "netCompAvailable")
+                }
+                onMouseLeave={handleHiringMouseLeave}
               >
-                <td>{cat.name}</td>
-                <td>{formatCurrencyFull(cat.actual)}</td>
-                <td>{formatCurrencyFull(cat.budget)}</td>
-                <td>{formatCurrencyFull(cat.variance)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                <span className="capacity-label">
+                  Net Compensation Available
+                </span>
+                <span className="capacity-value">
+                  {formatCurrencyFull(
+                    getResourceData().hiringCapacity.netCompensationAvailable
+                  )}
+                </span>
+                <span className="capacity-note">
+                  Annual compensation budget minus YTD actual spend
+                </span>
+              </div>
+              <div
+                className="capacity-row"
+                onMouseEnter={(e) =>
+                  handleHiringMouseEnter(e, "lastThreeMonthAvg")
+                }
+                onMouseLeave={handleHiringMouseLeave}
+              >
+                <span className="capacity-label">Last 3-Month Average</span>
+                <span className="capacity-value">
+                  {formatCurrencyFull(
+                    getResourceData().hiringCapacity.lastThreeMonthAverage
+                  )}
+                  /month
+                </span>
+                <span className="capacity-note">
+                  Recent monthly compensation spend trend
+                </span>
+              </div>
+              <div
+                className="capacity-row"
+                onMouseEnter={(e) =>
+                  handleHiringMouseEnter(e, "remainingMonths")
+                }
+                onMouseLeave={handleHiringMouseLeave}
+              >
+                <span className="capacity-label">Remaining Months</span>
+                <span className="capacity-value">
+                  {getResourceData().hiringCapacity.remainingMonths} months
+                </span>
+                <span className="capacity-note">
+                  Months left in fiscal year
+                </span>
+              </div>{" "}
+              <div
+                className="capacity-row"
+                onMouseEnter={(e) =>
+                  handleHiringMouseEnter(e, "projectedRemainingSpend")
+                }
+                onMouseLeave={handleHiringMouseLeave}
+              >
+                <span className="capacity-label">
+                  Projected Remaining Spend
+                </span>
+                <span className="capacity-value">
+                  {formatCurrencyFull(
+                    getResourceData().hiringCapacity.projectedRemainingSpend
+                  )}
+                </span>
+                <span className="capacity-note">
+                  {getResourceData().hiringCapacity.remainingMonths} months ×
+                  3-month average
+                </span>
+              </div>{" "}
+              <div
+                className="capacity-row"
+                onMouseEnter={(e) =>
+                  handleHiringMouseEnter(e, "projectedTotalSpend")
+                }
+                onMouseLeave={handleHiringMouseLeave}
+              >
+                <span className="capacity-label">Projected Total Spend</span>
+                <span className="capacity-value">
+                  {formatCurrencyFull(
+                    getResourceData().totalCompensation.ytdActual +
+                      getResourceData().hiringCapacity.projectedRemainingSpend
+                  )}
+                </span>
+                <span className="capacity-note">
+                  YTD actual + projected remaining spend
+                </span>
+              </div>{" "}
+              <div
+                className={`capacity-row ${
+                  getResourceData().hiringCapacity.budgetVsProjection > 0
+                    ? "budget-under"
+                    : "budget-over"
+                }`}
+                onMouseEnter={(e) =>
+                  handleHiringMouseEnter(e, "budgetVsProjection")
+                }
+                onMouseLeave={handleHiringMouseLeave}
+              >
+                <span className="capacity-label">Budget vs Projection</span>
+                <span
+                  className={`capacity-value ${
+                    getResourceData().hiringCapacity.budgetVsProjection > 0
+                      ? "value-positive"
+                      : "value-negative"
+                  }`}
+                >
+                  {getResourceData().hiringCapacity.budgetVsProjection >= 0
+                    ? "+"
+                    : ""}
+                  {formatCurrencyFull(
+                    getResourceData().hiringCapacity.budgetVsProjection
+                  )}
+                </span>{" "}
+                <span className="capacity-note">
+                  {getResourceData().hiringCapacity.budgetVsProjection < 0
+                    ? "Projected total spend exceeds annual budget - budget adjustments needed"
+                    : "Projected total spend under annual budget - additional hiring capacity available"}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>{" "}
       <div className="trend-chart-section">
         <h3>Budget vs Actual Trend</h3>
@@ -394,11 +1201,38 @@ const ExecutiveSummary = () => {
           value={userNotes}
           onChange={(e) => setUserNotes(e.target.value)}
         />
-      </div>
+      </div>{" "}
       <div className="summary-actions">
         <button onClick={() => window.location.reload()}>Refresh</button>
         <button onClick={handleExport}>Export</button>
-      </div>
+      </div>{" "}
+      {/* Tooltip */}
+      {tooltip.visible && tooltip.content && (
+        <div
+          className={`kpi-tooltip ${tooltip.showBelow ? "show-below" : ""}`}
+          style={{
+            position: "fixed",
+            left: `${tooltip.x}px`,
+            top: `${tooltip.y}px`,
+            transform: tooltip.showBelow
+              ? "translateX(-50%)"
+              : "translateX(-50%) translateY(-100%)",
+            zIndex: 1000,
+            pointerEvents: "none",
+          }}
+        >
+          <div className="tooltip-content">
+            <h4>{tooltip.content.definition}</h4>
+            <p className="interpretation">{tooltip.content.interpretation}</p>
+            <div className="formula-section">
+              <strong>Formula:</strong> {tooltip.content.formula}
+            </div>
+            <div className="calculation-section">
+              <strong>Calculation:</strong> {tooltip.content.calculation}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
