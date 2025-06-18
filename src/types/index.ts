@@ -95,6 +95,9 @@ export interface BudgetState {
     name: string;
     handle?: FileSystemFileHandle;
     lastSaved?: Date;
+    size?: number;
+    lastModified?: Date;
+    contentHash?: string;
   };
   yearlyBudgetTargets: {
     [year: number]: number;

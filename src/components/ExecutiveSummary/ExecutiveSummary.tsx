@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from "react";
 import { useBudget } from "../../context/BudgetContext";
 import {
-  LineChart,
+  ComposedChart,
+  Bar,
   Line,
   XAxis,
   YAxis,
@@ -53,6 +54,11 @@ const ExecutiveSummary = () => {
   const [isForwardLookingExpanded, setIsForwardLookingExpanded] =
     useState(false);
   const [isRiskVelocityExpanded, setIsRiskVelocityExpanded] = useState(false);
+  const [trendTableCollapsed, setTrendTableCollapsed] = useState(true);
+  const [
+    totalCompCapitalizationCollapsed,
+    setTotalCompCapitalizationCollapsed,
+  ] = useState(true);
   const [tooltip, setTooltip] = useState<{
     visible: boolean;
     content: any;
@@ -115,9 +121,7 @@ const ExecutiveSummary = () => {
     }
 
     return lastFinalMonth > 0 ? monthNames[lastFinalMonth] : "Current";
-  };
-
-  // Memoized calculations
+  }; // Memoized calculations
   const kpis = useMemo(() => getKPIData(state), [state]);
   const topVariance = useMemo(
     () => getTopVarianceCategories(state, 3),
@@ -1059,124 +1063,153 @@ const ExecutiveSummary = () => {
             </div>
           )}{" "}
         </div>
-      </div>
+      </div>{" "}
       <div className="trend-chart-section">
-        <h2>Budget vs Actual Trend</h2>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={trend}>
+        <div className="trend-chart-header">
+          <h3>Budget vs Actual Trend</h3>
+        </div>
+        <ResponsiveContainer width="100%" height={400}>
+          <ComposedChart data={trend}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="period" />
             <YAxis
-              tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
-            />{" "}
+              tickFormatter={(value) =>
+                `$${(value / 1000).toLocaleString("en-US", {
+                  maximumFractionDigits: 0,
+                })}k`
+              }
+            />
             <Tooltip
               formatter={(value: number, name: string) => [
                 formatCurrencyFull(value),
-                name === "Actual"
-                  ? "Actual"
+                name === "Budget"
+                  ? "Budget Target"
+                  : name === "Actual"
+                  ? "Actual Spend"
                   : name === "Forecast"
-                  ? "Forecast"
-                  : "Budget",
+                  ? "Forecast Spend"
+                  : name === "Adj Actual"
+                  ? "Adj Actual Spend"
+                  : name === "Adj Forecast"
+                  ? "Adj Forecast Spend"
+                  : name,
               ]}
               labelFormatter={(label) => `Through ${label}`}
             />
-            <Legend />{" "}
-            <Line
-              type="monotone"
+            <Legend />
+
+            {/* Budget as bar */}
+            <Bar
               dataKey="budget"
-              stroke="#0000FF"
-              strokeWidth={2}
-              name="Budget"
-            />{" "}
+              fill="#2D78FB"
+              name="Budget Target"
+              barSize={30}
+              opacity={0.5}
+            />
+
+            {/* Actual spending line */}
             <Line
               type="monotone"
               dataKey="actual"
-              stroke="#004526"
-              strokeWidth={2}
-              name="Actual"
+              stroke="#33CA7F"
+              strokeWidth={4}
+              strokeDasharray="5 1"
+              name="Actual Spend"
               connectNulls={false}
-            />{" "}
+            />
+
+            {/* Forecast spending line */}
             <Line
               type="monotone"
               dataKey="forecast"
               stroke="#FF8C00"
-              strokeWidth={2}
-              strokeDasharray="5 5"
-              name="Forecast"
+              strokeWidth={4}
+              strokeDasharray="5 1"
+              name="Forecast Spend"
               connectNulls={false}
             />
-          </LineChart>
+
+            {/* Adjusted actual line */}
+            <Line
+              type="monotone"
+              dataKey="adjActual"
+              stroke="#8B0000"
+              strokeWidth={4}
+              name="Adj Actual"
+              connectNulls={false}
+            />
+
+            {/* Adjusted forecast line */}
+            <Line
+              type="monotone"
+              dataKey="adjForecast"
+              stroke="#9932CC"
+              strokeWidth={4}
+              name="Adj Forecast"
+              connectNulls={false}
+            />
+          </ComposedChart>
         </ResponsiveContainer>
       </div>
-      <div className="resource-allocation-section">
-        <h2>Resource Allocation & Hiring Capacity</h2>
-        <div className="resource-overview">
-          <div className="resource-summary-cards">
-            <div className="resource-card total-compensation">
-              <h4>Total Compensation</h4>
-              <div className="resource-metrics">
-                <div className="metric">
-                  <span className="metric-label">YTD Actual</span>
-                  <span className="metric-value">
-                    {formatCurrencyFull(
-                      getResourceData().totalCompensation.ytdActual
-                    )}
-                  </span>
-                </div>
-                <div className="metric">
-                  <span className="metric-label">Annual Budget</span>
-                  <span className="metric-value">
-                    {formatCurrencyFull(
-                      getResourceData().totalCompensation.annualBudget
-                    )}
-                  </span>
-                </div>
-                <div className="metric">
-                  <span className="metric-label">Remaining</span>
-                  <span className="metric-value remaining">
-                    {formatCurrencyFull(
-                      getResourceData().totalCompensation.remaining
-                    )}
-                  </span>
-                </div>
-              </div>{" "}
-            </div>
-
-            <div className="resource-card capitalized-salaries">
-              <h4>Capitalized Salaries</h4>
-              <div className="resource-metrics">
-                <div className="metric">
-                  <span className="metric-label">YTD Actual</span>
-                  <span className="metric-value">
-                    {formatCurrencyFull(
-                      Math.abs(getResourceData().capitalizedSalaries.ytdActual)
-                    )}
-                  </span>
-                </div>
-                <div className="metric">
-                  <span className="metric-label">Monthly Avg</span>
-                  <span className="metric-value">
-                    {formatCurrencyFull(
-                      Math.abs(
-                        getResourceData().capitalizedSalaries.monthlyAverage
-                      )
-                    )}
-                  </span>
-                </div>
-                <div className="metric">
-                  <span className="metric-label">Offset Rate</span>
-                  <span className="metric-value">
-                    {getResourceData().capitalizedSalaries.offsetRate.toFixed(
-                      1
-                    )}
-                    %
-                  </span>
-                </div>
-              </div>
-            </div>
+      {/* Trend Data Table - Collapsible */}
+      <div className="trend-data-table-section">
+        <div
+          className="collapsible-header"
+          onClick={() => setTrendTableCollapsed(!trendTableCollapsed)}
+          style={{ cursor: "pointer" }}
+        >
+          <h3>{trendTableCollapsed ? "+" : "−"} Trend Chart Data</h3>
+        </div>
+        {!trendTableCollapsed && (
+          <div className="trend-data-table">
+            <table className="trend-table">
+              <thead>
+                <tr>
+                  <th>Period</th>
+                  <th>Budget</th>
+                  <th>Actual</th>
+                  <th>Forecast</th>
+                  <th>Adj Actual</th>
+                  <th>Adj Forecast</th>
+                </tr>
+              </thead>{" "}
+              <tbody>
+                {trend.map((data, index) => (
+                  <tr key={index}>
+                    <td>{data.period}</td>
+                    <td>{formatCurrencyFull(data.budget)}</td>
+                    <td>
+                      {data.actual ? formatCurrencyFull(data.actual) : "-"}
+                    </td>
+                    <td>
+                      {data.forecast ? formatCurrencyFull(data.forecast) : "-"}
+                    </td>
+                    <td>
+                      {data.adjActual
+                        ? formatCurrencyFull(data.adjActual)
+                        : "-"}
+                    </td>
+                    <td>
+                      {data.adjForecast
+                        ? formatCurrencyFull(data.adjForecast)
+                        : "-"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-          <div className="hiring-capacity-analysis">
-            <h4>Hiring Runway Analysis</h4>{" "}
+        )}
+      </div>
+      {/* Divider between Trend Chart Data and Resource Allocation */}
+      <div className="section-divider"></div>
+      <div className="resource-allocation-section">
+        <h2>Resource Allocation & Hiring Capacity</h2>{" "}
+        <div className="resource-overview">
+          <div className="hiring-capacity-analysis-section">
+            <div className="hiring-analysis-header">
+              <h2>Hiring Runway Analysis</h2>
+            </div>
             <div className="capacity-table">
               <div
                 className="capacity-row"
@@ -1298,11 +1331,115 @@ const ExecutiveSummary = () => {
                   {getResourceData().hiringCapacity.budgetVsProjection < 0
                     ? "Projected total spend exceeds annual budget - budget adjustments needed"
                     : "Projected total spend under annual budget - additional hiring capacity available"}
-                </span>
+                </span>{" "}
               </div>
             </div>
-          </div>{" "}
+          </div>
         </div>
+      </div>{" "}
+      {/* Total Comp & Capitalization Section */}
+      <div className="total-comp-capitalization-section">
+        <div
+          className="collapsible-header"
+          onClick={() =>
+            setTotalCompCapitalizationCollapsed(
+              !totalCompCapitalizationCollapsed
+            )
+          }
+          style={{ cursor: "pointer" }}
+        >
+          <h4>
+            {totalCompCapitalizationCollapsed ? "+" : "−"} Total Comp &
+            Capitalization
+          </h4>
+        </div>
+
+        {totalCompCapitalizationCollapsed && (
+          <div className="comp-summary-line">
+            <span className="summary-label">Total Compensation:</span>
+            <span className="summary-values">
+              YTD:{" "}
+              {formatCurrencyFull(
+                getResourceData().totalCompensation.ytdActual
+              )}{" "}
+              | Budget:{" "}
+              {formatCurrencyFull(
+                getResourceData().totalCompensation.annualBudget
+              )}{" "}
+              | Remaining:{" "}
+              {formatCurrencyFull(
+                getResourceData().totalCompensation.remaining
+              )}
+            </span>
+          </div>
+        )}
+
+        {!totalCompCapitalizationCollapsed && (
+          <div className="resource-summary-cards">
+            <div className="resource-card total-compensation">
+              <h4>Total Compensation</h4>
+              <div className="resource-metrics">
+                <div className="metric">
+                  <span className="metric-label">YTD Actual</span>
+                  <span className="metric-value">
+                    {formatCurrencyFull(
+                      getResourceData().totalCompensation.ytdActual
+                    )}
+                  </span>
+                </div>
+                <div className="metric">
+                  <span className="metric-label">Annual Budget</span>
+                  <span className="metric-value">
+                    {formatCurrencyFull(
+                      getResourceData().totalCompensation.annualBudget
+                    )}
+                  </span>
+                </div>
+                <div className="metric">
+                  <span className="metric-label">Remaining</span>
+                  <span className="metric-value remaining">
+                    {formatCurrencyFull(
+                      getResourceData().totalCompensation.remaining
+                    )}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="resource-card capitalized-salaries">
+              <h4>Capitalized Salaries</h4>
+              <div className="resource-metrics">
+                <div className="metric">
+                  <span className="metric-label">YTD Actual</span>
+                  <span className="metric-value">
+                    {formatCurrencyFull(
+                      Math.abs(getResourceData().capitalizedSalaries.ytdActual)
+                    )}
+                  </span>
+                </div>
+                <div className="metric">
+                  <span className="metric-label">Monthly Avg</span>
+                  <span className="metric-value">
+                    {formatCurrencyFull(
+                      Math.abs(
+                        getResourceData().capitalizedSalaries.monthlyAverage
+                      )
+                    )}
+                  </span>
+                </div>
+                <div className="metric">
+                  <span className="metric-label">Offset Rate</span>{" "}
+                  <span className="metric-value">
+                    {getResourceData().capitalizedSalaries.offsetRate.toFixed(
+                      1
+                    )}
+                    %
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       <div className="alerts-section">
         <h3>Alerts</h3>
@@ -1313,9 +1450,11 @@ const ExecutiveSummary = () => {
             </li>
           ))}
         </ul>
-      </div>
+      </div>{" "}
       <div className="commentary-section">
-        <h3>Executive Commentary</h3>
+        <div className="commentary-header">
+          <h3>Executive Commentary</h3>
+        </div>
         <div className="auto-commentary">{commentary}</div>
         <textarea
           placeholder="Add your notes for leadership..."
@@ -1656,26 +1795,30 @@ const getTrendData = (state: any) => {
     "Nov",
     "Dec",
   ];
-
   let cumulativeBudget = 0;
   let cumulativeActual = 0;
   let cumulativeForecast = 0;
+  let cumulativeAdjActual = 0;
+  let cumulativeAdjForecast = 0;
 
-  return months
+  const trendData = months
     .map((month) => {
       // Calculate monthly totals
       const monthEntries = state.entries.filter(
         (entry: any) =>
           entry.year === state.selectedYear && entry.month === month
       );
-
       const monthlyBudget = monthEntries.reduce(
         (sum: number, entry: any) => sum + entry.budgetAmount,
         0
       );
-
       const monthlyActual = monthEntries.reduce(
         (sum: number, entry: any) => sum + (entry.actualAmount || 0),
+        0
+      );
+
+      const monthlyAdjustments = monthEntries.reduce(
+        (sum: number, entry: any) => sum + (entry.adjustmentAmount || 0),
         0
       );
 
@@ -1687,28 +1830,39 @@ const getTrendData = (state: any) => {
       // Check if this month is in "Final" mode (true) or "Forecast" mode (false)
       const isFinalMonth =
         state.monthlyForecastModes[state.selectedYear]?.[month] ?? false; // Add to cumulative totals
-      cumulativeBudget += monthlyBudget;
-
-      // Only add to cumulative actual if this month is final
+      cumulativeBudget += monthlyBudget; // Only add to cumulative actual if this month is final
       if (isFinalMonth) {
         cumulativeActual += monthlyActual;
       }
 
-      // For forecast line: use actual for final months, forecast for non-final months
-      // Only show cumulative forecast for non-final months
+      // Only add to cumulative adjusted actual if this month is final (subtract adjustments)
       if (isFinalMonth) {
-        cumulativeForecast += monthlyActual;
-      } else {
-        cumulativeForecast += monthlyReforecast;
+        cumulativeAdjActual += monthlyActual - monthlyAdjustments;
       }
 
+      // For forecast: build cumulative total including actuals from final months + forecasts from forecast months
+      if (isFinalMonth) {
+        cumulativeForecast += monthlyActual; // Add actuals from final months to build the base
+      } else {
+        cumulativeForecast += monthlyReforecast; // Add reforecasts from forecast months
+      }
+
+      // For adjusted forecast: build cumulative total including adjusted actuals from final months + adjusted forecasts from forecast months
+      if (isFinalMonth) {
+        cumulativeAdjForecast += monthlyActual - monthlyAdjustments; // Add adjusted actuals from final months to build the base
+      } else {
+        cumulativeAdjForecast += monthlyReforecast - monthlyAdjustments; // Add adjusted reforecasts from forecast months
+      }
       return {
         period: monthNames[month],
         budget: cumulativeBudget,
         actual: isFinalMonth ? cumulativeActual : null, // Only show actual for final months
-        forecast: !isFinalMonth ? cumulativeForecast : null, // Only show forecast for non-final months
+        forecast: !isFinalMonth ? cumulativeForecast : null, // Only show forecast for forecast months
+        adjActual: isFinalMonth ? cumulativeAdjActual : null, // Only show adjusted actual for final months
+        adjForecast: !isFinalMonth ? cumulativeAdjForecast : null, // Only show adjusted forecast for forecast months
         monthlyBudget,
         monthlyActual,
+        monthlyAdjustments,
         monthlyReforecast,
         isFinalMonth,
       };
@@ -1717,8 +1871,12 @@ const getTrendData = (state: any) => {
       (data) =>
         data.budget > 0 ||
         (data.actual && data.actual > 0) ||
-        (data.forecast && data.forecast > 0)
+        (data.forecast && data.forecast > 0) ||
+        (data.adjActual && data.adjActual > 0) ||
+        (data.adjForecast && data.adjForecast > 0)
     ); // Only show months with data
+
+  return trendData;
 };
 
 const getAlerts = (state: any) =>

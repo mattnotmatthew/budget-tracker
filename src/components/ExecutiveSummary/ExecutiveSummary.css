@@ -170,6 +170,7 @@
 }
 .alerts-section {
   margin-bottom: 2rem;
+  display: none;
 }
 .alerts-section ul {
   list-style: none;
@@ -194,23 +195,33 @@
   color: #2980b9;
 }
 .commentary-section {
-  margin-bottom: 2rem;
+  padding: 0;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 1px solid #e1e8ed;
+  overflow: hidden;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
 }
 .auto-commentary {
-  background: #f5f8fa;
+  background: #ffffff;
   border-radius: 6px;
   padding: 0.7rem 1rem;
   margin-bottom: 0.7rem;
   color: #2d3a4a;
+  width: auto;
+  margin-left: 1rem;
+  margin-right: 1rem;
 }
 .commentary-section textarea {
-  width: 100%;
+  width: 96.5%;
   min-height: 60px;
   border-radius: 6px;
   border: 1px solid #d1dbe6;
   padding: 0.7rem 1rem;
   font-size: 1rem;
   resize: vertical;
+  margin: 1rem;
 }
 .summary-actions {
   display: flex;
@@ -686,4 +697,269 @@
   .capacity-note {
     margin-top: 0.25rem;
   }
+}
+
+/* Trend Data Table Styles */
+.trend-data-table-section {
+  margin-top: 2rem;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+  overflow: hidden;
+}
+
+.trend-data-table-section .collapsible-header {
+  padding: 1rem 1.5rem;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e1e8ed;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.trend-data-table-section .collapsible-header:hover {
+  background: #e9ecef;
+}
+
+/* Matching header style for Budget vs Actual Trend */
+.trend-chart-section .trend-chart-header {
+  padding: 1rem 1.5rem;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e1e8ed;
+  margin-bottom: 1rem;
+  border-radius: 8px 8px 0 0;
+}
+
+/* Matching header style for Executive Commentary */
+.commentary-section .commentary-header {
+  padding: 1rem 1.5rem;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e1e8ed;
+  margin-bottom: 1rem;
+
+  border-radius: 8px 8px 0 0;
+}
+
+.trend-data-table-section h3,
+.trend-chart-section .trend-chart-header h3,
+.commentary-section .commentary-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #2d3a4a;
+  font-weight: 600;
+}
+
+.trend-data-table {
+  padding: 1.5rem;
+}
+
+.trend-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.trend-table th {
+  background: #f8f9fa;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #2d3a4a;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.trend-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e1e8ed;
+  color: #495057;
+}
+
+.trend-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.trend-table th:first-child,
+.trend-table td:first-child {
+  font-weight: 600;
+  color: #2d3a4a;
+}
+
+/* Responsive table */
+@media (max-width: 768px) {
+  .trend-table {
+    font-size: 0.8rem;
+  }
+
+  .trend-table th,
+  .trend-table td {
+    padding: 0.5rem 0.75rem;
+  }
+}
+
+/* Chart styling for Option 2 implementation */
+.chart-dot {
+  cursor: pointer;
+  transition: r 0.2s ease;
+}
+
+.chart-dot:hover {
+  r: 6;
+}
+
+.transition-connector {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.7;
+  }
+}
+
+.transition-line {
+  pointer-events: none;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.8;
+  }
+}
+
+/* Enhanced chart container */
+.trend-chart-section .recharts-surface {
+  overflow: visible;
+}
+
+/* Ensure connecting lines render properly */
+.recharts-layer .transition-line {
+  z-index: 1;
+}
+
+/* Stacked bar chart enhancements */
+.trend-chart-section .recharts-bar-rectangle {
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.trend-chart-section .recharts-bar-rectangle:hover {
+  opacity: 0.8;
+}
+
+/* Enhanced chart container for stacked bars */
+.trend-chart-section .recharts-surface {
+  overflow: visible;
+}
+
+/* Custom legend spacing */
+.trend-chart-section .recharts-default-legend {
+  padding-top: 20px !important;
+}
+
+/* Section Divider */
+.section-divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    #d1d9e0 20%,
+    #d1d9e0 80%,
+    transparent
+  );
+  margin: 3rem 0;
+  position: relative;
+}
+
+.section-divider::before {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 4px;
+  background: linear-gradient(to right, #3d52d5, #33ca7f);
+  border-radius: 2px;
+}
+
+/* Total Comp & Capitalization Section */
+.total-comp-capitalization-section {
+  padding: 0;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 1px solid #e1e8ed;
+  overflow: hidden;
+}
+
+.total-comp-capitalization-section .collapsible-header {
+  padding: 1rem 1.5rem;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e1e8ed;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.total-comp-capitalization-section .collapsible-header:hover {
+  background: #e9ecef;
+}
+
+.total-comp-capitalization-section h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #2d3a4a;
+  font-weight: 600;
+}
+
+.total-comp-capitalization-section .resource-summary-cards {
+  padding: 1.5rem;
+}
+
+/* Collapsed summary line styling */
+.comp-summary-line {
+  padding: 1rem 1.5rem;
+  background: #ffffff;
+  border-top: 1px solid #e1e8ed;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.comp-summary-line .summary-label {
+  font-weight: 600;
+  color: #2d3a4a;
+  min-width: 150px;
+}
+
+.comp-summary-line .summary-values {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+/* Hiring Runway Analysis Section - Matching style */
+.hiring-capacity-analysis-section {
+  margin-top: 1rem;
+  padding: 2rem;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 1px solid #e1e8ed;
+}
+
+.hiring-capacity-analysis-section .hiring-analysis-header h2 {
+  font-size: 1.8rem;
+  color: #2d3a4a;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+  border-bottom: 2px solid #3d52d5;
+  padding-bottom: 0.5rem;
+  margin-top: 0;
 }

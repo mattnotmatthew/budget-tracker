@@ -1,5 +1,8 @@
 import { BudgetEntry, BudgetState } from "../types";
 
+// Cache key for storing file information
+const CACHE_KEY = "budget-tracker-file-info";
+
 // Type extensions for File System Access API compatibility
 declare global {
   interface Window {
@@ -367,4 +370,176 @@ export const smartAutoSave = async (
     method: "newFile",
     userCancelled: true,
   };
+};
+
+// Function to attempt restoring the last used file from cache
+export const attemptRestoreCachedFile = async (): Promise<{
+  success: boolean;
+  data?: any;
+  fileName?: string;
+  error?: string;
+}> => {
+  try {
+    // Check if browser supports File System Access API
+    if (!supportsFileSystemAccess()) {
+      return {
+        success: false,
+        error:
+          "File System Access API not supported - cannot restore cached file",
+      };
+    }
+
+    // Get cached file info
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (!cached) {
+      return {
+        success: false,
+        error: "No cached file information found",
+      };
+    }
+    const cachedFileInfo = JSON.parse(cached);
+    const { name, lastSaved, size, lastModified, contentHash, timestamp } =
+      cachedFileInfo;
+
+    // Show a more detailed confirmation dialog to user before attempting to restore
+    const cacheAge = timestamp
+      ? Math.round((Date.now() - new Date(timestamp).getTime()) / (1000 * 60))
+      : 0;
+    const shouldRestore = window.confirm(
+      `Would you like to restore your last session?\n\nFile: ${name}${
+        size ? ` (${Math.round(size / 1024)}KB)` : ""
+      }\nLast saved: ${
+        lastSaved ? new Date(lastSaved).toLocaleString() : "Unknown"
+      }${
+        lastModified
+          ? `\nFile modified: ${new Date(lastModified).toLocaleString()}`
+          : ""
+      }${
+        cacheAge > 0 ? `\nCached: ${cacheAge} minutes ago` : ""
+      }\n\nClick OK to select the file again, or Cancel to start fresh.`
+    );
+
+    if (!shouldRestore) {
+      return {
+        success: false,
+        error: "User declined to restore cached file",
+      };
+    }
+
+    // Prompt user to re-select the file (since FileSystemFileHandle can't be cached)
+    const fileHandles = await window.showOpenFilePicker?.({
+      types: [
+        {
+          description: "JSON files",
+          accept: {
+            "application/json": [".json"],
+          },
+        },
+      ],
+    });
+
+    if (!fileHandles || fileHandles.length === 0) {
+      return {
+        success: false,
+        error: "No file selected",
+      };
+    }
+
+    const fileHandle = fileHandles[0];
+    const file = await fileHandle.getFile?.();
+
+    if (!file) {
+      return {
+        success: false,
+        error: "Could not read selected file",
+      };
+    } // Enhanced verification of the selected file
+    let verificationWarnings = [];
+
+    if (file.name !== name) {
+      verificationWarnings.push(
+        `File name mismatch: expected "${name}", got "${file.name}"`
+      );
+    }
+
+    if (size && Math.abs(file.size - size) > 1024) {
+      // Allow 1KB difference
+      verificationWarnings.push(
+        `File size mismatch: expected ~${Math.round(
+          size / 1024
+        )}KB, got ${Math.round(file.size / 1024)}KB`
+      );
+    }
+
+    if (
+      lastModified &&
+      Math.abs(file.lastModified - lastModified.getTime()) > 60000
+    ) {
+      // Allow 1 minute difference
+      verificationWarnings.push(`File modification time mismatch`);
+    }
+
+    if (verificationWarnings.length > 0) {
+      const proceedAnyway = window.confirm(
+        `File verification warnings:\n\n${verificationWarnings.join(
+          "\n"
+        )}\n\nThis might not be the same file. Do you want to proceed anyway?`
+      );
+
+      if (!proceedAnyway) {
+        return {
+          success: false,
+          error: "File verification failed - user declined to proceed",
+        };
+      }
+    }
+
+    const content = await file.text();
+
+    // Verify content hash if available
+    if (contentHash) {
+      const newContentHash = btoa(content.substring(0, 1000))
+        .replace(/[^a-zA-Z0-9]/g, "")
+        .substring(0, 20);
+      if (newContentHash !== contentHash) {
+        const proceedAnyway = window.confirm(
+          `File content appears to have changed since it was cached. Do you want to proceed anyway?`
+        );
+
+        if (!proceedAnyway) {
+          return {
+            success: false,
+            error: "Content verification failed - user declined to proceed",
+          };
+        }
+      }
+    }
+    const data = JSON.parse(content);
+
+    // Validate file format
+    if (!data.version || !data.entries || !Array.isArray(data.entries)) {
+      return {
+        success: false,
+        error: "Invalid file format",
+      };
+    }
+
+    // Convert date strings back to Date objects
+    data.entries = data.entries.map((entry: any) => ({
+      ...entry,
+      createdAt: new Date(entry.createdAt),
+      updatedAt: new Date(entry.updatedAt),
+    }));
+
+    return {
+      success: true,
+      data,
+      fileName: file.name,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: `Failed to restore cached file: ${(error as Error).message}`,
+    };
+  }
 };

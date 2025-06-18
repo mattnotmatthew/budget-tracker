@@ -2509,6 +2509,7 @@ button small {
   border-radius: 12px;
   margin-bottom: 1.5rem;
   overflow: hidden;
+
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
@@ -2881,101 +2882,103 @@ button small {
 
 .merge-strategy select {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #5d6a5c;
-  border-radius: 6px;
-  font-size: 0.9rem;
-}
-
-.save-btn,
-.load-btn,
-.clear-btn {
-  border: none;
-  border-radius: 6px;
-  padding: 0.75rem 1.5rem;
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.save-btn {
-  background: #6fbf9a;
-  color: #ffffff;
-}
-
-.save-btn:hover:not(:disabled) {
-  background: #334915;
-}
-
-.load-btn {
-  background: #a7c8f9;
-  color: #172a3a;
-}
-
-.load-btn:hover:not(:disabled) {
-  background: #172a3a;
-  color: #ffffff;
-}
-
-.danger-btn {
-  background: #3f3a35;
-  color: #ffffff;
-}
-
-.danger-btn:hover {
-  background: #122415;
-}
-
-.save-btn:disabled,
-.load-btn:disabled {
-  background: #5d6a5c;
-  cursor: not-allowed;
-}
-
-.message {
-  margin-top: 1rem;
-  padding: 1rem;
-  border-radius: 6px;
-  font-weight: 500;
-}
-
-.message.success {
-  background: #affe76;
-  border: 1px solid #334915;
-  color: #122415;
-}
-
-.message.error {
-  background: #dfe7ef;
-  border: 1px solid #5d6a5c;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
   color: #3f3a35;
 }
 
-.message.info {
-  background: #a7c8f9;
-  border: 1px solid #172a3a;
-  color: #172a3a;
+/* File Manager Sections */
+.file-section {
+  background: #f8f9fa;
+  border: 1px solid #e2dcd3;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
 }
 
-.file-manager-footer {
-  border-top: 1px solid #5d6a5c;
-  padding: 1rem 2rem;
-  display: flex;
-  justify-content: flex-end;
+.file-section h4 {
+  color: #3f3a35;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
 }
 
-.close-footer-btn {
-  background: #434947;
+.file-section p {
+  color: #666;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+/* Current File Info Styles */
+.current-file-info {
+  background: linear-gradient(135deg, #e8f5e8 0%, #f0f8ff 100%);
+  border: 1px solid #4caf50;
+  position: relative;
+}
+
+.current-file-info::before {
+  content: "📁";
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 1.5rem;
+  opacity: 0.7;
+}
+
+.current-file-details p {
+  margin-bottom: 0.5rem;
+  color: #2e5c2e;
+}
+
+.current-file-details strong {
+  color: #1a4a1a;
+}
+
+.cache-info {
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px solid #4caf50;
+  border-radius: 4px;
+  padding: 0.5rem;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: #2e5c2e;
+}
+
+/* File Manager Buttons */
+.save-btn,
+.load-btn,
+.restore-btn {
+  background: #172a3a;
   color: #ffffff;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 0.75rem 1.5rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  width: 100%;
+  margin-top: 0.5rem;
 }
 
-.close-footer-btn:hover {
-  background: #3f3a35;
+.save-btn:hover,
+.load-btn:hover,
+.restore-btn:hover {
+  background: #334915;
+}
+
+.restore-btn {
+  background: #4caf50;
+  font-size: 0.9rem;
+}
+
+.restore-btn:hover {
+  background: #45a049;
+}
+
+.load-btn:disabled,
+.restore-btn:disabled {
+  background: #999;
+  cursor: not-allowed;
 }

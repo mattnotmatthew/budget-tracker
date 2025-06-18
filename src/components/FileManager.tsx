@@ -6,6 +6,7 @@ import {
   mergeBudgetData,
   saveToFileHandle,
   supportsFileSystemAccess,
+  attemptRestoreCachedFile,
 } from "../utils/fileManager";
 
 interface FileManagerProps {
@@ -83,11 +84,13 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
   const handleLoad = async () => {
     setIsLoading(true);
     setMessage(null);
-
     try {
       let loadedData;
       let fileHandle = null;
       let fileName = "loaded-file.json";
+      let fileObj = null;
+      let content = "";
+
       if (supportsFileSystemAccess()) {
         try {
           const fileHandles = await window.showOpenFilePicker?.({
@@ -113,10 +116,11 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
             throw new Error("Could not read file");
           }
 
-          const content = await file.text();
+          content = await file.text();
           loadedData = JSON.parse(content);
           fileHandle = selectedFileHandle;
           fileName = file.name;
+          fileObj = file;
 
           // Validate and convert dates
           if (
@@ -185,28 +189,121 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
       dispatch({
         type: "SET_SELECTED_PERIOD",
         payload: { year: loadedData.year as number },
-      });
+      }); // Set the current file if we have a handle
+      if (fileHandle && fileObj) {
+        // Create a simple hash of the content for verification
+        const contentHash = btoa(content.substring(0, 1000))
+          .replace(/[^a-zA-Z0-9]/g, "")
+          .substring(0, 20);
 
-      // Set the current file if we have a handle
-      if (fileHandle) {
         dispatch({
           type: "SET_CURRENT_FILE",
           payload: {
             name: fileName,
             handle: fileHandle,
             lastSaved: new Date(),
+            size: fileObj.size,
+            lastModified: new Date(fileObj.lastModified),
+            contentHash: contentHash,
           },
         });
       }
 
+      const entriesCount = loadedData.entries.length;
       setMessage({
         type: "success",
-        text: `Successfully loaded ${loadedData.metadata.totalEntries} entries for ${loadedData.year} from ${fileName}. Strategy: ${mergeStrategy}`,
+        text: `Successfully loaded ${entriesCount} entries from ${fileName} for year ${loadedData.year}`,
       });
     } catch (error) {
       setMessage({
         type: "error",
         text: "Failed to load file: " + (error as Error).message,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  const handleRestoreCached = async () => {
+    setIsLoading(true);
+    setMessage(null);
+
+    try {
+      const result = await attemptRestoreCachedFile();
+
+      if (result.success && result.data) {
+        // Load the restored data
+        const mergedEntries = mergeBudgetData(
+          state.entries,
+          result.data,
+          mergeStrategy
+        );
+        dispatch({ type: "LOAD_ENTRIES", payload: mergedEntries });
+
+        // Load yearly budget targets if they exist
+        if (result.data.yearlyBudgetTargets) {
+          Object.entries(result.data.yearlyBudgetTargets).forEach(
+            ([year, amount]) => {
+              dispatch({
+                type: "SET_YEARLY_BUDGET_TARGET",
+                payload: { year: parseInt(year), amount: amount as number },
+              });
+            }
+          );
+        }
+
+        // Load monthly forecast modes if they exist
+        if (result.data.monthlyForecastModes) {
+          Object.entries(result.data.monthlyForecastModes).forEach(
+            ([year, monthModes]) => {
+              if (monthModes && typeof monthModes === "object") {
+                Object.entries(
+                  monthModes as { [month: number]: boolean }
+                ).forEach(([month, isFinal]) => {
+                  dispatch({
+                    type: "SET_MONTHLY_FORECAST_MODE",
+                    payload: {
+                      year: parseInt(year),
+                      month: parseInt(month),
+                      isFinal: isFinal as boolean,
+                    },
+                  });
+                });
+              }
+            }
+          );
+        }
+
+        // Update selected year to the loaded year
+        if (result.data.year) {
+          dispatch({
+            type: "SET_SELECTED_PERIOD",
+            payload: { year: result.data.year as number },
+          });
+        }
+
+        // Update current file info
+        dispatch({
+          type: "SET_CURRENT_FILE",
+          payload: {
+            name: result.fileName || "restored-file.json",
+            lastSaved: new Date(),
+          },
+        });
+
+        setMessage({
+          type: "success",
+          text: `Successfully restored cached file: ${result.fileName}`,
+        });
+      } else {
+        setMessage({
+          type: "error",
+          text: result.error || "Failed to restore cached file",
+        });
+      }
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text: "Error during file restoration: " + (error as Error).message,
       });
     } finally {
       setIsLoading(false);
@@ -300,6 +397,29 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
               )}
             </div>
           </div>{" "}
+          {/* Current File Info */}
+          {state.currentFile && (
+            <div className="file-section current-file-info">
+              <h4>Current Session</h4>
+              <div className="current-file-details">
+                <p>
+                  <strong>File:</strong> {state.currentFile.name}
+                </p>
+                {state.currentFile.lastSaved && (
+                  <p>
+                    <strong>Last Saved:</strong>{" "}
+                    {state.currentFile.lastSaved.toLocaleString()}
+                  </p>
+                )}
+                <p className="cache-info">
+                  📝{" "}
+                  <em>
+                    File location is cached - will be restored on page refresh
+                  </em>
+                </p>
+              </div>
+            </div>
+          )}
           {/* Save Section */}
           <div className="file-section">
             <h4>Save Data</h4>
@@ -320,7 +440,6 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
           <div className="file-section">
             <h4>Load Data</h4>
             <p>Load budget data from a JSON file.</p>
-
             <div className="merge-strategy">
               <label>Merge Strategy:</label>
               <select
@@ -337,8 +456,7 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
                 <option value="append">Append (add to existing data)</option>
                 <option value="update">Update (merge by entry ID)</option>
               </select>
-            </div>
-
+            </div>{" "}
             <button
               className="load-btn"
               onClick={handleLoad}
@@ -346,6 +464,17 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
             >
               {isLoading ? "Loading..." : "Load Data from File"}
             </button>
+            {/* Restore Cached File Button - only show if cached file exists and FileSystem API is supported */}
+            {state.currentFile && supportsFileSystemAccess() && (
+              <button
+                className="restore-btn"
+                onClick={handleRestoreCached}
+                disabled={isLoading}
+                style={{ marginTop: "0.5rem" }}
+              >
+                {isLoading ? "Restoring..." : "Restore Cached File"}
+              </button>
+            )}
           </div>
           {/* Clear Data Section */}
           <div className="file-section danger-section">

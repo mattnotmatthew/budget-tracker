@@ -1,5 +1,12 @@
-import React, { createContext, useContext, useReducer, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useReducer,
+  useEffect,
+  ReactNode,
+} from "react";
 import { BudgetEntry, BudgetCategory, ViewMode, BudgetState } from "../types";
+import { attemptRestoreCachedFile } from "../utils/fileManager";
 
 type BudgetAction =
   | { type: "ADD_ENTRY"; payload: BudgetEntry }
@@ -98,9 +105,73 @@ const initialCategories: BudgetCategory[] = [
   { id: "opex-marketing", name: "Marketing", parentCategory: "opex" },
 ];
 
-// Initialize state with empty data - no caching
+// Cache key for storing file information
+const CACHE_KEY = "budget-tracker-file-info";
+
+// Helper function to save file info to cache
+const saveFileInfoToCache = (fileInfo: {
+  name: string;
+  path?: string;
+  lastSaved?: Date;
+  size?: number;
+  lastModified?: Date;
+  contentHash?: string;
+}) => {
+  try {
+    const cacheData = {
+      ...fileInfo,
+      lastSaved: fileInfo.lastSaved?.toISOString(),
+      lastModified: fileInfo.lastModified?.toISOString(),
+      timestamp: new Date().toISOString(),
+    };
+    localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+  } catch (error) {
+    console.warn("Failed to save file info to cache:", error);
+  }
+};
+
+// Helper function to load file info from cache
+const loadFileInfoFromCache = (): {
+  name: string;
+  path?: string;
+  lastSaved?: Date;
+  size?: number;
+  lastModified?: Date;
+  contentHash?: string;
+  timestamp?: Date;
+} | null => {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      return {
+        ...parsed,
+        lastSaved: parsed.lastSaved ? new Date(parsed.lastSaved) : undefined,
+        lastModified: parsed.lastModified
+          ? new Date(parsed.lastModified)
+          : undefined,
+        timestamp: parsed.timestamp ? new Date(parsed.timestamp) : undefined,
+      };
+    }
+  } catch (error) {
+    console.warn("Failed to load file info from cache:", error);
+  }
+  return null;
+};
+
+// Helper function to clear file info from cache
+const clearFileInfoFromCache = () => {
+  try {
+    localStorage.removeItem(CACHE_KEY);
+  } catch (error) {
+    console.warn("Failed to clear file info from cache:", error);
+  }
+};
+
+// Initialize state with cached file info if available
 const getInitialState = (): BudgetState => {
-  // Always start with empty data - user must load/create a file
+  const cachedFileInfo = loadFileInfoFromCache();
+
   return {
     entries: [],
     categories: initialCategories,
@@ -108,6 +179,14 @@ const getInitialState = (): BudgetState => {
     selectedYear: 2025,
     yearlyBudgetTargets: {},
     monthlyForecastModes: {},
+    currentFile: cachedFileInfo
+      ? {
+          name: cachedFileInfo.name,
+          lastSaved: cachedFileInfo.lastSaved,
+          // Note: FileSystemFileHandle cannot be serialized, so it's not cached
+          // The app will need to prompt user to re-select the file for new file system access
+        }
+      : undefined,
   };
 };
 
@@ -146,8 +225,20 @@ const budgetReducer = (
     case "LOAD_ENTRIES":
       return { ...state, entries: action.payload };
     case "SET_CURRENT_FILE":
+      // Save file info to cache when setting current file
+      if (action.payload) {
+        saveFileInfoToCache({
+          name: action.payload.name,
+          lastSaved: action.payload.lastSaved,
+        });
+      } else {
+        // Clear cache when unsetting current file
+        clearFileInfoFromCache();
+      }
       return { ...state, currentFile: action.payload };
     case "CLEAR_ALL_DATA":
+      // Clear file info from cache when clearing all data
+      clearFileInfoFromCache();
       return {
         ...state,
         entries: [],
@@ -191,6 +282,86 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [state, dispatch] = useReducer(budgetReducer, initialState);
+
+  // Attempt to restore cached file on app load
+  useEffect(() => {
+    const restoreCachedFile = async () => {
+      // Only attempt restore if we have cached file info but no current data
+      if (state.currentFile && state.entries.length === 0) {
+        try {
+          const result = await attemptRestoreCachedFile();
+
+          if (result.success && result.data) {
+            // Load the restored data
+            dispatch({ type: "LOAD_ENTRIES", payload: result.data.entries });
+
+            // Load yearly budget targets if they exist
+            if (result.data.yearlyBudgetTargets) {
+              Object.entries(result.data.yearlyBudgetTargets).forEach(
+                ([year, amount]) => {
+                  dispatch({
+                    type: "SET_YEARLY_BUDGET_TARGET",
+                    payload: { year: parseInt(year), amount: amount as number },
+                  });
+                }
+              );
+            }
+
+            // Load monthly forecast modes if they exist
+            if (result.data.monthlyForecastModes) {
+              Object.entries(result.data.monthlyForecastModes).forEach(
+                ([year, monthModes]) => {
+                  if (monthModes && typeof monthModes === "object") {
+                    Object.entries(
+                      monthModes as { [month: number]: boolean }
+                    ).forEach(([month, isFinal]) => {
+                      dispatch({
+                        type: "SET_MONTHLY_FORECAST_MODE",
+                        payload: {
+                          year: parseInt(year),
+                          month: parseInt(month),
+                          isFinal: isFinal as boolean,
+                        },
+                      });
+                    });
+                  }
+                }
+              );
+            }
+
+            // Update selected year to the loaded year
+            if (result.data.year) {
+              dispatch({
+                type: "SET_SELECTED_PERIOD",
+                payload: { year: result.data.year as number },
+              });
+            }
+
+            // Update current file info with the restored file name
+            dispatch({
+              type: "SET_CURRENT_FILE",
+              payload: {
+                name: result.fileName || state.currentFile.name,
+                lastSaved: new Date(),
+              },
+            });
+
+            console.log("Successfully restored cached file:", result.fileName);
+          } else if (result.error && !result.error.includes("User declined")) {
+            console.warn("Failed to restore cached file:", result.error);
+          }
+        } catch (error) {
+          console.error("Error during file restoration:", error);
+        }
+      }
+    };
+
+    // Run restoration after a short delay to ensure component is mounted
+    const timeoutId = setTimeout(restoreCachedFile, 1000);
+
+    return () => clearTimeout(timeoutId);
+  }, []); // Only run once on mount
+
   return (
     <BudgetContext.Provider value={{ state, dispatch }}>
       {children}
