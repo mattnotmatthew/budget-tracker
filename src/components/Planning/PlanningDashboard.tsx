@@ -8,14 +8,16 @@
  * Future: Will contain planning-specific UI components
  */
 
-import React from "react";
+import React, { useState } from "react";
 import { Navigate, Link } from "react-router-dom";
 import { useBudget } from "../../context/BudgetContext";
 import { isFeatureEnabled } from "../../utils/featureFlags";
 import { isValidPlanningYear } from "../../utils/yearUtils";
+import PlanningSetupWizard from "./PlanningSetupWizard";
 
 const PlanningDashboard: React.FC = () => {
   const { state } = useBudget();
+  const [showSetupWizard, setShowSetupWizard] = useState(false);
 
   // Route guard: Only render if planning feature is enabled
   if (!isFeatureEnabled("BUDGET_PLANNING")) {
@@ -34,6 +36,11 @@ const PlanningDashboard: React.FC = () => {
   }
 
   const currentPlanningData = state.planningData?.[state.selectedYear];
+
+  // Show setup wizard if requested or no planning data exists
+  if (showSetupWizard || !currentPlanningData) {
+    return <PlanningSetupWizard />;
+  }
 
   return (
     <div className="planning-dashboard">
@@ -92,10 +99,12 @@ const PlanningDashboard: React.FC = () => {
               }
             >
               📊 View Categories
-            </Link>
-            <button
-              className="btn btn-secondary"
-              disabled={!currentPlanningData}
+            </Link>{" "}
+            <Link
+              to="/planning/scenarios"
+              className={`btn btn-secondary ${
+                !currentPlanningData ? "btn-disabled" : ""
+              }`}
               title={
                 !currentPlanningData
                   ? "Create planning data first"
@@ -103,17 +112,13 @@ const PlanningDashboard: React.FC = () => {
               }
             >
               🎯 Scenarios
-            </button>
+            </Link>
             <button
               className="btn btn-secondary"
-              disabled={!currentPlanningData}
-              title={
-                !currentPlanningData
-                  ? "Create planning data first"
-                  : "View planning summary"
-              }
+              onClick={() => setShowSetupWizard(true)}
+              title="Reconfigure planning settings"
             >
-              📈 Summary
+              ⚙️ Setup Wizard
             </button>
           </div>
         </div>
@@ -157,18 +162,19 @@ const PlanningDashboard: React.FC = () => {
           color: "#666",
         }}
       >
+        {" "}
         <h4>🔧 Development Status</h4>
         <p>
-          <strong>Phase 2.2:</strong> Basic planning dashboard shell with route
-          guards
+          <strong>Phase 3.1:</strong> Planning setup wizard and data creation
+          tools implemented
         </p>
         <p>
-          <strong>Route Protection:</strong> Feature flag and year validation
-          active
+          <strong>New Features:</strong> Comprehensive planning data setup with
+          method selection
         </p>
         <p>
-          <strong>Next Phase:</strong> Core planning components and
-          functionality
+          <strong>Next Phase:</strong> Scenario management and planning
+          calculations
         </p>
       </div>
     </div>

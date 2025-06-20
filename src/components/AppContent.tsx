@@ -7,6 +7,7 @@ import Dashboard from "../components/Dashboard";
 import ExecutiveSummary from "../components/ExecutiveSummary/ExecutiveSummary";
 import PlanningDashboard from "../components/Planning/PlanningDashboard";
 import PlanningCategories from "../components/Planning/PlanningCategories";
+import ScenarioManagement from "../components/Planning/PlanningScenarios";
 import FeatureFlagTest from "../components/FeatureFlagTest"; // ADD THIS LINE
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
@@ -51,6 +52,7 @@ const AppContent: React.FC = () => {
             {/* NEW: Planning routes (feature-flagged) */}
             {isFeatureEnabled("BUDGET_PLANNING") && (
               <>
+                {" "}
                 <Route path="/planning" element={<PlanningDashboard />} />
                 <Route
                   path="/planning/dashboard"
@@ -59,6 +61,10 @@ const AppContent: React.FC = () => {
                 <Route
                   path="/planning/categories"
                   element={<PlanningCategories />}
+                />
+                <Route
+                  path="/planning/scenarios"
+                  element={<ScenarioManagement />}
                 />
               </>
             )}
