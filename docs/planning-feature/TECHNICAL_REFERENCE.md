@@ -7,14 +7,15 @@ This document provides concrete code examples to guide the implementation of the
 ## 🚀 Phase 1: Feature Flag Implementation
 
 ### Feature Flag Utility
+
 **File**: `src/utils/featureFlags.ts`
 
 ```typescript
 // Feature flag configuration
 export const FEATURE_FLAGS = {
-  BUDGET_PLANNING_2026: process.env.REACT_APP_ENABLE_PLANNING === 'true',
-  PLANNING_SCENARIOS: process.env.REACT_APP_ENABLE_SCENARIOS === 'true',
-  ADVANCED_ANALYTICS: process.env.REACT_APP_ENABLE_ANALYTICS === 'true',
+  BUDGET_PLANNING_2026: process.env.REACT_APP_ENABLE_PLANNING === "true",
+  PLANNING_SCENARIOS: process.env.REACT_APP_ENABLE_SCENARIOS === "true",
+  ADVANCED_ANALYTICS: process.env.REACT_APP_ENABLE_ANALYTICS === "true",
 } as const;
 
 export type FeatureFlag = keyof typeof FEATURE_FLAGS;
@@ -31,6 +32,7 @@ export const useFeatureFlag = (flag: FeatureFlag): boolean => {
 ```
 
 ### Environment Configuration
+
 **File**: `.env.example`
 
 ```bash
@@ -46,6 +48,7 @@ REACT_APP_ENABLE_PLANNING=true
 ## 🗃️ Phase 1: Data Model Extensions
 
 ### Type Definitions
+
 **File**: `src/types/planning.ts`
 
 ```typescript
@@ -69,7 +72,7 @@ export interface PlanningScenario {
 
 export interface CategoryPlanningData {
   categoryId: string;
-  planningMethod: 'trend-based' | 'zero-based' | 'percentage-increase';
+  planningMethod: "trend-based" | "zero-based" | "percentage-increase";
   monthlyValues: number[];
   assumptions: Record<string, number>;
   notes?: string;
@@ -88,6 +91,7 @@ export interface PlanningData {
 ```
 
 ### Extended App State
+
 **File**: `src/types/index.ts`
 
 ```typescript
@@ -97,7 +101,7 @@ export interface AppState {
   selectedYear: number;
   categories: CategoryData[];
   summary: SummaryData;
-  
+
   // NEW: Planning mode properties (optional for backward compatibility)
   planningMode?: boolean;
   planningData?: Record<number, PlanningData>;
@@ -118,14 +122,19 @@ export const createInitialState = (): AppState => ({
 ## 🎛️ Phase 2: Conditional Routing
 
 ### App Router Enhancement
+
 **File**: `src/App.tsx`
 
 ```typescript
-import { isFeatureEnabled } from './utils/featureFlags';
+import { isFeatureEnabled } from "./utils/featureFlags";
 
 // Lazy load planning components
-const PlanningDashboard = lazy(() => import('./components/Planning/PlanningDashboard'));
-const PlanningCategories = lazy(() => import('./components/Planning/PlanningCategories'));
+const PlanningDashboard = lazy(
+  () => import("./components/Planning/PlanningDashboard")
+);
+const PlanningCategories = lazy(
+  () => import("./components/Planning/PlanningCategories")
+);
 
 const App: React.FC = () => {
   return (
@@ -136,16 +145,22 @@ const App: React.FC = () => {
           <Route path="/budget" element={<Dashboard />} />
           <Route path="/budget/categories" element={<Categories />} />
           <Route path="/budget/summary" element={<ExecutiveSummary />} />
-          
+
           {/* NEW: Planning routes (feature-flagged) */}
-          {isFeatureEnabled('BUDGET_PLANNING_2026') && (
+          {isFeatureEnabled("BUDGET_PLANNING_2026") && (
             <>
               <Route path="/budget/planning" element={<PlanningDashboard />} />
-              <Route path="/budget/planning/categories" element={<PlanningCategories />} />
-              <Route path="/budget/planning/scenarios" element={<ScenarioModeling />} />
+              <Route
+                path="/budget/planning/categories"
+                element={<PlanningCategories />}
+              />
+              <Route
+                path="/budget/planning/scenarios"
+                element={<ScenarioModeling />}
+              />
             </>
           )}
-          
+
           {/* Default redirect - UNCHANGED */}
           <Route path="*" element={<Navigate to="/budget" replace />} />
         </Routes>
@@ -156,20 +171,21 @@ const App: React.FC = () => {
 ```
 
 ### Navigation Enhancement
+
 **File**: `src/components/Navigation/Navigation.tsx`
 
 ```typescript
 const Navigation: React.FC = () => {
   const { state } = useAppContext();
-  const planningEnabled = useFeatureFlag('BUDGET_PLANNING_2026');
-  
+  const planningEnabled = useFeatureFlag("BUDGET_PLANNING_2026");
+
   return (
     <nav className="main-navigation">
       {/* Existing navigation - UNCHANGED */}
       <NavLink to="/budget">Dashboard</NavLink>
       <NavLink to="/budget/categories">Categories</NavLink>
       <NavLink to="/budget/summary">Summary</NavLink>
-      
+
       {/* NEW: Planning navigation (conditional) */}
       {planningEnabled && state.selectedYear === 2026 && (
         <div className="planning-nav">
@@ -186,27 +202,28 @@ const Navigation: React.FC = () => {
 ## 📊 Phase 3: Enhanced Executive Summary
 
 ### Executive Summary Enhancement
+
 **File**: `src/components/ExecutiveSummary/ExecutiveSummary.tsx`
 
 ```typescript
 interface ExecutiveSummaryProps {
-  mode?: 'tracking' | 'planning';
+  mode?: "tracking" | "planning";
   comparisonYear?: number;
   planningData?: PlanningData;
 }
 
-const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ 
-  mode = 'tracking',
+const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({
+  mode = "tracking",
   comparisonYear,
-  planningData 
+  planningData,
 }) => {
   const { state } = useAppContext();
-  
+
   // Use existing logic for tracking mode
-  if (mode === 'tracking') {
+  if (mode === "tracking") {
     return <ExistingExecutiveSummary />;
   }
-  
+
   // NEW: Planning mode logic
   const planningMetrics = useMemo(() => {
     if (!planningData) return null;
@@ -219,26 +236,28 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({
         <h2>2026 Budget Planning Summary</h2>
         <div className="mode-indicator">📋 Planning Mode</div>
       </div>
-      
+
       {/* Reuse existing KPI cards with planning data */}
       <div className="kpi-grid">
-        <KPICard 
+        <KPICard
           title="Planned Total Budget"
           value={planningMetrics?.totalBudget}
-          comparison={comparisonYear ? getComparisonData(comparisonYear) : undefined}
+          comparison={
+            comparisonYear ? getComparisonData(comparisonYear) : undefined
+          }
         />
-        <KPICard 
+        <KPICard
           title="vs 2025 Actuals"
           value={planningMetrics?.variance}
           isPercentage
         />
-        <KPICard 
+        <KPICard
           title="Growth Rate"
           value={planningMetrics?.growthRate}
           isPercentage
         />
       </div>
-      
+
       {/* NEW: Planning-specific insights */}
       <PlanningInsights data={planningMetrics} />
     </div>
@@ -249,6 +268,7 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({
 ## 🔄 Phase 4: Historical Analysis Engine
 
 ### Historical Data Analysis
+
 **File**: `src/utils/historicalAnalysis.ts`
 
 ```typescript
@@ -263,58 +283,63 @@ export const analyzeHistoricalData = (
   currentYearData: CategoryData[],
   previousYearData?: CategoryData[]
 ): HistoricalAnalysis => {
-  
   // Calculate year-over-year growth
-  const trendGrowth = previousYearData 
+  const trendGrowth = previousYearData
     ? calculateGrowthRate(currentYearData, previousYearData)
     : 0.03; // Default 3% growth
-  
+
   // Analyze monthly patterns for seasonality
   const seasonalityFactors = calculateSeasonalityFactors(currentYearData);
-  
+
   // Identify variance patterns by category
   const variancePatterns = analyzeVariancePatterns(currentYearData);
-  
+
   // Generate planning recommendations
   const recommendations = generateRecommendations({
     trendGrowth,
     seasonalityFactors,
-    variancePatterns
+    variancePatterns,
   });
-  
+
   return {
     trendGrowth,
     seasonalityFactors,
     variancePatterns,
-    recommendations
+    recommendations,
   };
 };
 
-const calculateGrowthRate = (current: CategoryData[], previous: CategoryData[]): number => {
+const calculateGrowthRate = (
+  current: CategoryData[],
+  previous: CategoryData[]
+): number => {
   const currentTotal = current.reduce((sum, cat) => sum + cat.actualTotal, 0);
   const previousTotal = previous.reduce((sum, cat) => sum + cat.actualTotal, 0);
-  
+
   return previousTotal > 0 ? (currentTotal - previousTotal) / previousTotal : 0;
 };
 
 const calculateSeasonalityFactors = (data: CategoryData[]): number[] => {
   // Calculate monthly distribution patterns
   const monthlyTotals = Array(12).fill(0);
-  
-  data.forEach(category => {
+
+  data.forEach((category) => {
     category.months.forEach((month, index) => {
       monthlyTotals[index] += month.actual || 0;
     });
   });
-  
+
   const yearTotal = monthlyTotals.reduce((sum, month) => sum + month, 0);
-  return monthlyTotals.map(month => yearTotal > 0 ? month / (yearTotal / 12) : 1);
+  return monthlyTotals.map((month) =>
+    yearTotal > 0 ? month / (yearTotal / 12) : 1
+  );
 };
 ```
 
 ## 🎯 Phase 5: Planning Methods Implementation
 
 ### Trend-Based Planning
+
 **File**: `src/utils/planningMethods.ts`
 
 ```typescript
@@ -323,27 +348,27 @@ export const generateTrendBasedPlan = (
   analysis: HistoricalAnalysis,
   assumptions: PlanningAssumptions
 ): CategoryPlanningData[] => {
-  
-  return historicalData.map(category => {
+  return historicalData.map((category) => {
     const baseValue = category.actualTotal;
-    const adjustedGrowth = analysis.trendGrowth + (assumptions.inflationRate / 100);
+    const adjustedGrowth =
+      analysis.trendGrowth + assumptions.inflationRate / 100;
     const projectedTotal = baseValue * (1 + adjustedGrowth);
-    
+
     // Distribute across months using seasonality
-    const monthlyValues = analysis.seasonalityFactors.map(factor => 
-      (projectedTotal / 12) * factor
+    const monthlyValues = analysis.seasonalityFactors.map(
+      (factor) => (projectedTotal / 12) * factor
     );
-    
+
     return {
       categoryId: category.id,
-      planningMethod: 'trend-based',
+      planningMethod: "trend-based",
       monthlyValues,
       assumptions: {
         baseValue,
         growthRate: adjustedGrowth,
-        inflationAdjustment: assumptions.inflationRate
+        inflationAdjustment: assumptions.inflationRate,
       },
-      notes: `Based on ${(adjustedGrowth * 100).toFixed(1)}% growth trend`
+      notes: `Based on ${(adjustedGrowth * 100).toFixed(1)}% growth trend`,
     };
   });
 };
@@ -352,16 +377,15 @@ export const generateZeroBasedPlan = (
   categories: CategoryData[],
   assumptions: PlanningAssumptions
 ): CategoryPlanningData[] => {
-  
-  return categories.map(category => ({
+  return categories.map((category) => ({
     categoryId: category.id,
-    planningMethod: 'zero-based',
+    planningMethod: "zero-based",
     monthlyValues: Array(12).fill(0), // Start from zero
     assumptions: {
       inflationRate: assumptions.inflationRate,
-      requiresJustification: true
+      requiresJustification: true,
     },
-    notes: 'Zero-based budget - justify each expense'
+    notes: "Zero-based budget - justify each expense",
   }));
 };
 ```
@@ -369,6 +393,7 @@ export const generateZeroBasedPlan = (
 ## 🎨 CSS Organization
 
 ### Planning Mode Styles
+
 **File**: `src/styles/planning.css`
 
 ```css
@@ -421,7 +446,7 @@ export const generateZeroBasedPlan = (
 }
 
 .feature-planning-enabled .year-selector::after {
-  content: '✨ Planning Available';
+  content: "✨ Planning Available";
   position: absolute;
   top: 100%;
   left: 0;
@@ -435,7 +460,7 @@ export const generateZeroBasedPlan = (
   .planning-dashboard {
     grid-template-columns: 1fr;
   }
-  
+
   .planning-grid {
     grid-template-columns: 1fr;
   }
@@ -445,79 +470,91 @@ export const generateZeroBasedPlan = (
 ## 🧪 Testing Examples
 
 ### Component Testing
+
 **File**: `src/components/ExecutiveSummary/ExecutiveSummary.test.tsx`
 
 ```typescript
-describe('ExecutiveSummary', () => {
+describe("ExecutiveSummary", () => {
   // Test existing behavior unchanged
-  it('renders tracking mode by default', () => {
+  it("renders tracking mode by default", () => {
     render(<ExecutiveSummary />);
-    expect(screen.getByRole('heading')).toHaveTextContent('Executive Summary');
-    expect(screen.queryByText('Planning Mode')).not.toBeInTheDocument();
+    expect(screen.getByRole("heading")).toHaveTextContent("Executive Summary");
+    expect(screen.queryByText("Planning Mode")).not.toBeInTheDocument();
   });
-  
+
   // Test planning mode when feature enabled
-  it('renders planning mode when enabled', () => {
+  it("renders planning mode when enabled", () => {
     // Mock feature flag
     jest.mocked(isFeatureEnabled).mockReturnValue(true);
-    
+
     const mockPlanningData = createMockPlanningData();
-    
-    render(<ExecutiveSummary mode="planning" planningData={mockPlanningData} />);
-    
-    expect(screen.getByText('📋 Planning Mode')).toBeInTheDocument();
-    expect(screen.getByText('2026 Budget Planning Summary')).toBeInTheDocument();
+
+    render(
+      <ExecutiveSummary mode="planning" planningData={mockPlanningData} />
+    );
+
+    expect(screen.getByText("📋 Planning Mode")).toBeInTheDocument();
+    expect(
+      screen.getByText("2026 Budget Planning Summary")
+    ).toBeInTheDocument();
   });
-  
+
   // Test feature flag behavior
-  it('does not render planning features when flag disabled', () => {
+  it("does not render planning features when flag disabled", () => {
     jest.mocked(isFeatureEnabled).mockReturnValue(false);
-    
+
     render(<ExecutiveSummary mode="planning" />);
-    
+
     // Should fallback to tracking mode
-    expect(screen.queryByText('Planning Mode')).not.toBeInTheDocument();
+    expect(screen.queryByText("Planning Mode")).not.toBeInTheDocument();
   });
 });
 ```
 
 ### Integration Testing
+
 **File**: `src/__tests__/planning-integration.test.tsx`
 
 ```typescript
-describe('Planning Feature Integration', () => {
+describe("Planning Feature Integration", () => {
   beforeEach(() => {
     // Reset feature flags before each test
     jest.clearAllMocks();
   });
-  
-  it('enables planning routes when feature flag is on', () => {
+
+  it("enables planning routes when feature flag is on", () => {
     jest.mocked(isFeatureEnabled).mockReturnValue(true);
-    
+
     render(<App />);
-    
+
     // Planning routes should be available
-    expect(screen.getByRole('link', { name: /planning/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /planning/i })).toBeInTheDocument();
   });
-  
-  it('hides planning routes when feature flag is off', () => {
+
+  it("hides planning routes when feature flag is off", () => {
     jest.mocked(isFeatureEnabled).mockReturnValue(false);
-    
+
     render(<App />);
-    
+
     // Planning routes should not be available
-    expect(screen.queryByRole('link', { name: /planning/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /planning/i })
+    ).not.toBeInTheDocument();
   });
-  
-  it('maintains existing functionality with planning disabled', () => {
+
+  it("maintains existing functionality with planning disabled", () => {
     jest.mocked(isFeatureEnabled).mockReturnValue(false);
-    
+
     render(<App />);
-    
+
     // All existing features should work
-    expect(screen.getByRole('link', { name: /dashboard/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /categories/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /summary/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /dashboard/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /categories/i })
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /summary/i })).toBeInTheDocument();
   });
 });
 ```
@@ -525,6 +562,7 @@ describe('Planning Feature Integration', () => {
 ## 🚀 Deployment Configuration
 
 ### Environment Variables
+
 **File**: `.env.production`
 
 ```bash
@@ -544,17 +582,23 @@ REACT_APP_ENABLE_ANALYTICS=true
 ```
 
 ### Build Scripts
+
 **File**: `package.json`
 
 ```json
 {
   "scripts": {
     "build": "react-scripts build",
-    "build:planning": "REACT_APP_ENABLE_PLANNING=true react-scripts build",
-    "build:production": "REACT_APP_ENABLE_PLANNING=false react-scripts build",
-    "start:planning": "REACT_APP_ENABLE_PLANNING=true react-scripts start"
+    "build:planning": "cross-env REACT_APP_ENABLE_PLANNING=true react-scripts build",
+    "build:production": "cross-env REACT_APP_ENABLE_PLANNING=false react-scripts build",
+    "start:planning": "cross-env REACT_APP_ENABLE_PLANNING=true react-scripts start"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3"
   }
 }
 ```
+
+**Note**: Uses `cross-env` for Windows/Mac/Linux compatibility
 
 This technical reference provides concrete implementation examples that developers can copy and adapt during the actual implementation phase.

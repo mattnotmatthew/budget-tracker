@@ -5,8 +5,12 @@
   "main": "src/index.tsx",
   "scripts": {
     "start": "react-scripts start",
+    "start:planning": "cross-env REACT_APP_ENABLE_PLANNING=true react-scripts start",
     "build": "react-scripts build",
+    "build:planning": "cross-env REACT_APP_ENABLE_PLANNING=true react-scripts build",
+    "build:production": "cross-env REACT_APP_ENABLE_PLANNING=false react-scripts build",
     "test": "react-scripts test",
+    "test:planning": "cross-env REACT_APP_ENABLE_PLANNING=true react-scripts test",
     "eject": "react-scripts eject"
   },
   "keywords": [
@@ -35,7 +39,7 @@
     "web-vitals": "^2.1.0",
     "xlsx": "^0.18.5"
   },
-  "homepage": "/budget",
+  "homepage": "/",
   "repository": {
     "type": "git",
     "url": "https://github.com/yourusername/budget-tracker.git"
@@ -58,6 +62,7 @@
     "browserify-zlib": "^0.2.0",
     "buffer": "^6.0.3",
     "constants-browserify": "^1.0.0",
+    "cross-env": "^7.0.3",
     "crypto-browserify": "^3.12.1",
     "https-browserify": "^1.0.0",
     "os-browserify": "^0.3.0",
