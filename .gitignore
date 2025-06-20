@@ -119,7 +119,7 @@ budget-files/
 *.csv
 
 # Documentation and test directories
-docs/
+docs/complete-features
 tests/
 
 # Local storage backups
