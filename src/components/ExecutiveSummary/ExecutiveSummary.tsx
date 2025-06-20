@@ -570,7 +570,6 @@ const ExecutiveSummary = () => {
 
     return summary;
   };
-
   const handleExport = () => {
     exportExecutiveSummary({
       kpis,
@@ -580,6 +579,65 @@ const ExecutiveSummary = () => {
       //   commentary,
       userNotes,
     });
+  };
+  const handlePrintExport = () => {
+    // Store current state of collapsible sections
+    const originalStates = {
+      strategicContext: isStrategicContextExpanded,
+      ytdPerformance: isYTDPerformanceExpanded,
+      forwardLooking: isForwardLookingExpanded,
+      riskVelocity: isRiskVelocityExpanded,
+      trendTable: trendTableCollapsed,
+      totalCompCapitalization: totalCompCapitalizationCollapsed,
+    };
+
+    // Expand all sections for printing
+    setIsStrategicContextExpanded(true);
+    setIsYTDPerformanceExpanded(true);
+    setIsForwardLookingExpanded(true);
+    setIsRiskVelocityExpanded(true);
+    setTrendTableCollapsed(false);
+    setTotalCompCapitalizationCollapsed(false);
+
+    // Small delay to allow state updates to render
+    setTimeout(() => {
+      // Temporarily hide elements that shouldn't be printed
+      const floatingButtons = document.querySelectorAll(
+        ".floating-back-button, .floating-export-button"
+      );
+      const originalDisplay: string[] = [];
+
+      floatingButtons.forEach((button, index) => {
+        const element = button as HTMLElement;
+        originalDisplay[index] = element.style.display;
+        element.style.display = "none";
+      });
+
+      // Add print class to body for print-specific styling
+      document.body.classList.add("printing");
+
+      // Open print dialog
+      window.print();
+
+      // Restore elements and original states after print dialog closes
+      setTimeout(() => {
+        floatingButtons.forEach((button, index) => {
+          const element = button as HTMLElement;
+          element.style.display = originalDisplay[index];
+        });
+        document.body.classList.remove("printing");
+
+        // Restore original collapsible states
+        setIsStrategicContextExpanded(originalStates.strategicContext);
+        setIsYTDPerformanceExpanded(originalStates.ytdPerformance);
+        setIsForwardLookingExpanded(originalStates.forwardLooking);
+        setIsRiskVelocityExpanded(originalStates.riskVelocity);
+        setTrendTableCollapsed(originalStates.trendTable);
+        setTotalCompCapitalizationCollapsed(
+          originalStates.totalCompCapitalization
+        );
+      }, 100);
+    }, 200);
   };
   // Helper to get performance class for dynamic styling
   const getPerformanceClass = (
@@ -1036,14 +1094,12 @@ const ExecutiveSummary = () => {
         title="Back to Dashboard"
       >
         ← Back
-      </button>
+      </button>{" "}
       {/* Floating Export Button */}
       <button
         className="floating-export-button"
-        onClick={() => {
-          /* TODO: Hook up export functionality */
-        }}
-        title="Export Executive Summary"
+        onClick={handlePrintExport}
+        title="Export Executive Summary to PDF"
       >
         📊 Export
       </button>
@@ -1058,10 +1114,17 @@ const ExecutiveSummary = () => {
         </div>
         {/* <div className="auto-commentary">{commentary}</div> */}
         <textarea
+          className="commentary-textarea"
           placeholder="Add your notes for leadership..."
           value={userNotes}
           onChange={(e) => setUserNotes(e.target.value)}
         />
+        {/* Print-only version of commentary text */}
+        <div className="commentary-print-text">
+          {userNotes.split("\n").map((line, index) => (
+            <p key={index}>{line || "\u00A0"}</p>
+          ))}
+        </div>
       </div>{" "}
       <div className="kpi-grid">
         {/* Strategic Context - Collapsible */}

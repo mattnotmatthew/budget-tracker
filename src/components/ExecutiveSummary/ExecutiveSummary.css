@@ -225,6 +225,11 @@
   margin: 1rem;
   height: 300px;
 }
+
+/* Hide print text version during normal viewing */
+.commentary-section .commentary-print-text {
+  display: none;
+}
 .summary-actions {
   display: flex;
   gap: 1rem;
@@ -1066,4 +1071,313 @@
     float: none;
     margin-left: 0;
   }
+}
+
+/* Print Styles for Executive Summary */
+@media print {
+  /* Remove shadows and background colors for better printing */
+  .executive-summary {
+    box-shadow: none !important;
+    background: white !important;
+    margin: 0 !important;
+    max-width: none !important;
+    padding: 1rem !important;
+    border-radius: 0 !important;
+  }
+
+  /* Hide floating buttons */
+  .floating-back-button,
+  .floating-export-button {
+    display: none !important;
+  }
+
+  /* Optimize typography for print */
+  .executive-summary h2 {
+    font-size: 1.5rem !important;
+    margin-bottom: 1rem !important;
+    color: black !important;
+    page-break-after: avoid;
+  }
+
+  .executive-summary h3 {
+    font-size: 1.2rem !important;
+    color: black !important;
+    page-break-after: avoid;
+  }
+
+  .executive-summary h4 {
+    font-size: 1.1rem !important;
+    color: black !important;
+    page-break-after: avoid;
+  }
+
+  /* Optimize KPI cards for print */
+  .kpi-cards {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 0.5rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .kpi-card {
+    background: white !important;
+    border: 1px solid #ddd !important;
+    border-radius: 4px !important;
+    padding: 0.75rem !important;
+    box-shadow: none !important;
+    page-break-inside: avoid;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .kpi-card span {
+    font-size: 0.8rem !important;
+    color: #666 !important;
+  }
+
+  .kpi-card strong {
+    font-size: 1.1rem !important;
+    color: black !important;
+  }
+  /* Optimize charts for print */
+  .trend-chart-section {
+    page-break-before: always !important;
+    page-break-inside: avoid;
+    margin-bottom: 1rem !important;
+    margin-top: 0 !important;
+  }
+
+  .trend-chart-section .recharts-wrapper {
+    height: 300px !important;
+  }
+
+  /* Optimize tables for print */
+  .trend-table,
+  .variance-table {
+    font-size: 0.8rem !important;
+    page-break-inside: avoid;
+  }
+
+  .trend-table th,
+  .trend-table td,
+  .variance-table th,
+  .variance-table td {
+    padding: 0.4rem 0.6rem !important;
+    border: 1px solid #ddd !important;
+  }
+
+  .trend-table th,
+  .variance-table th {
+    background: #f5f5f5 !important;
+    color: black !important;
+  }
+  /* Optimize commentary section */
+  .commentary-section {
+    page-break-inside: avoid;
+    margin-bottom: 1rem !important;
+    background: white !important;
+    border: 1px solid #ddd !important;
+    padding: 1rem !important;
+  }
+
+  /* Hide textarea in print view */
+  .commentary-section .commentary-textarea {
+    display: none !important;
+  }
+  /* Show and style print text version */
+  .commentary-section .commentary-print-text {
+    display: block !important;
+    background: white !important;
+    color: black !important;
+    font-size: 0.9rem !important;
+    line-height: 1.4 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    font-family: inherit !important;
+  }
+  .commentary-section .commentary-print-text p {
+    margin: 0 0 0.4rem 0 !important;
+    padding: 0 !important;
+    color: black !important;
+    font-size: 0.9rem !important;
+    line-height: 1.4 !important;
+  }
+
+  .commentary-section .commentary-print-text p:last-child {
+    margin-bottom: 0 !important;
+  }
+
+  .commentary-section .commentary-header {
+    background: #f8f8f8 !important;
+    border-bottom: 1px solid #ddd !important;
+    padding: 0.75rem !important;
+    margin: -1rem -1rem 1rem -1rem !important;
+  }
+
+  .commentary-section .commentary-header h3 {
+    color: black !important;
+    margin: 0 !important;
+    font-size: 1.1rem !important;
+  }
+
+  /* Optimize resource allocation section */
+  .resource-summary-cards {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.5rem !important;
+    page-break-inside: avoid;
+  }
+
+  .resource-card {
+    background: white !important;
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+    padding: 0.75rem !important;
+    page-break-inside: avoid;
+  }
+
+  .resource-card h4 {
+    color: black !important;
+    border-bottom: 1px solid #ddd !important;
+  }
+
+  /* Optimize collapsible sections for print */
+  .section-header {
+    background: #f8f8f8 !important;
+    border-bottom: 1px solid #ddd !important;
+    padding: 0.75rem !important;
+  }
+
+  .section-title {
+    color: black !important;
+  }
+
+  /* Hide expand/collapse icons in print */
+  .expand-icon {
+    display: none !important;
+  }
+
+  /* Ensure all collapsible sections are expanded for print */
+  .kpi-section .kpi-row,
+  .trend-data-table,
+  .resource-summary-cards {
+    display: block !important;
+  }
+
+  /* Remove animations and transitions for print */
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* Optimize capacity table for print */
+  .capacity-table {
+    display: block !important;
+  }
+
+  .capacity-row {
+    display: grid !important;
+    grid-template-columns: 1fr auto 1fr !important;
+    gap: 0.5rem !important;
+    padding: 0.5rem !important;
+    margin-bottom: 0.5rem !important;
+    border: 1px solid #ddd !important;
+    background: white !important;
+    page-break-inside: avoid;
+  }
+
+  .capacity-label,
+  .capacity-value,
+  .capacity-note {
+    color: black !important;
+  }
+
+  /* Optimize metrics display */
+  .metric {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 0.3rem 0 !important;
+    border-bottom: 1px solid #eee !important;
+  }
+
+  .metric-label,
+  .metric-value {
+    color: black !important;
+  }
+
+  /* Page break optimization */
+  .section-divider {
+    page-break-before: always;
+    margin: 1rem 0 !important;
+    background: #ddd !important;
+    height: 1px !important;
+  }
+
+  /* Ensure proper spacing between sections */
+  .kpi-section,
+  .trend-chart-section,
+  .resource-allocation-section,
+  .total-comp-capitalization-section {
+    margin-bottom: 1.5rem !important;
+    page-break-inside: avoid;
+  }
+
+  /* Hide alerts section if empty or make it print-friendly */
+  .alerts-section {
+    display: block !important;
+    background: white !important;
+    border: 1px solid #ddd !important;
+    padding: 0.75rem !important;
+  }
+
+  .alerts-section li {
+    background: white !important;
+    color: black !important;
+    border: 1px solid #ddd !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  /* Optimize tooltips for print (hide them) */
+  .kpi-tooltip {
+    display: none !important;
+  }
+
+  /* Make sure text is black and readable */
+  .compact-metric,
+  .compact-metric strong,
+  .summary-label,
+  .summary-values {
+    color: black !important;
+  }
+
+  /* Responsive adjustments for different paper sizes */
+  @page {
+    margin: 0.5in;
+    size: letter;
+  }
+}
+
+/* Additional print optimization when body has printing class */
+body.printing {
+  overflow: visible !important;
+}
+
+body.printing .executive-summary {
+  transform: none !important;
+}
+
+/* Force expand all collapsible sections for print */
+body.printing .kpi-section .kpi-row,
+body.printing .trend-data-table,
+body.printing .resource-summary-cards {
+  display: block !important;
+}
+
+body.printing .trend-data-table-section .trend-data-table {
+  display: block !important;
+}
+
+body.printing .total-comp-capitalization-section .resource-summary-cards {
+  display: grid !important;
 }
