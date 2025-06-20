@@ -4,6 +4,7 @@ import FirstTimeSetup from "../components/FirstTimeSetup/FirstTimeSetup";
 import PersistenceIndicator from "../components/PersistenceIndicator";
 import Dashboard from "../components/Dashboard";
 import ExecutiveSummary from "../components/ExecutiveSummary/ExecutiveSummary";
+import FeatureFlagTest from "../components/FeatureFlagTest"; // ADD THIS LINE
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 const AppContent: React.FC = () => {
@@ -30,14 +31,17 @@ const AppContent: React.FC = () => {
         onSkipForNow={handleSkipForNow}
       />
     );
-  }
-  // Show main application
+  } // Show main application
   return (
     <BrowserRouter>
       <div className="App">
         <header className="app-header">
           <h1>Budget vs Actual Tracker 2025</h1>
         </header>
+
+        {/* TEMPORARY: Feature Flag Test Component - Remove after testing */}
+        <FeatureFlagTest />
+
         <main className="app-main">
           <Routes>
             <Route path="/" element={<Dashboard />} />

@@ -3034,12 +3034,57 @@ button small {
 
 .year-selector select:focus {
   outline: none;
-  border-color: #334915;
-  box-shadow: 0 0 0 3px rgba(51, 73, 21, 0.1);
+  border-color: #2196f3;
+  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
 }
 
-.year-selector select option {
-  padding: 0.5rem;
-  background: #ffffff;
-  color: #434947;
+/* Planning Feature Styles */
+
+/* Mode indicator for planning vs tracking */
+.mode-indicator {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.mode-indicator.planning-mode {
+  background-color: #e3f2fd;
+  border: 1px solid #2196f3;
+  color: #1976d2;
+}
+
+.mode-indicator.tracking-mode {
+  background-color: #f3e5f5;
+  border: 1px solid #9c27b0;
+  color: #7b1fa2;
+}
+
+/* Year selector container for better layout */
+.year-selector-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Enhanced year dropdown with mode-aware styling */
+.year-selector select {
+  transition: border-color 0.2s ease;
+}
+
+.year-selector select:focus {
+  outline: none;
+  border-color: #2196f3;
+  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+}
+
+/* Planning year option styling */
+.year-selector select option[value*="planning"] {
+  background-color: #e3f2fd;
+  color: #1976d2;
+  font-weight: 500;
 }

@@ -8,7 +8,7 @@
 
 // Feature flag configuration
 export const FEATURE_FLAGS = {
-  BUDGET_PLANNING_2026: process.env.REACT_APP_ENABLE_PLANNING === "true",
+  BUDGET_PLANNING: process.env.REACT_APP_ENABLE_PLANNING === "true",
   PLANNING_SCENARIOS: process.env.REACT_APP_ENABLE_SCENARIOS === "true",
   PLANNING_AI_SUGGESTIONS:
     process.env.REACT_APP_ENABLE_AI_SUGGESTIONS === "true",

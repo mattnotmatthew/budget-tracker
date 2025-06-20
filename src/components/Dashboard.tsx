@@ -1,5 +1,11 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useBudget } from "../context/BudgetContext";
+import { isFeatureEnabled } from "../utils/featureFlags";
+import {
+  getNextPlanningYear,
+  getAvailablePlanningYears,
+  getPlanningYearLabel,
+} from "../utils/yearUtils";
 import MonthlyView from "./MonthlyView";
 import QuarterSelector from "./QuarterSelector";
 import BudgetInput from "./BudgetInput";
@@ -35,6 +41,34 @@ const Dashboard: React.FC = () => {
   const [selectedQuarters, setSelectedQuarters] = useState<number[]>([]);
   const [showHotkeysHelp, setShowHotkeysHelp] = useState(false);
   const navigate = useNavigate();
+
+  // Generate year options dynamically (year-agnostic)
+  const yearOptions = React.useMemo(() => {
+    const years = [
+      { value: 2024, label: "2024", mode: "tracking" },
+      { value: 2025, label: "2025", mode: "tracking" },
+    ];
+
+    // Add planning year if feature is enabled
+    if (isFeatureEnabled("BUDGET_PLANNING")) {
+      const planningYear = getNextPlanningYear();
+      years.push({
+        value: planningYear,
+        label: getPlanningYearLabel(planningYear),
+        mode: "planning",
+      });
+    }
+
+    return years;
+  }, []);
+
+  // Determine current mode based on selected year
+  const currentMode = React.useMemo(() => {
+    const selectedYearOption = yearOptions.find(
+      (y) => y.value === state.selectedYear
+    );
+    return selectedYearOption?.mode || "tracking";
+  }, [state.selectedYear, yearOptions]);
 
   const handleQuarterToggle = (quarter: number) => {
     setSelectedQuarters((prev) => {
@@ -141,15 +175,30 @@ const Dashboard: React.FC = () => {
         switch (key) {
           case "1":
             event.preventDefault();
-            dispatch({ type: "SET_SELECTED_PERIOD", payload: { year: 2024 } });
+            if (yearOptions[0]) {
+              dispatch({
+                type: "SET_SELECTED_PERIOD",
+                payload: { year: yearOptions[0].value },
+              });
+            }
             break;
           case "2":
             event.preventDefault();
-            dispatch({ type: "SET_SELECTED_PERIOD", payload: { year: 2025 } });
+            if (yearOptions[1]) {
+              dispatch({
+                type: "SET_SELECTED_PERIOD",
+                payload: { year: yearOptions[1].value },
+              });
+            }
             break;
           case "3":
             event.preventDefault();
-            dispatch({ type: "SET_SELECTED_PERIOD", payload: { year: 2026 } });
+            if (yearOptions[2]) {
+              dispatch({
+                type: "SET_SELECTED_PERIOD",
+                payload: { year: yearOptions[2].value },
+              });
+            }
             break;
         }
       }
@@ -173,6 +222,7 @@ const Dashboard: React.FC = () => {
       showHotkeysHelp,
       state.viewMode,
       dispatch,
+      yearOptions,
     ]
   );
 
@@ -196,20 +246,32 @@ const Dashboard: React.FC = () => {
       <div className="dashboard-header">
         <div className="view-controls">
           <div className="year-selector">
-            <label>Year: </label>
-            <select
-              value={state.selectedYear}
-              onChange={(e) =>
-                dispatch({
-                  type: "SET_SELECTED_PERIOD",
-                  payload: { year: parseInt(e.target.value) },
-                })
-              }
-            >
-              <option value={2024}>2024</option>
-              <option value={2025}>2025</option>
-              <option value={2026}>2026</option>
-            </select>
+            <label>Year: </label>{" "}
+            <div className="year-selector-container">
+              <select
+                value={state.selectedYear}
+                onChange={(e) =>
+                  dispatch({
+                    type: "SET_SELECTED_PERIOD",
+                    payload: { year: parseInt(e.target.value) },
+                  })
+                }
+              >
+                {yearOptions.map((yearOption) => (
+                  <option key={yearOption.value} value={yearOption.value}>
+                    {yearOption.label}
+                  </option>
+                ))}
+              </select>
+
+              {/* Mode indicator (only show when planning is enabled) */}
+              {isFeatureEnabled("BUDGET_PLANNING") &&
+                currentMode === "planning" && (
+                  <div className="mode-indicator planning-mode">
+                    📋 Planning Mode
+                  </div>
+                )}
+            </div>
           </div>
           <button className={`view-btn active`} title="Monthly View">
             Monthly View

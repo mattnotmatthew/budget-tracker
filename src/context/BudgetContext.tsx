@@ -5,9 +5,17 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
-import { BudgetEntry, BudgetCategory, ViewMode, BudgetState } from "../types";
+import {
+  BudgetEntry,
+  BudgetCategory,
+  ViewMode,
+  BudgetState,
+  PlanningData,
+  HistoricalAnalysis,
+} from "../types";
 import { attemptRestoreCachedFile } from "../utils/fileManager";
 import { PersistenceManager } from "../services/persistenceManager";
+import { isFeatureEnabled } from "../utils/featureFlags";
 
 type BudgetAction =
   | { type: "ADD_ENTRY"; payload: BudgetEntry }
@@ -39,7 +47,20 @@ type BudgetAction =
   | { type: "MARK_SAVED_TO_FILE" }
   | { type: "UPDATE_CACHE_TIMESTAMP" }
   | { type: "LOAD_FROM_CACHE"; payload: any }
-  | { type: "SET_FIRST_TIME_USER"; payload: boolean };
+  | { type: "SET_FIRST_TIME_USER"; payload: boolean }
+  // NEW: Planning feature actions (optional - only available when feature enabled)
+  | { type: "SET_PLANNING_MODE"; payload: boolean }
+  | { type: "SET_PLANNING_DATA"; payload: { year: number; data: PlanningData } }
+  | {
+      type: "UPDATE_PLANNING_DATA";
+      payload: { year: number; data: Partial<PlanningData> };
+    }
+  | { type: "DELETE_PLANNING_DATA"; payload: number }
+  | { type: "SET_SELECTED_SCENARIO"; payload: string }
+  | {
+      type: "SET_HISTORICAL_ANALYSIS";
+      payload: { year: number; analysis: HistoricalAnalysis };
+    };
 
 const initialCategories: BudgetCategory[] = [
   // Cost of Sales
@@ -201,6 +222,11 @@ const getInitialState = (): BudgetState => {
       isFirstTimeUser: persistenceManager.isFirstTimeUser(),
       cacheAutoSaveInterval: 5 * 60 * 1000, // 5 minutes
     },
+    // NEW: Planning feature properties (optional, only initialized if feature enabled)
+    planningMode: false, // Always start in tracking mode
+    planningData: {}, // Empty planning data by default
+    selectedScenario: undefined, // No scenario selected initially
+    historicalAnalysis: {}, // Empty historical analysis by default
   };
 };
 
@@ -349,7 +375,114 @@ const budgetReducer = (
           ...state.persistence,
           isFirstTimeUser: action.payload,
         },
+      }; // NEW: Planning feature action handlers (only process if feature enabled)
+    case "SET_PLANNING_MODE":
+      if (!isFeatureEnabled("BUDGET_PLANNING")) {
+        console.warn("Planning feature is disabled");
+        return state;
+      }
+      return {
+        ...state,
+        planningMode: action.payload,
+        persistence: {
+          ...state.persistence,
+          hasUnsavedChanges: true,
+        },
       };
+    case "SET_PLANNING_DATA":
+      if (!isFeatureEnabled("BUDGET_PLANNING")) {
+        console.warn("Planning feature is disabled");
+        return state;
+      }
+      return {
+        ...state,
+        planningData: {
+          ...state.planningData,
+          [action.payload.year]: action.payload.data,
+        },
+        persistence: {
+          ...state.persistence,
+          hasUnsavedChanges: true,
+        },
+      };
+    case "UPDATE_PLANNING_DATA":
+      if (!isFeatureEnabled("BUDGET_PLANNING")) {
+        console.warn("Planning feature is disabled");
+        return state;
+      }
+      const existingData = state.planningData?.[action.payload.year];
+      if (!existingData) {
+        console.warn(`No planning data found for year ${action.payload.year}`);
+        return state;
+      }
+      return {
+        ...state,
+        planningData: {
+          ...state.planningData,
+          [action.payload.year]: {
+            ...existingData,
+            ...action.payload.data,
+            metadata: {
+              ...existingData.metadata,
+              lastModified: new Date(),
+            },
+          },
+        },
+        persistence: {
+          ...state.persistence,
+          hasUnsavedChanges: true,
+        },
+      };
+    case "DELETE_PLANNING_DATA":
+      if (!isFeatureEnabled("BUDGET_PLANNING")) {
+        console.warn("Planning feature is disabled");
+        return state;
+      }
+      const { [action.payload]: deletedData, ...remainingData } =
+        state.planningData || {};
+      return {
+        ...state,
+        planningData: remainingData,
+        selectedScenario:
+          state.selectedScenario &&
+          deletedData?.scenarios.some((s) => s.id === state.selectedScenario)
+            ? undefined
+            : state.selectedScenario,
+        persistence: {
+          ...state.persistence,
+          hasUnsavedChanges: true,
+        },
+      };
+    case "SET_SELECTED_SCENARIO":
+      if (!isFeatureEnabled("BUDGET_PLANNING")) {
+        console.warn("Planning feature is disabled");
+        return state;
+      }
+      return {
+        ...state,
+        selectedScenario: action.payload,
+        persistence: {
+          ...state.persistence,
+          hasUnsavedChanges: true,
+        },
+      };
+    case "SET_HISTORICAL_ANALYSIS":
+      if (!isFeatureEnabled("BUDGET_PLANNING")) {
+        console.warn("Planning feature is disabled");
+        return state;
+      }
+      return {
+        ...state,
+        historicalAnalysis: {
+          ...state.historicalAnalysis,
+          [action.payload.year]: action.payload.analysis,
+        },
+        persistence: {
+          ...state.persistence,
+          hasUnsavedChanges: true,
+        },
+      };
+
     default:
       return state;
   }
@@ -369,6 +502,17 @@ const BudgetContext = createContext<{
   hasUnsavedChanges: () => boolean;
   getTimeSinceLastSave: () => string | null;
   getCacheStats: () => any;
+  // NEW: Planning feature functions (only available when feature enabled)
+  setPlanningMode: (enabled: boolean) => void;
+  setPlanningData: (year: number, data: PlanningData) => void;
+  updatePlanningData: (year: number, data: Partial<PlanningData>) => void;
+  deletePlanningData: (year: number) => void;
+  setSelectedScenario: (scenarioId: string) => void;
+  setHistoricalAnalysis: (year: number, analysis: HistoricalAnalysis) => void;
+  // Planning utility functions
+  isPlanningEnabled: () => boolean;
+  getCurrentPlanningData: () => PlanningData | undefined;
+  getActiveScenario: () => any | undefined;
 } | null>(null);
 
 export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
@@ -721,9 +865,53 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
   const getTimeSinceLastSave = (): string | null => {
     return persistenceManager.getTimeSinceLastFileSave();
   };
-
   const getCacheStats = () => {
     return persistenceManager.getCacheStats();
+  };
+
+  // NEW: Planning feature functions (only available when feature enabled)
+  const setPlanningMode = (enabled: boolean) => {
+    dispatch({ type: "SET_PLANNING_MODE", payload: enabled });
+  };
+
+  const setPlanningData = (year: number, data: PlanningData) => {
+    dispatch({ type: "SET_PLANNING_DATA", payload: { year, data } });
+  };
+
+  const updatePlanningData = (year: number, data: Partial<PlanningData>) => {
+    dispatch({ type: "UPDATE_PLANNING_DATA", payload: { year, data } });
+  };
+
+  const deletePlanningData = (year: number) => {
+    dispatch({ type: "DELETE_PLANNING_DATA", payload: year });
+  };
+
+  const setSelectedScenario = (scenarioId: string) => {
+    dispatch({ type: "SET_SELECTED_SCENARIO", payload: scenarioId });
+  };
+
+  const setHistoricalAnalysis = (
+    year: number,
+    analysis: HistoricalAnalysis
+  ) => {
+    dispatch({ type: "SET_HISTORICAL_ANALYSIS", payload: { year, analysis } });
+  };
+  const isPlanningEnabled = (): boolean => {
+    return isFeatureEnabled("BUDGET_PLANNING");
+  };
+
+  const getCurrentPlanningData = (): PlanningData | undefined => {
+    return state.planningData?.[state.selectedYear];
+  };
+
+  const getActiveScenario = () => {
+    const currentPlanningData = getCurrentPlanningData();
+    if (!currentPlanningData || !state.selectedScenario) {
+      return undefined;
+    }
+    return currentPlanningData.scenarios.find(
+      (s) => s.id === state.selectedScenario
+    );
   };
 
   // Skip first-time setup (for demo/testing purposes)
@@ -745,6 +933,16 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
         hasUnsavedChanges,
         getTimeSinceLastSave,
         getCacheStats,
+        // Planning feature functions
+        setPlanningMode,
+        setPlanningData,
+        updatePlanningData,
+        deletePlanningData,
+        setSelectedScenario,
+        setHistoricalAnalysis,
+        isPlanningEnabled,
+        getCurrentPlanningData,
+        getActiveScenario,
       }}
     >
       {children}

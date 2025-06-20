@@ -1,3 +1,6 @@
+// Planning feature imports (added for 2026 planning functionality)
+import { PlanningData, HistoricalAnalysis } from "./planning";
+
 export interface BudgetCategory {
   id: string;
   name: string;
@@ -115,4 +118,13 @@ export interface BudgetState {
     isFirstTimeUser: boolean;
     cacheAutoSaveInterval: number; // in milliseconds
   };
+
+  // NEW: Planning feature properties (optional for backward compatibility)
+  planningMode?: boolean; // Default: false - whether app is in planning mode
+  planningData?: Record<number, PlanningData>; // Default: {} - planning data by year
+  selectedScenario?: string; // Default: undefined - active scenario ID
+  historicalAnalysis?: Record<number, HistoricalAnalysis>; // Default: {} - analysis by base year
 }
+
+// Re-export planning types for convenience
+export * from "./planning";
