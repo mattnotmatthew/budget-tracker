@@ -42,8 +42,7 @@ const AppContent: React.FC = () => {
         <header className="app-header">
           <h1>Budget vs Actual Tracker 2025</h1>
         </header>
-        {/* TEMPORARY: Feature Flag Test Component - Remove after testing */}
-        <FeatureFlagTest />{" "}
+
         <main className="app-main">
           <Routes>
             {/* Existing routes - UNCHANGED */}
