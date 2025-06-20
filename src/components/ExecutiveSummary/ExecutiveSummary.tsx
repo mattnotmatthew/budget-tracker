@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useBudget } from "../../context/BudgetContext";
 import {
@@ -17,6 +17,9 @@ import {
   calculateBudgetTracking,
   calculateMonthlyData,
 } from "../../utils/budgetCalculations";
+import html2canvas from "html2canvas";
+import { saveAs } from "file-saver";
+import ExportCustomizer from "../ExportCustomizer/ExportCustomizer";
 import "./ExecutiveSummary.css";
 
 // Utility functions (stubs, since imports fail)
@@ -406,8 +409,13 @@ const ExecutiveSummary = () => {
 
     return summary;
   }, [state.entries, state.categories, state.selectedYear]);
+
   // User notes state - initialize with intelligent summary
   const [userNotes, setUserNotes] = useState(intelligentSummary);
+
+  // Export customizer state
+  const [showExportCustomizer, setShowExportCustomizer] = useState(false);
+  const [currentExportTemplate, setCurrentExportTemplate] = useState(null);
 
   // Update userNotes when intelligent summary changes (e.g., year change)
   useEffect(() => {
@@ -543,7 +551,7 @@ const ExecutiveSummary = () => {
     // 7. Key Variances
     if (topVariance.length > 0) {
       summary += "\nTOP VARIANCES:\n";
-      topVariance.slice(0, 2).forEach((variance, idx) => {
+      topVariance.slice(0, 2).forEach((variance: any, idx: any) => {
         const direction = variance.variance > 0 ? "over" : "under";
         summary += `• ${variance.name}: ${direction} by ${formatCurrency(
           Math.abs(variance.variance)
@@ -603,7 +611,7 @@ const ExecutiveSummary = () => {
     setTimeout(() => {
       // Temporarily hide elements that shouldn't be printed
       const floatingButtons = document.querySelectorAll(
-        ".floating-back-button, .floating-export-button"
+        ".floating-back-button, .floating-export-button, .floating-customize-button"
       );
       const originalDisplay: string[] = [];
 
@@ -638,6 +646,988 @@ const ExecutiveSummary = () => {
         );
       }, 100);
     }, 200);
+  };
+  const handlePowerPointExport = async (customTemplate?: any) => {
+    try {
+      // Get template from parameter, localStorage, or use default
+      const template = customTemplate ||
+        currentExportTemplate ||
+        JSON.parse(localStorage.getItem("exportCustomTemplate") || "null") || {
+          styles: {
+            bodyFont: "Arial, sans-serif",
+            titleColor: "#2563eb",
+            titleSize: "36px",
+            headingColor: "#2563eb",
+            headingSize: "28px",
+            backgroundColor: "#ffffff",
+            slideBackground: "#ffffff",
+            borderColor: "#2563eb",
+            fontSize: "16px",
+            lineHeight: "1.6",
+          },
+          layout: {
+            includeTitle: true,
+            includeCommentary: true,
+            includeKPIs: true,
+            includeResourceAllocation: true,
+            includeChart: true,
+          },
+        };
+
+      // Create HTML content for PowerPoint import using the template
+      let htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Executive Summary - ${state.selectedYear}</title>
+    <style>
+        /* PowerPoint-Ready Styling with Web Look and Feel */
+        body { 
+          font-family: ${template.styles.bodyFont}; 
+          margin: 0;
+          padding: 20px;
+          background-color: ${template.styles.backgroundColor};
+          line-height: ${template.styles.lineHeight};
+        }
+          .slide { 
+          page-break-after: always; 
+          margin-bottom: 60px; 
+          padding: 40px; 
+          background-color: ${template.styles.slideBackground};
+          border-radius: 12px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+          max-width: 95vw;
+          width: 100%;
+          margin-left: auto;
+          margin-right: auto;
+          position: relative;
+          min-height: 600px;
+          box-sizing: border-box;
+          overflow-x: auto;
+        }
+        
+        .slide:last-child { page-break-after: auto; }
+        
+        /* Add slide number indicators */
+        .slide::before {
+          content: "SLIDE " counter(slide-counter);
+          counter-increment: slide-counter;
+          position: absolute;
+          top: -30px;
+          right: 0;
+          background: #2d3a4a;
+          color: white;
+          padding: 8px 16px;
+          border-radius: 20px;
+          font-size: 12px;
+          font-weight: bold;
+          letter-spacing: 1px;
+        }
+        
+        body { counter-reset: slide-counter; }
+        
+        /* Slide separator line */
+        .slide::after {
+          content: "";
+          position: absolute;
+          bottom: -30px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 200px;
+          height: 3px;
+          background: linear-gradient(90deg, transparent, ${template.styles.borderColor}, transparent);
+        }
+        
+        h1 { 
+          color: ${template.styles.titleColor}; 
+          font-size: ${template.styles.titleSize}; 
+          text-align: center; 
+          margin-bottom: 30px;
+          font-weight: 600;
+        }
+        
+        h2 { 
+          color: ${template.styles.headingColor}; 
+          font-size: ${template.styles.headingSize}; 
+          margin-bottom: 24px;
+          font-weight: 600;
+          border-bottom: 2px solid #e1e8ed;
+          padding-bottom: 8px;
+        }
+        
+        h3 { 
+          color: #2d3a4a; 
+          font-size: 18px; 
+          margin-bottom: 16px;
+          font-weight: 600;
+        }
+          /* Web-style KPI Grid - optimized for landscape */
+        .kpi-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 20px;
+          margin: 24px 0;
+          width: 100%;
+          max-width: 100%;
+          box-sizing: border-box;
+        }
+        
+        .kpi-card {
+          background: #ffffff;
+          border-radius: 12px;
+          padding: 20px;
+          text-align: center;
+          border: 2px solid #e1e8ed;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+          min-width: 0;
+          word-wrap: break-word;
+          box-sizing: border-box;
+        }
+        
+        .kpi-card .label {
+          display: block;
+          font-size: 13px;
+          margin-bottom: 10px;
+          color: #6b7a8f;
+          font-weight: 500;
+          letter-spacing: 0.5px;
+          text-transform: uppercase;
+          word-wrap: break-word;
+        }
+        
+        .kpi-card .value {
+          font-size: 20px;
+          font-weight: 700;
+          color: #2d3a4a;
+          line-height: 1.2;
+          word-wrap: break-word;
+        }
+        
+        /* Web-style Capacity Table - optimized for landscape */
+        .capacity-table {
+          display: flex;
+          flex-direction: column;
+          gap: 0.8rem;
+          margin: 24px 0;
+          width: 100%;
+          max-width: 100%;
+          box-sizing: border-box;
+        }
+          .capacity-row {
+          display: grid;
+          grid-template-columns: auto 1fr auto;
+          gap: 1rem;
+          align-items: center;
+          padding: 0.75rem;
+          background: #ffffff;
+          border-radius: 8px;
+          border-left: 4px solid #3498db;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+          min-width: 0;
+          word-wrap: break-word;
+          box-sizing: border-box;
+        }
+        
+        .capacity-row.budget-under {
+          border-left-color: #27ae60;
+          background: #f2fdf5;
+        }
+        
+        .capacity-row.budget-over {
+          border-left-color: #e74c3c;
+          background: #fdf2f2;
+        }
+        
+        .capacity-label {
+          font-weight: 600;
+          color: #2d3a4a;
+          font-size: 0.95rem;
+        }
+        
+        .capacity-value {
+          font-weight: 700;
+          color: #3498db;
+          font-size: 1rem;
+          text-align: right;
+          min-width: 120px;
+        }
+        
+        .capacity-value.value-positive {
+          color: #27ae60;
+          font-weight: 700;
+        }
+        
+        .capacity-value.value-negative {
+          color: #e74c3c;
+          font-weight: 700;
+        }
+          .capacity-note {
+          font-size: 0.8rem;
+          color: #666;
+          font-style: italic;
+          margin-left: 0.5rem;
+        }
+          /* Commentary styling - optimized for readability */
+        .commentary { 
+          font-size: ${template.styles.fontSize}; 
+          line-height: ${template.styles.lineHeight}; 
+          white-space: pre-wrap;
+          background: #f8f9fa;
+          border-radius: 12px;
+          padding: 24px;
+          border: 1px solid #e1e8ed;
+          max-height: 400px;
+          overflow-y: auto;
+          width: 100%;
+          max-width: 100%;
+          box-sizing: border-box;
+          word-wrap: break-word;
+        }
+        
+        .date { 
+          color: #6b7a8f; 
+          font-size: 16px; 
+          text-align: center;
+          margin: 8px 0;
+        }
+        
+        /* Chart container */
+        .chart-container {
+          text-align: center;
+          padding: 20px;
+          background: #f8f9fa;
+          border-radius: 12px;
+          border: 1px solid #e1e8ed;
+          margin: 20px 0;
+        }
+        
+        .chart-placeholder {
+          color: #6b7a8f;
+          font-style: italic;
+          padding: 40px;
+        }
+          /* Print optimizations for landscape/widescreen */        @media print {
+          @page {
+            size: A4 landscape;
+            margin: 0.2in;
+          }
+          
+          * {
+            box-sizing: border-box;
+          }
+          
+          body {
+            padding: 0;
+            margin: 0;
+            background: white !important;
+            font-size: 11px;
+            line-height: 1.2;
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+          }
+            .slide { 
+            margin-bottom: 8px;
+            padding: 12px;
+            box-shadow: none !important;
+            border: none !important;
+            background: white !important;
+            border-radius: 0 !important;
+            max-width: 100%;
+            width: 100%;
+            min-height: auto;
+            page-break-inside: avoid;
+            overflow: hidden;
+          }
+          
+          .slide::before, .slide::after { 
+            display: none; 
+          }
+          
+          .kpi-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            width: 100%;
+            max-width: 100%;
+            min-height: 200px;
+          }
+          
+          .kpi-card {
+            padding: 10px;
+            box-shadow: none;
+            border: 1px solid #ddd;
+            font-size: 16px;
+            min-width: 0;
+            word-wrap: break-word;
+           width: 250px;
+          height: auto;
+          }
+          
+          .kpi-card .label {
+            font-size: 16px;
+            margin-bottom: 6px;
+          }
+          
+          .kpi-card .value {
+            font-size: 18px;
+            line-height: 1.2;
+          }
+          
+          .capacity-table {
+            gap: 0.3rem;
+            width: 100%;
+            max-width: 100%;
+          }
+            .capacity-row {
+            padding: 0.4rem;
+            box-shadow: none;
+            border: 1px solid #ddd;
+            border-left: 4px solid #3498db;
+            grid-template-columns: auto 1fr auto;
+            gap: 0.5rem;
+            font-size: 16px;
+            min-width: 0;
+            max-height: 50px;
+            margin-bottom: 1.75rem;
+          }
+          
+        .capacity-label {
+          font-weight: 600;
+          color: #2d3a4a;
+          font-size: 28px;
+        }
+        
+        .capacity-value {
+          font-weight: 700;
+          font-family: courier, monospace;
+          color: #3498db;
+          font-size: 32px;
+          text-align: right;
+          min-width: 120px;
+        }
+        
+        .capacity-value.value-positive {
+          color: #27ae60;
+          font-weight: 700;
+        }
+        
+        .capacity-value.value-negative {
+          color: #e74c3c;
+          font-weight: 700;
+        }
+          .capacity-note {
+          font-size: 10px;
+          color: #666;
+          font-style: italic;
+          margin-left: 0.2rem;
+        }
+          
+          .commentary {
+            max-height: none;
+            overflow: visible;
+            padding: 15px;
+            border: 1px solid #ddd;
+            box-shadow: none;
+            font-size: 11px;
+            line-height: 1.4;
+            word-wrap: break-word;
+            width: 100%;
+            max-width: 100%;
+            min-height: 650px;
+          }
+          
+          h1 { 
+            font-size: 24px; 
+            margin-bottom: 15px;
+            word-wrap: break-word;
+          }
+          h2 { 
+            font-size: 22px; 
+            margin-bottom: 12px;
+            word-wrap: break-word;
+          }
+          h3 { 
+            font-size: 18px; 
+            margin-bottom: 8px;
+            word-wrap: break-word;
+          }
+          
+          .date {
+            font-size: 12px;
+          }
+          
+          .chart-container {
+            padding: 10px;
+            max-width: 100%;
+            overflow: hidden;
+          }
+          
+          .chart-container img {
+            max-width: 100% !important;
+            height: auto !important;
+          }
+          
+          /* Ensure no content overflows */
+          table, tr, td, th {
+            max-width: 100%;
+            word-wrap: break-word;
+            font-size: 16px;
+          }
+        }
+          /* Screen-only: Print instruction banner */
+        @media screen {
+          .print-instructions {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #2563eb;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            font-weight: 600;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+          }
+          
+          body {
+            margin-top: 60px;
+            padding: 10px;
+            box-sizing: border-box;
+          }
+        }
+        
+        /* Responsive adjustments for smaller screens */
+        @media screen and (max-width: 1200px) {
+          .slide {
+            max-width: 98vw;
+            padding: 30px 20px;
+          }
+          
+          .kpi-grid {
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+          }
+          
+          .capacity-row {
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+            text-align: left;
+          }
+          
+          .capacity-value {
+            text-align: left;
+          }
+        }
+        
+        @media screen and (max-width: 800px) {
+          .slide {
+            padding: 20px 15px;
+          }
+          
+          .kpi-grid {
+            grid-template-columns: 1fr;
+            gap: 10px;
+          }
+          
+          .kpi-card {
+            padding: 15px;
+          }
+        }
+        
+        @media print {
+          .print-instructions {
+            display: none;
+          }
+          
+          body {
+            margin-top: 0;
+          }
+        }
+    </style>
+    <script>
+      // Auto-trigger print dialog when page loads
+      window.onload = function() {
+        // Small delay to ensure page is fully rendered
+        setTimeout(function() {
+          window.print();
+        }, 1000);
+      };
+      
+      // Handle print dialog events
+      window.onbeforeprint = function() {
+        console.log('Print dialog opened');
+      };
+      
+      window.onafterprint = function() {
+        console.log('Print dialog closed');
+        // Optionally close the window after printing
+        // window.close();
+      };
+    </script>
+</head>
+<body>
+    <div class="print-instructions">
+      📄 Print to PDF: Set to Landscape orientation and adjust margins for best results. This window will auto-close after printing.
+    </div>`;
+
+      // Slide 1: Title (conditional)
+      if (template.layout.includeTitle) {
+        htmlContent += `
+    <!-- Slide 1: Title -->
+    <div class="slide">
+        <h1>Executive Summary</h1>
+        <p class="date">${state.selectedYear}${
+          state.selectedQuarter ? ` Q${state.selectedQuarter}` : ""
+        }</p>
+        <p class="date">${new Date().toLocaleDateString("en-US", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })}</p>
+    </div>
+`;
+      }
+
+      // Slide 2: Executive Commentary (conditional)
+      if (template.layout.includeCommentary && userNotes.trim()) {
+        htmlContent += `
+    <!-- Slide 2: Executive Commentary -->
+    <div class="slide">
+        <h2>Executive Commentary</h2>
+        <div class="commentary">${userNotes}</div>
+    </div>
+`;
+      }
+
+      // Slide 3: Key Performance Indicators (conditional)
+      if (template.layout.includeKPIs) {
+        // Helper function to get border color and styling based on performance
+        const getKPIStyle = (
+          kpiType: string,
+          value: number,
+          percentage?: number
+        ) => {
+          let borderColor = "#e1e8ed";
+          let boxShadow = "";
+
+          switch (kpiType) {
+            case "ytdVariance":
+              if (percentage && percentage > 5) {
+                borderColor = "#28a745"; // Good - under budget
+                boxShadow = "box-shadow: 0 0 15px rgba(40, 167, 69, 0.3);";
+              } else if (percentage && percentage < -15) {
+                borderColor = "#dc3545"; // Danger - significantly over budget
+                boxShadow = "box-shadow: 0 0 15px rgba(220, 53, 69, 0.3);";
+              }
+              break;
+            case "budgetUtilization":
+              if (value > 80) {
+                borderColor = "#ffc107"; // Warning - high utilization
+                boxShadow = "box-shadow: 0 0 15px rgba(255, 193, 7, 0.3);";
+              } else if (value < 30) {
+                borderColor = "#28a745"; // Good - low utilization
+                boxShadow = "box-shadow: 0 0 15px rgba(40, 167, 69, 0.3);";
+              }
+              break;
+            case "forecastVariance":
+              if (value < -1000000) {
+                borderColor = "#dc3545"; // Danger - over budget
+                boxShadow = "box-shadow: 0 0 15px rgba(220, 53, 69, 0.3);";
+              } else if (value > 1000000) {
+                borderColor = "#ffc107"; // Warning - significant variance
+                boxShadow = "box-shadow: 0 0 15px rgba(255, 193, 7, 0.3);";
+              }
+              break;
+            case "monthsRemaining":
+              if (value > 6) {
+                borderColor = "#28a745"; // Good - plenty of runway
+                boxShadow = "box-shadow: 0 0 15px rgba(40, 167, 69, 0.3);";
+              } else if (value < 2) {
+                borderColor = "#dc3545"; // Danger - low runway
+                boxShadow = "box-shadow: 0 0 15px rgba(220, 53, 69, 0.3);";
+              } else {
+                borderColor = "#ffc107"; // Warning - moderate runway
+                boxShadow = "box-shadow: 0 0 15px rgba(255, 193, 7, 0.3);";
+              }
+              break;
+          }
+
+          return `border-color: ${borderColor}; ${boxShadow}`;
+        };
+
+        htmlContent += `
+    <!-- Slide 3: Key Performance Indicators -->
+    <div class="slide">
+        <h2>Key Performance Indicators</h2>
+        <div class="kpi-grid">
+            <div class="kpi-card" style="border-color: #e1e8ed;">
+                <span class="label">YTD Actual</span>
+                <div class="value">${formatCurrencyFull(kpis.ytdActual)}</div>
+            </div>
+            <div class="kpi-card" style="border-color: #e1e8ed;">
+                <span class="label">YTD Budget</span>
+                <div class="value">${formatCurrencyFull(kpis.ytdBudget)}</div>
+            </div>
+            <div class="kpi-card" style="${getKPIStyle(
+              "ytdVariance",
+              kpis.variance,
+              kpis.variancePct
+            )}">
+                <span class="label">YTD Variance</span>
+                <div class="value ${
+                  kpis.variancePct >= 0 ? "positive" : "negative"
+                }">${formatCurrencyFull(kpis.variance)}<br><small>(${
+          kpis.variancePct >= 0 ? "+" : ""
+        }${kpis.variancePct.toFixed(1)}%)</small></div>
+            </div>
+            <div class="kpi-card" style="border-color: #e1e8ed;">
+                <span class="label">Annual Budget Target</span>
+                <div class="value">${formatCurrencyFull(
+                  kpis.annualBudgetTarget
+                )}</div>
+            </div>
+            <div class="kpi-card" style="${getKPIStyle(
+              "budgetUtilization",
+              kpis.budgetUtilization
+            )}">
+                <span class="label">Budget Utilization</span>
+                <div class="value">${kpis.budgetUtilization.toFixed(1)}%</div>
+            </div>
+            <div class="kpi-card" style="${getKPIStyle(
+              "forecastVariance",
+              kpis.forecastVsTargetVariance
+            )}">
+                <span class="label">Full-Year Forecast</span>
+                <div class="value">${formatCurrencyFull(
+                  kpis.fullYearForecast
+                )}</div>
+            </div>
+            <div class="kpi-card" style="border-color: #e1e8ed;">
+                <span class="label">Monthly Burn Rate</span>
+                <div class="value">${formatCurrencyFull(kpis.burnRate)}</div>
+            </div>
+            <div class="kpi-card" style="${getKPIStyle(
+              "monthsRemaining",
+              kpis.monthsRemaining
+            )}">
+                <span class="label">Months Remaining</span>
+                <div class="value">${kpis.monthsRemaining.toFixed(
+                  1
+                )} months</div>
+            </div>
+            <div class="kpi-card" style="border-color: #e1e8ed;">
+                <span class="label">Variance Trend</span>
+                <div class="value">${kpis.varianceTrend}</div>
+            </div>
+        </div>
+    </div>
+`;
+      }
+
+      // Resource Allocation & Hiring Capacity Section
+      if (template.layout.includeResourceAllocation) {
+        const resourceData = getResourceData();
+        const budgetNote =
+          resourceData.hiringCapacity.budgetVsProjection < 0
+            ? "Projected total spend exceeds annual budget - budget adjustments needed"
+            : "Projected total spend under annual budget - additional hiring capacity available";
+        const budgetClass =
+          resourceData.hiringCapacity.budgetVsProjection >= 0
+            ? "positive"
+            : "negative";
+        const budgetSign =
+          resourceData.hiringCapacity.budgetVsProjection >= 0 ? "+" : "";
+        htmlContent += `
+    <!-- Slide 4: Resource Allocation & Hiring Capacity -->
+    <div class="slide">
+        <h2>Resource Allocation & Hiring Capacity</h2>
+        
+        <!-- Hiring Runway Analysis -->
+        <h3>Hiring Runway Analysis</h3>
+        <div class="capacity-table">
+            <div class="capacity-row">
+                <span class="capacity-label">Net Compensation Available</span>
+                <span class="capacity-note">Annual compensation budget minus YTD actual spend</span>
+                <span class="capacity-value">${formatCurrencyFull(
+                  resourceData.hiringCapacity.netCompensationAvailable
+                )}</span>
+                
+            </div>
+            <div class="capacity-row">
+                <span class="capacity-label">Last 3-Month Average</span>
+                <span class="capacity-note">Recent monthly compensation spend trend</span>
+                <span class="capacity-value">${formatCurrencyFull(
+                  resourceData.hiringCapacity.lastThreeMonthAverage
+                )}/month</span>
+            </div>
+            <div class="capacity-row">
+            <span class="capacity-label">Remaining Months</span>
+            <span class="capacity-note">Months left in fiscal year</span>
+                <span class="capacity-value">${
+                  resourceData.hiringCapacity.remainingMonths
+                } months</span>
+            </div>
+            <div class="capacity-row">
+                <span class="capacity-label">Projected Remaining Spend</span>
+                <span class="capacity-note">${
+                  resourceData.hiringCapacity.remainingMonths
+                } months × 3-month average</span>
+                <span class="capacity-value">${formatCurrencyFull(
+                  resourceData.hiringCapacity.projectedRemainingSpend
+                )}</span>
+            </div>
+            <div class="capacity-row">
+                <span class="capacity-label">Projected Total Spend</span>
+                <span class="capacity-note">YTD actual + projected remaining spend</span>
+                <span class="capacity-value">${formatCurrencyFull(
+                  resourceData.totalCompensation.ytdActual +
+                    resourceData.hiringCapacity.projectedRemainingSpend
+                )}</span>
+            </div>
+            <div class="capacity-row ${
+              budgetClass === "positive" ? "budget-under" : "budget-over"
+            }">
+                <span class="capacity-label">Budget vs Projection</span>
+                <span class="capacity-note">${budgetNote}</span>
+                <span class="capacity-value ${
+                  budgetClass === "positive"
+                    ? "value-positive"
+                    : "value-negative"
+                }">
+                    ${budgetSign}${formatCurrencyFull(
+          resourceData.hiringCapacity.budgetVsProjection
+        )}
+                </span>
+            </div></div>
+    </div>
+`;
+      }
+
+      // Try to capture and include the chart (conditional)
+      if (template.layout.includeChart) {
+        try {
+          const chartElement = document.querySelector(
+            ".trend-chart-section .recharts-wrapper"
+          );
+          if (chartElement) {
+            const canvas = await html2canvas(chartElement as HTMLElement, {
+              backgroundColor: "#ffffff",
+              scale: 2,
+              useCORS: true,
+            });
+
+            const chartImage = canvas.toDataURL("image/png");
+
+            htmlContent += `
+    <!-- Slide 5: Budget vs Actual Chart -->
+    <div class="slide">
+        <h2>Budget vs Actual Trend</h2>
+        <div class="chart-container">
+            <img src="${chartImage}" style="width: 100%; max-width: 800px; height: auto; border-radius: 8px;" alt="Budget vs Actual Trend Chart"/>
+        </div>
+    </div>
+`;
+          }
+        } catch (chartError) {
+          console.warn("Could not capture chart for export:", chartError);
+
+          htmlContent += `
+    <!-- Slide 5: Budget vs Actual Chart -->
+    <div class="slide">
+        <h2>Budget vs Actual Trend</h2>
+        <div class="chart-container">
+            <div class="chart-placeholder">Chart could not be captured. Please refer to the dashboard for the latest trend visualization.</div>
+        </div>
+    </div>
+`;
+        }
+      }
+
+      // Slide 6: Trend Chart Data Table
+      htmlContent += `
+    <!-- Slide 6: Trend Chart Data -->
+    <div class="slide">
+        <h2>Trend Chart Data</h2>
+        <div class="trend-data-table">
+            <table class="trend-table" style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                <thead>
+                    <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                        <th style="padding: 12px; text-align: left; font-weight: 600; color: #2d3a4a;">Period</th>
+                        <th style="padding: 12px; text-align: right; font-weight: 600; color: #2d3a4a;">Budget</th>
+                        <th style="padding: 12px; text-align: right; font-weight: 600; color: #2d3a4a;">Actual</th>
+                        <th style="padding: 12px; text-align: right; font-weight: 600; color: #2d3a4a;">Forecast</th>
+                        <th style="padding: 12px; text-align: right; font-weight: 600; color: #2d3a4a;">Adj Actual</th>
+                        <th style="padding: 12px; text-align: right; font-weight: 600; color: #2d3a4a;">Adj Forecast</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+      // Add trend data rows
+      trend.forEach((data, index) => {
+        htmlContent += `
+                    <tr style="border-bottom: 1px solid #dee2e6; ${
+                      index % 2 === 0
+                        ? "background: #fff;"
+                        : "background: #f8f9fa;"
+                    }">
+                        <td style="padding: 10px; font-weight: 500;">${
+                          data.period
+                        }</td>
+                        <td style="padding: 10px; text-align: right;">${formatCurrencyFull(
+                          data.budget
+                        )}</td>
+                        <td style="padding: 10px; text-align: right;">${
+                          data.actual ? formatCurrencyFull(data.actual) : "-"
+                        }</td>
+                        <td style="padding: 10px; text-align: right;">${
+                          data.forecast
+                            ? formatCurrencyFull(data.forecast)
+                            : "-"
+                        }</td>
+                        <td style="padding: 10px; text-align: right;">${
+                          data.adjActual
+                            ? formatCurrencyFull(data.adjActual)
+                            : "-"
+                        }</td>
+                        <td style="padding: 10px; text-align: right;">${
+                          data.adjForecast
+                            ? formatCurrencyFull(data.adjForecast)
+                            : "-"
+                        }</td>
+                    </tr>`;
+      });
+
+      htmlContent += `
+                </tbody>
+            </table>
+        </div>
+    </div>
+`;
+
+      // Slide 7: Total Compensation & Capitalization
+      const resourceData = getResourceData();
+      htmlContent += `
+    <!-- Slide 7: Total Compensation & Capitalization -->
+    <div class="slide">
+        <h2>Total Compensation & Capitalization</h2>
+        <div class="resource-summary-cards" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 2rem 0;">
+            <div class="resource-card total-compensation" style="background: #ffffff; border-radius: 12px; padding: 1.5rem; border: 2px solid #e1e8ed; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);">
+                <h3 style="color: #2d3a4a; margin-bottom: 1rem; font-size: 1.2rem;">Total Compensation</h3>
+                <div class="resource-metrics">
+                    <div class="metric" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;">
+                        <span class="metric-label" style="color: #6b7a8f; font-weight: 500;">YTD Actual</span>
+                        <span class="metric-value" style="font-weight: 700; color: #2d3a4a;">${formatCurrencyFull(
+                          resourceData.totalCompensation.ytdActual
+                        )}</span>
+                    </div>
+                    <div class="metric" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;">
+                        <span class="metric-label" style="color: #6b7a8f; font-weight: 500;">Annual Budget</span>
+                        <span class="metric-value" style="font-weight: 700; color: #2d3a4a;">${formatCurrencyFull(
+                          resourceData.totalCompensation.annualBudget
+                        )}</span>
+                    </div>
+                    <div class="metric" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0;">
+                        <span class="metric-label" style="color: #6b7a8f; font-weight: 500;">Remaining</span>
+                        <span class="metric-value remaining" style="font-weight: 700; color: #3498db;">${formatCurrencyFull(
+                          resourceData.totalCompensation.remaining
+                        )}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="resource-card capitalized-salaries" style="background: #ffffff; border-radius: 12px; padding: 1.5rem; border: 2px solid #e1e8ed; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);">
+                <h3 style="color: #2d3a4a; margin-bottom: 1rem; font-size: 1.2rem;">Capitalized Salaries</h3>
+                <div class="resource-metrics">
+                    <div class="metric" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;">
+                        <span class="metric-label" style="color: #6b7a8f; font-weight: 500;">YTD Actual</span>
+                        <span class="metric-value" style="font-weight: 700; color: #2d3a4a;">${formatCurrencyFull(
+                          Math.abs(resourceData.capitalizedSalaries.ytdActual)
+                        )}</span>
+                    </div>
+                    <div class="metric" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;">
+                        <span class="metric-label" style="color: #6b7a8f; font-weight: 500;">Monthly Avg</span>
+                        <span class="metric-value" style="font-weight: 700; color: #2d3a4a;">${formatCurrencyFull(
+                          Math.abs(
+                            resourceData.capitalizedSalaries.monthlyAverage
+                          )
+                        )}</span>
+                    </div>
+                    <div class="metric" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0;">
+                        <span class="metric-label" style="color: #6b7a8f; font-weight: 500;">Offset Rate</span>
+                        <span class="metric-value" style="font-weight: 700; color: #2d3a4a;">${resourceData.capitalizedSalaries.offsetRate.toFixed(
+                          1
+                        )}%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+`;
+
+      htmlContent += `
+</body>
+</html>`;
+
+      // Open in new window optimized for printing to PDF
+      const printWindow = window.open(
+        "",
+        "_blank",
+        "width=1200,height=800,scrollbars=yes,resizable=yes"
+      );
+      if (printWindow) {
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
+
+        // Set the window title
+        printWindow.document.title = `Executive Summary - ${
+          state.selectedYear
+        }${state.selectedQuarter ? ` Q${state.selectedQuarter}` : ""}`;
+
+        // Focus the new window
+        printWindow.focus();
+
+        // The print dialog will auto-trigger from the JavaScript in the HTML
+        console.log("Export window opened with print-optimized layout");
+      } else {
+        // Fallback: create downloadable file if popup blocked
+        const blob = new Blob([htmlContent], {
+          type: "text/html;charset=utf-8",
+        });
+        const fileName = `Executive_Summary_${state.selectedYear}${
+          state.selectedQuarter ? `_Q${state.selectedQuarter}` : ""
+        }_${new Date().toISOString().split("T")[0]}.html`;
+
+        // Create download link since saveAs is not available
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        alert(
+          "Popup blocked. HTML file downloaded instead. Open it in a browser and print to PDF in landscape mode."
+        );
+      }
+      console.log("HTML export completed successfully");
+    } catch (error) {
+      console.error("Error exporting to HTML:", error);
+      alert("Export failed. Please try again.");
+    }
+  };
+
+  // Function to handle opening the export customizer
+  const handleCustomizeExport = () => {
+    setShowExportCustomizer(true);
+  };
+
+  // Function to handle applying a template and exporting
+  const handleApplyTemplateAndExport = (template: any) => {
+    setCurrentExportTemplate(template);
+    handlePowerPointExport(template);
   };
   // Helper to get performance class for dynamic styling
   const getPerformanceClass = (
@@ -1101,7 +2091,15 @@ const ExecutiveSummary = () => {
         onClick={handlePrintExport}
         title="Export Executive Summary to PDF"
       >
-        📊 Export
+        📊 Print to PDF
+      </button>{" "}
+      {/* Export as Slides Button */}
+      <button
+        className="floating-customize-button"
+        onClick={handleCustomizeExport}
+        title="Export as Presentation Slides"
+      >
+        📊 Export as Slides
       </button>
       <h2>
         Executive Summary – {state.selectedYear}
@@ -1555,7 +2553,7 @@ const ExecutiveSummary = () => {
                 </tr>
               </thead>{" "}
               <tbody>
-                {trend.map((data, index) => (
+                {trend.map((data: any, index: any) => (
                   <tr key={index}>
                     <td>{data.period}</td>
                     <td>{formatCurrencyFull(data.budget)}</td>
@@ -1592,6 +2590,7 @@ const ExecutiveSummary = () => {
               <h2>Hiring Runway Analysis</h2>
             </div>
             <div className="capacity-table">
+              {" "}
               <div
                 className="capacity-row"
                 onMouseEnter={(e) =>
@@ -1602,13 +2601,13 @@ const ExecutiveSummary = () => {
                 <span className="capacity-label">
                   Net Compensation Available
                 </span>
+                <span className="capacity-note">
+                  Annual compensation budget minus YTD actual spend
+                </span>
                 <span className="capacity-value">
                   {formatCurrencyFull(
                     getResourceData().hiringCapacity.netCompensationAvailable
                   )}
-                </span>
-                <span className="capacity-note">
-                  Annual compensation budget minus YTD actual spend
                 </span>
               </div>
               <div
@@ -1618,15 +2617,16 @@ const ExecutiveSummary = () => {
                 }
                 onMouseLeave={handleHiringMouseLeave}
               >
+                {" "}
                 <span className="capacity-label">Last 3-Month Average</span>
+                <span className="capacity-note">
+                  Recent monthly compensation spend trend
+                </span>
                 <span className="capacity-value">
                   {formatCurrencyFull(
                     getResourceData().hiringCapacity.lastThreeMonthAverage
                   )}
                   /month
-                </span>
-                <span className="capacity-note">
-                  Recent monthly compensation spend trend
                 </span>
               </div>
               <div
@@ -1636,12 +2636,13 @@ const ExecutiveSummary = () => {
                 }
                 onMouseLeave={handleHiringMouseLeave}
               >
+                {" "}
                 <span className="capacity-label">Remaining Months</span>
-                <span className="capacity-value">
-                  {getResourceData().hiringCapacity.remainingMonths} months
-                </span>
                 <span className="capacity-note">
                   Months left in fiscal year
+                </span>
+                <span className="capacity-value">
+                  {getResourceData().hiringCapacity.remainingMonths} months
                 </span>
               </div>{" "}
               <div
@@ -1651,17 +2652,18 @@ const ExecutiveSummary = () => {
                 }
                 onMouseLeave={handleHiringMouseLeave}
               >
+                {" "}
                 <span className="capacity-label">
                   Projected Remaining Spend
+                </span>
+                <span className="capacity-note">
+                  {getResourceData().hiringCapacity.remainingMonths} months ×
+                  3-month average
                 </span>
                 <span className="capacity-value">
                   {formatCurrencyFull(
                     getResourceData().hiringCapacity.projectedRemainingSpend
                   )}
-                </span>
-                <span className="capacity-note">
-                  {getResourceData().hiringCapacity.remainingMonths} months ×
-                  3-month average
                 </span>
               </div>{" "}
               <div
@@ -1671,15 +2673,16 @@ const ExecutiveSummary = () => {
                 }
                 onMouseLeave={handleHiringMouseLeave}
               >
+                {" "}
                 <span className="capacity-label">Projected Total Spend</span>
+                <span className="capacity-note">
+                  YTD actual + projected remaining spend
+                </span>
                 <span className="capacity-value">
                   {formatCurrencyFull(
                     getResourceData().totalCompensation.ytdActual +
                       getResourceData().hiringCapacity.projectedRemainingSpend
                   )}
-                </span>
-                <span className="capacity-note">
-                  YTD actual + projected remaining spend
                 </span>
               </div>{" "}
               <div
@@ -1693,7 +2696,13 @@ const ExecutiveSummary = () => {
                 }
                 onMouseLeave={handleHiringMouseLeave}
               >
+                {" "}
                 <span className="capacity-label">Budget vs Projection</span>
+                <span className="capacity-note">
+                  {getResourceData().hiringCapacity.budgetVsProjection < 0
+                    ? "Projected total spend exceeds annual budget - budget adjustments needed"
+                    : "Projected total spend under annual budget - additional hiring capacity available"}
+                </span>
                 <span
                   className={`capacity-value ${
                     getResourceData().hiringCapacity.budgetVsProjection > 0
@@ -1707,12 +2716,7 @@ const ExecutiveSummary = () => {
                   {formatCurrencyFull(
                     getResourceData().hiringCapacity.budgetVsProjection
                   )}
-                </span>{" "}
-                <span className="capacity-note">
-                  {getResourceData().hiringCapacity.budgetVsProjection < 0
-                    ? "Projected total spend exceeds annual budget - budget adjustments needed"
-                    : "Projected total spend under annual budget - additional hiring capacity available"}
-                </span>{" "}
+                </span>
               </div>
             </div>
           </div>
@@ -1855,10 +2859,16 @@ const ExecutiveSummary = () => {
             </div>
             <div className="calculation-section">
               <strong>Calculation:</strong> {tooltip.content.calculation}
-            </div>
+            </div>{" "}
           </div>
         </div>
       )}
+      {/* Export Customizer Modal */}
+      <ExportCustomizer
+        isOpen={showExportCustomizer}
+        onClose={() => setShowExportCustomizer(false)}
+        onApplyTemplate={handleApplyTemplateAndExport}
+      />
     </div>
   );
 };

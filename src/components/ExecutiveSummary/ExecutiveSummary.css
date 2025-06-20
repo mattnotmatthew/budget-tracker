@@ -490,7 +490,7 @@
 
 .capacity-row {
   display: grid;
-  grid-template-columns: 1fr auto 1.5fr;
+  grid-template-columns: auto 1fr auto;
   gap: 1rem;
   align-items: center;
   padding: 0.75rem;
@@ -563,6 +563,7 @@
   font-size: 0.85rem;
   color: #666;
   font-style: italic;
+  margin-left: 0.5rem;
 }
 
 /* Collapsible Section Styles */
@@ -690,7 +691,6 @@
   .resource-summary-cards {
     grid-template-columns: 1fr;
   }
-
   .capacity-row {
     grid-template-columns: 1fr;
     gap: 0.5rem;
@@ -703,6 +703,7 @@
 
   .capacity-note {
     margin-top: 0.25rem;
+    margin-left: 0;
   }
 }
 
@@ -994,7 +995,7 @@
   float: left;
   margin-left: -150px;
   margin-bottom: 20px;
-  width: 120px;
+  width: 130px;
 }
 
 .floating-back-button:hover {
@@ -1032,7 +1033,7 @@
   margin-left: -150px;
   margin-bottom: 20px;
   clear: left; /* Ensure it clears the back button */
-  width: 120px;
+  width: 130px;
 }
 
 .floating-export-button:hover {
@@ -1042,6 +1043,82 @@
 }
 
 .floating-export-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Floating PowerPoint Button - positioned below export button */
+.floating-powerpoint-button {
+  position: sticky;
+  top: 140px; /* Position below the export button */
+  left: -140px;
+  background: #059669;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  float: left;
+  margin-left: -150px;
+  margin-bottom: 20px;
+  clear: left;
+  width: 135px;
+}
+
+.floating-powerpoint-button:hover {
+  background: #047857;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.floating-powerpoint-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Floating Customize Button - positioned below PowerPoint button */
+.floating-customize-button {
+  position: sticky;
+  top: 165px; /* Position below the back button (20px + button height + margin) */
+  left: -140px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  float: left;
+  margin-left: -150px;
+  margin-bottom: 20px;
+  clear: left; /* Ensure it clears the back button */
+  width: 130px;
+}
+
+.floating-customize-button:hover {
+  background: #6d28d9;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.floating-customize-button:active {
   transform: translateY(0);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
@@ -1059,7 +1136,6 @@
     float: none;
     margin-left: 0;
   }
-
   .floating-export-button {
     position: relative;
     top: 0;
@@ -1070,6 +1146,44 @@
     align-self: flex-start;
     float: none;
     margin-left: 0;
+  }
+  .floating-powerpoint-button {
+    position: relative;
+    top: 0;
+    left: 0;
+    margin-bottom: 20px;
+    padding: 10px 16px;
+    font-size: 13px;
+    align-self: flex-start;
+    float: none;
+    margin-left: 10px;
+    width: auto;
+  }
+
+  .floating-customize-button {
+    position: relative;
+    top: 0;
+    left: 0;
+    margin-bottom: 20px;
+    padding: 10px 16px;
+    font-size: 13px;
+    align-self: flex-start;
+    float: none;
+    margin-left: 10px;
+    width: auto;
+  }
+
+  .floating-customize-button {
+    position: relative;
+    top: 0;
+    left: 0;
+    margin-bottom: 20px;
+    padding: 10px 16px;
+    font-size: 13px;
+    align-self: flex-start;
+    float: none;
+    margin-left: 10px;
+    width: auto;
   }
 }
 
@@ -1084,10 +1198,11 @@
     padding: 1rem !important;
     border-radius: 0 !important;
   }
-
   /* Hide floating buttons */
   .floating-back-button,
-  .floating-export-button {
+  .floating-export-button,
+  .floating-powerpoint-button,
+  .floating-customize-button {
     display: none !important;
   }
 
@@ -1274,10 +1389,9 @@
   .capacity-table {
     display: block !important;
   }
-
   .capacity-row {
     display: grid !important;
-    grid-template-columns: 1fr auto 1fr !important;
+    grid-template-columns: auto 1fr auto !important;
     gap: 0.5rem !important;
     padding: 0.5rem !important;
     margin-bottom: 0.5rem !important;
