@@ -1,9 +1,12 @@
 import React from "react";
 import { useBudget } from "../context/BudgetContext";
+import { isFeatureEnabled } from "../utils/featureFlags";
 import FirstTimeSetup from "../components/FirstTimeSetup/FirstTimeSetup";
 import PersistenceIndicator from "../components/PersistenceIndicator";
 import Dashboard from "../components/Dashboard";
 import ExecutiveSummary from "../components/ExecutiveSummary/ExecutiveSummary";
+import PlanningDashboard from "../components/Planning/PlanningDashboard";
+import PlanningCategories from "../components/Planning/PlanningCategories";
 import FeatureFlagTest from "../components/FeatureFlagTest"; // ADD THIS LINE
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
@@ -38,14 +41,27 @@ const AppContent: React.FC = () => {
         <header className="app-header">
           <h1>Budget vs Actual Tracker 2025</h1>
         </header>
-
         {/* TEMPORARY: Feature Flag Test Component - Remove after testing */}
-        <FeatureFlagTest />
-
+        <FeatureFlagTest />{" "}
         <main className="app-main">
           <Routes>
+            {/* Existing routes - UNCHANGED */}
             <Route path="/" element={<Dashboard />} />
             <Route path="/executive-summary" element={<ExecutiveSummary />} />
+            {/* NEW: Planning routes (feature-flagged) */}
+            {isFeatureEnabled("BUDGET_PLANNING") && (
+              <>
+                <Route path="/planning" element={<PlanningDashboard />} />
+                <Route
+                  path="/planning/dashboard"
+                  element={<PlanningDashboard />}
+                />
+                <Route
+                  path="/planning/categories"
+                  element={<PlanningCategories />}
+                />
+              </>
+            )}
           </Routes>
         </main>
         <PersistenceIndicator />

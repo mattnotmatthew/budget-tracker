@@ -61,7 +61,6 @@ const Dashboard: React.FC = () => {
 
     return years;
   }, []);
-
   // Determine current mode based on selected year
   const currentMode = React.useMemo(() => {
     const selectedYearOption = yearOptions.find(
@@ -69,6 +68,27 @@ const Dashboard: React.FC = () => {
     );
     return selectedYearOption?.mode || "tracking";
   }, [state.selectedYear, yearOptions]);
+
+  // Auto-navigate to planning dashboard when planning year is selected
+  React.useEffect(() => {
+    if (currentMode === "planning" && isFeatureEnabled("BUDGET_PLANNING")) {
+      // Only navigate if we're not already on a planning route
+      if (!window.location.pathname.startsWith("/planning")) {
+        navigate("/planning");
+      }
+    }
+  }, [currentMode, navigate]);
+
+  // Handle year change with automatic route navigation
+  const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newYear = parseInt(e.target.value);
+    dispatch({
+      type: "SET_SELECTED_PERIOD",
+      payload: { year: newYear },
+    });
+
+    // Navigation will be handled by the useEffect above
+  };
 
   const handleQuarterToggle = (quarter: number) => {
     setSelectedQuarters((prev) => {
@@ -225,12 +245,16 @@ const Dashboard: React.FC = () => {
       yearOptions,
     ]
   );
-
   // Add event listener for hotkeys
   useEffect(() => {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
+
+  // Route guard: Redirect to planning if planning year is selected and we're on the main dashboard
+  if (currentMode === "planning" && isFeatureEnabled("BUDGET_PLANNING")) {
+    return null; // The useEffect will handle navigation
+  }
 
   return (
     <div className="dashboard">
@@ -248,22 +272,14 @@ const Dashboard: React.FC = () => {
           <div className="year-selector">
             <label>Year: </label>{" "}
             <div className="year-selector-container">
-              <select
-                value={state.selectedYear}
-                onChange={(e) =>
-                  dispatch({
-                    type: "SET_SELECTED_PERIOD",
-                    payload: { year: parseInt(e.target.value) },
-                  })
-                }
-              >
+              {" "}
+              <select value={state.selectedYear} onChange={handleYearChange}>
                 {yearOptions.map((yearOption) => (
                   <option key={yearOption.value} value={yearOption.value}>
                     {yearOption.label}
                   </option>
                 ))}
               </select>
-
               {/* Mode indicator (only show when planning is enabled) */}
               {isFeatureEnabled("BUDGET_PLANNING") &&
                 currentMode === "planning" && (
