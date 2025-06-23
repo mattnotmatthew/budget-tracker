@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from "react";
 import "../styles/PasswordProtection.css";
 
+/*
+ * SECURITY NOTE: This is a simple client-side password protection designed to
+ * deter casual access only. The password is visible in the source code and can
+ * be bypassed by anyone with basic web development knowledge. This is intentional
+ * for internal network use where the goal is to prevent accidental access, not
+ * to secure sensitive data. For real security, use server-side authentication.
+ */
+
 interface PasswordProtectionProps {
   children: React.ReactNode;
 }
@@ -13,7 +21,7 @@ const PasswordProtection: React.FC<PasswordProtectionProps> = ({
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
-  // Set your password here - you can change this to whatever you want
+  // SECURITY: Password is visible in source code - this is intentional for internal use
   const CORRECT_PASSWORD = "budget2025"; // Change this to your desired password
 
   // Check if user was previously authenticated (expires after 24 hours)
@@ -118,7 +126,7 @@ const PasswordProtection: React.FC<PasswordProtectionProps> = ({
         </form>
 
         <div className="password-protection-footer">
-          <small>Access is logged and monitored.</small>
+          <small></small>
         </div>
       </div>
     </div>
