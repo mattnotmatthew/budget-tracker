@@ -363,8 +363,8 @@ const Dashboard: React.FC = () => {
           <small>💡 (USD in Thousands)</small>
         </div>
 
-        {/* Yearly Budget Dashboard */}
-        <YearlyBudgetDashboard collapseAll={collapseAll} />
+        {/* Yearly Budget Dashboard
+        <YearlyBudgetDashboard collapseAll={collapseAll} /> */}
 
         <MonthlyView
           collapseAll={collapseAll}

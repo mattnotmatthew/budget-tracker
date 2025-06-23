@@ -410,9 +410,7 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
           monthlyForecastModes: state.monthlyForecastModes,
         },
         state.currentFile
-      );
-
-      // Update the current file if a new one was created
+      ); // Update the current file if a new one was created
       if (result.fileHandle) {
         const now = new Date();
         setLastSavedAt(now);
@@ -422,6 +420,7 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
             name: result.fileName || "",
             handle: result.fileHandle,
             lastSaved: now,
+            userLastSaved: now, // Set both timestamps for new files
           },
         });
       } else if (state.currentFile) {
@@ -432,6 +431,7 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
           payload: {
             ...state.currentFile,
             lastSaved: now,
+            userLastSaved: now, // Update user save timestamp
           },
         });
       }

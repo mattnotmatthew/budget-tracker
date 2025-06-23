@@ -61,6 +61,10 @@ const ExecutiveSummary = () => {
     useState(false);
   const [isRiskVelocityExpanded, setIsRiskVelocityExpanded] = useState(false);
   const [trendTableCollapsed, setTrendTableCollapsed] = useState(true);
+  const [monthlyTrendTableCollapsed, setMonthlyTrendTableCollapsed] =
+    useState(true);
+  const [rollingTrendTableCollapsed, setRollingTrendTableCollapsed] =
+    useState(true);
   const [
     totalCompCapitalizationCollapsed,
     setTotalCompCapitalizationCollapsed,
@@ -1451,52 +1455,69 @@ const ExecutiveSummary = () => {
     <!-- Slide 6: Trend Chart Data -->
     <div class="slide">
         <h2>Trend Chart Data</h2>
-        <div class="trend-data-table">
-            <table class="trend-table" style="width: 100%; border-collapse: collapse; font-size: 14px;">
-                <thead>
-                    <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
-                        <th style="padding: 12px; text-align: left; font-weight: 600; color: #2d3a4a;">Period</th>
-                        <th style="padding: 12px; text-align: right; font-weight: 600; color: #2d3a4a;">Budget</th>
-                        <th style="padding: 12px; text-align: right; font-weight: 600; color: #2d3a4a;">Actual</th>
-                        <th style="padding: 12px; text-align: right; font-weight: 600; color: #2d3a4a;">Forecast</th>
-                        <th style="padding: 12px; text-align: right; font-weight: 600; color: #2d3a4a;">Adj Actual</th>
-                        <th style="padding: 12px; text-align: right; font-weight: 600; color: #2d3a4a;">Adj Forecast</th>
-                    </tr>
-                </thead>
-                <tbody>`;
-
-      // Add trend data rows
+        <div class="trend-data-table">            <table class="trend-table" style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                <thead>                    <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">                        <th style="padding: 12px; text-align: left; font-weight: 600; color: #2d3a4a;">Period</th>
+                        <th style="padding: 12px; text-align: right; font-weight: 600; color: #2d3a4a; background-color: rgba(173, 216, 230, 0.08);">Monthly Budget</th>
+                        <th style="padding: 12px; text-align: right; font-weight: 600; color: #2d3a4a; background-color: rgba(173, 216, 230, 0.08);">Monthly Actual</th>
+                        <th style="padding: 12px; text-align: right; font-weight: 600; color: #2d3a4a; background-color: rgba(173, 216, 230, 0.08);">Monthly Forecast</th>
+                        <th style="padding: 12px; text-align: right; font-weight: 600; color: #2d3a4a; background-color: rgba(173, 216, 230, 0.08);">Monthly Adj Actual</th>
+                        <th style="padding: 12px; text-align: right; font-weight: 600; color: #2d3a4a; background-color: rgba(144, 238, 144, 0.08);">Rolling Budget</th>
+                        <th style="padding: 12px; text-align: right; font-weight: 600; color: #2d3a4a; background-color: rgba(144, 238, 144, 0.08);">Rolling Actual</th>
+                        <th style="padding: 12px; text-align: right; font-weight: 600; color: #2d3a4a; background-color: rgba(144, 238, 144, 0.08);">Rolling Forecast</th>
+                        <th style="padding: 12px; text-align: right; font-weight: 600; color: #2d3a4a; background-color: rgba(144, 238, 144, 0.08);">Rolling Adj Actual</th>
+                    </tr>                </thead>
+                <tbody>`; // Add trend data rows
       trend.forEach((data, index) => {
-        htmlContent += `
-                    <tr style="border-bottom: 1px solid #dee2e6; ${
-                      index % 2 === 0
-                        ? "background: #fff;"
-                        : "background: #f8f9fa;"
-                    }">
-                        <td style="padding: 10px; font-weight: 500;">${
-                          data.period
+        htmlContent += `                    <tr style="border-bottom: 1px solid #dee2e6; ${
+          index % 2 === 0 ? "background: #fff;" : "background: #f8f9fa;"
+        }${
+          !data.isFinalMonth
+            ? " font-style: italic; opacity: 0.85; border-left: 3px solid #9b59b6;"
+            : ""
+        }">                        <td style="padding: 10px; font-weight: 500;">${
+          data.period
+        }</td>
+                        <td style="padding: 10px; text-align: right; background-color: rgba(173, 216, 230, 0.08);">${formatCurrencyFull(
+                          data.monthlyBudget
+                        )}</td>
+                        <td style="padding: 10px; text-align: right; background-color: rgba(173, 216, 230, 0.08);">${
+                          data.isFinalMonth
+                            ? formatCurrencyFull(data.monthlyActual)
+                            : "-"
                         }</td>
-                        <td style="padding: 10px; text-align: right;">${formatCurrencyFull(
+                        <td style="padding: 10px; text-align: right; background-color: rgba(173, 216, 230, 0.08);">${
+                          !data.isFinalMonth
+                            ? formatCurrencyFull(data.monthlyReforecast)
+                            : "-"
+                        }</td>
+                        <td style="padding: 10px; text-align: right; background-color: rgba(173, 216, 230, 0.08);">${
+                          data.isFinalMonth
+                            ? formatCurrencyFull(
+                                data.monthlyActual - data.monthlyAdjustments
+                              )
+                            : formatCurrencyFull(
+                                data.monthlyReforecast - data.monthlyAdjustments
+                              )
+                        }</td>
+                        <td style="padding: 10px; text-align: right; background-color: rgba(144, 238, 144, 0.08);">${formatCurrencyFull(
                           data.budget
                         )}</td>
-                        <td style="padding: 10px; text-align: right;">${
+                        <td style="padding: 10px; text-align: right; background-color: rgba(144, 238, 144, 0.08);">${
                           data.actual ? formatCurrencyFull(data.actual) : "-"
                         }</td>
-                        <td style="padding: 10px; text-align: right;">${
+                        <td style="padding: 10px; text-align: right; background-color: rgba(144, 238, 144, 0.08);">${
                           data.forecast
                             ? formatCurrencyFull(data.forecast)
                             : "-"
-                        }</td>
-                        <td style="padding: 10px; text-align: right;">${
-                          data.adjActual
-                            ? formatCurrencyFull(data.adjActual)
-                            : "-"
-                        }</td>
-                        <td style="padding: 10px; text-align: right;">${
-                          data.adjForecast
-                            ? formatCurrencyFull(data.adjForecast)
-                            : "-"
-                        }</td>
+                        }</td>                        <td style="padding: 10px; text-align: right; background-color: rgba(144, 238, 144, 0.08);">${
+          data.isFinalMonth
+            ? data.adjActual
+              ? formatCurrencyFull(data.adjActual)
+              : "-"
+            : data.adjForecast
+            ? formatCurrencyFull(data.adjForecast)
+            : "-"
+        }</td>
                     </tr>`;
       });
 
@@ -2444,8 +2465,9 @@ const ExecutiveSummary = () => {
         </div>
       </div>{" "}
       <div className="trend-chart-section">
+        {" "}
         <div className="trend-chart-header">
-          <h3>Budget vs Actual Trend</h3>
+          <h3>Budget vs Actual Trend, Rolling</h3>
         </div>
         <ResponsiveContainer width="100%" height={400}>
           <ComposedChart data={trend}>
@@ -2476,16 +2498,14 @@ const ExecutiveSummary = () => {
               labelFormatter={(label) => `Through ${label}`}
             />
             <Legend />
-
             {/* Budget as bar */}
             <Bar
               dataKey="budget"
               fill="#2D78FB"
-              name="Budget Target"
+              name="Rolling Budget"
               barSize={30}
               opacity={0.5}
             />
-
             {/* Actual spending line */}
             <Line
               type="monotone"
@@ -2493,10 +2513,9 @@ const ExecutiveSummary = () => {
               stroke="#33CA7F"
               strokeWidth={4}
               strokeDasharray="5 1"
-              name="Actual Spend"
+              name="Rolling Actual"
               connectNulls={false}
             />
-
             {/* Forecast spending line */}
             <Line
               type="monotone"
@@ -2504,72 +2523,73 @@ const ExecutiveSummary = () => {
               stroke="#FF8C00"
               strokeWidth={4}
               strokeDasharray="5 1"
-              name="Forecast Spend"
+              name="Rolling Forecast"
               connectNulls={false}
-            />
-
-            {/* Adjusted actual line */}
+            />{" "}
+            {/* Rolling Adj Actual line */}
             <Line
               type="monotone"
               dataKey="adjActual"
-              stroke="#8B0000"
-              strokeWidth={4}
-              name="Adj Actual"
-              connectNulls={false}
-            />
-
-            {/* Adjusted forecast line */}
-            <Line
-              type="monotone"
-              dataKey="adjForecast"
               stroke="#9932CC"
               strokeWidth={4}
-              name="Adj Forecast"
+              name="Rolling Adj Actual"
               connectNulls={false}
             />
           </ComposedChart>
-        </ResponsiveContainer>
+        </ResponsiveContainer>{" "}
       </div>
-      {/* Trend Data Table - Collapsible */}
+      {/* Rolling Trend Data Table - Collapsible */}
       <div className="trend-data-table-section">
         <div
           className="collapsible-header"
-          onClick={() => setTrendTableCollapsed(!trendTableCollapsed)}
+          onClick={() =>
+            setRollingTrendTableCollapsed(!rollingTrendTableCollapsed)
+          }
           style={{ cursor: "pointer" }}
         >
-          <h3>{trendTableCollapsed ? "+" : "−"} Trend Chart Data</h3>
-        </div>
-        {!trendTableCollapsed && (
+          <h3>
+            {rollingTrendTableCollapsed ? "+" : "−"} Rolling Trend Chart Data
+          </h3>
+        </div>{" "}
+        {!rollingTrendTableCollapsed && (
           <div className="trend-data-table">
-            <table className="trend-table">
+            {" "}
+            <table className="trend-table rolling-trend-table">
               <thead>
                 <tr>
                   <th>Period</th>
-                  <th>Budget</th>
-                  <th>Actual</th>
-                  <th>Forecast</th>
-                  <th>Adj Actual</th>
-                  <th>Adj Forecast</th>
+                  <th>Rolling Budget</th>
+                  <th>Rolling Actual</th>
+                  <th>Rolling Forecast</th>
+                  <th>Rolling Adj Actual</th>
                 </tr>
-              </thead>{" "}
+              </thead>
               <tbody>
                 {trend.map((data: any, index: any) => (
-                  <tr key={index}>
+                  <tr
+                    key={index}
+                    style={
+                      !data.isFinalMonth
+                        ? { fontStyle: "italic", opacity: 0.85 }
+                        : {}
+                    }
+                  >
                     <td>{data.period}</td>
                     <td>{formatCurrencyFull(data.budget)}</td>
                     <td>
-                      {data.actual ? formatCurrencyFull(data.actual) : "-"}
-                    </td>
-                    <td>
-                      {data.forecast ? formatCurrencyFull(data.forecast) : "-"}
-                    </td>
-                    <td>
-                      {data.adjActual
-                        ? formatCurrencyFull(data.adjActual)
+                      {data.actual !== null
+                        ? formatCurrencyFull(data.actual)
                         : "-"}
                     </td>
                     <td>
-                      {data.adjForecast
+                      {data.forecast !== null
+                        ? formatCurrencyFull(data.forecast)
+                        : "-"}
+                    </td>
+                    <td>
+                      {data.adjActual !== null
+                        ? formatCurrencyFull(data.adjActual)
+                        : data.adjForecast !== null
                         ? formatCurrencyFull(data.adjForecast)
                         : "-"}
                     </td>
@@ -2580,6 +2600,339 @@ const ExecutiveSummary = () => {
           </div>
         )}
       </div>
+      {/* Spacing between Rolling and Monthly sections */}
+      <div style={{ marginBottom: "2rem" }}></div>
+      {/* Monthly Budget vs Actual Trend Chart */}
+      <div className="trend-chart-section">
+        <div className="trend-chart-header">
+          <h3>Budget vs Actual Trend, Monthly</h3>
+        </div>
+        <ResponsiveContainer width="100%" height={400}>
+          <ComposedChart data={trend}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="period" />
+            <YAxis
+              tickFormatter={(value) =>
+                `$${(value / 1000).toLocaleString("en-US", {
+                  maximumFractionDigits: 0,
+                })}k`
+              }
+            />{" "}
+            <Tooltip
+              formatter={(value: number, name: string) => [
+                value !== null ? formatCurrencyFull(value) : "-",
+                name === "monthlyBudget"
+                  ? "Monthly Budget"
+                  : name === "monthlyActual"
+                  ? "Monthly Actual"
+                  : name === "monthlyReforecast"
+                  ? "Monthly Forecast"
+                  : name === "monthlyAdjusted"
+                  ? "Monthly Adj Actual"
+                  : name,
+              ]}
+              labelFormatter={(label) => `${label}`}
+            />
+            <Legend /> {/* Monthly Budget as bar */}
+            <Bar
+              dataKey="monthlyBudget"
+              fill="#2D78FB"
+              name="Monthly Budget"
+              barSize={30}
+              opacity={0.5}
+            />
+            {/* Monthly Actual spending line */}
+            <Line
+              type="monotone"
+              dataKey="monthlyActual"
+              stroke="#33CA7F"
+              strokeWidth={4}
+              strokeDasharray="5 1"
+              name="Monthly Actual"
+              connectNulls={false}
+            />
+            {/* Monthly Forecast spending line */}
+            <Line
+              type="monotone"
+              dataKey="monthlyReforecast"
+              stroke="#FF8C00"
+              strokeWidth={4}
+              strokeDasharray="5 1"
+              name="Monthly Forecast"
+              connectNulls={false}
+            />{" "}
+            {/* Monthly Adjusted actual line - using calculated values */}
+            <Line
+              type="monotone"
+              dataKey="monthlyAdjusted"
+              stroke="#8B0000"
+              strokeWidth={4}
+              name="Monthly Adj Actual"
+              connectNulls={false}
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
+      {/* Monthly Spending KPIs */}
+      <div
+        className="monthly-spending-kpis"
+        style={{
+          marginBottom: "1.5rem",
+          padding: "1rem",
+          backgroundColor: "#f8f9fa",
+          borderRadius: "8px",
+          border: "1px solid #e1e8ed",
+        }}
+      >
+        <h4 style={{ marginBottom: "1rem", color: "#2d3a4a" }}>
+          Monthly Spending Analysis
+        </h4>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+            gap: "1rem",
+          }}
+        >
+          {" "}
+          {(() => {
+            // Calculate Average Monthly Spend YTD (Regular and Adjusted)
+            const finalMonths = trend.filter((data) => data.isFinalMonth);
+            const totalMonthlyActual = finalMonths.reduce((sum, data) => {
+              return sum + (data.monthlyActual || 0);
+            }, 0);
+            const totalMonthlyAdjusted = finalMonths.reduce((sum, data) => {
+              return sum + (data.monthlyAdjusted || 0);
+            }, 0);
+
+            const avgMonthlySpendYTD =
+              finalMonths.length > 0
+                ? totalMonthlyActual / finalMonths.length
+                : 0;
+            const avgMonthlyAdjustedYTD =
+              finalMonths.length > 0
+                ? totalMonthlyAdjusted / finalMonths.length
+                : 0;
+
+            // Calculate Average Quarterly Spend (last completed quarter - Regular and Adjusted)
+            const currentMonth = new Date().getMonth() + 1; // Current month (1-12)
+            const currentQuarter = Math.ceil(currentMonth / 3);
+            const lastCompletedQuarter =
+              currentQuarter > 1 ? currentQuarter - 1 : 4; // If Q1, use Q4 of previous year
+
+            let quarterMonths: number[] = [];
+            if (lastCompletedQuarter === 1) quarterMonths = [1, 2, 3];
+            else if (lastCompletedQuarter === 2) quarterMonths = [4, 5, 6];
+            else if (lastCompletedQuarter === 3) quarterMonths = [7, 8, 9];
+            else quarterMonths = [10, 11, 12];
+
+            const quarterData = trend.filter((data) => {
+              const monthNum =
+                [
+                  "Jan",
+                  "Feb",
+                  "Mar",
+                  "Apr",
+                  "May",
+                  "Jun",
+                  "Jul",
+                  "Aug",
+                  "Sep",
+                  "Oct",
+                  "Nov",
+                  "Dec",
+                ].indexOf(data.period) + 1;
+              return quarterMonths.includes(monthNum) && data.isFinalMonth;
+            });
+
+            const totalQuarterlyActual = quarterData.reduce((sum, data) => {
+              return sum + (data.monthlyActual || 0);
+            }, 0);
+            const totalQuarterlyAdjusted = quarterData.reduce((sum, data) => {
+              return sum + (data.monthlyAdjusted || 0);
+            }, 0);
+
+            const avgQuarterlySpend =
+              quarterData.length > 0
+                ? totalQuarterlyActual / quarterData.length
+                : avgMonthlySpendYTD;
+            const avgQuarterlyAdjusted =
+              quarterData.length > 0
+                ? totalQuarterlyAdjusted / quarterData.length
+                : avgMonthlyAdjustedYTD;
+            return (
+              <>
+                <div
+                  className="kpi-card"
+                  style={{
+                    backgroundColor: "white",
+                    padding: "1rem",
+                    borderRadius: "6px",
+                    border: "1px solid #dee2e6",
+                  }}
+                >
+                  <div
+                    className="kpi-label"
+                    style={{
+                      fontSize: "0.9rem",
+                      color: "#6b7a8f",
+                      marginBottom: "0.5rem",
+                    }}
+                  >
+                    Avg Monthly Spend YTD
+                  </div>{" "}
+                  <div
+                    className="kpi-value"
+                    style={{
+                      fontSize: "1.5rem",
+                      fontWeight: "700",
+                      color: "#2d3a4a",
+                      marginBottom: "0.5rem",
+                    }}
+                  >
+                    {formatCurrencyFull(avgMonthlyAdjustedYTD)}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "#6b7a8f",
+                      marginBottom: "0.25rem",
+                    }}
+                  >
+                    Regular: {formatCurrencyFull(avgMonthlySpendYTD)}
+                  </div>
+                  <div
+                    className="kpi-context"
+                    style={{
+                      fontSize: "0.8rem",
+                      color: "#8b949e",
+                      marginTop: "0.25rem",
+                    }}
+                  >
+                    Based on {finalMonths.length} completed months
+                  </div>
+                </div>
+
+                <div
+                  className="kpi-card"
+                  style={{
+                    backgroundColor: "white",
+                    padding: "1rem",
+                    borderRadius: "6px",
+                    border: "1px solid #dee2e6",
+                  }}
+                >
+                  <div
+                    className="kpi-label"
+                    style={{
+                      fontSize: "0.9rem",
+                      color: "#6b7a8f",
+                      marginBottom: "0.5rem",
+                    }}
+                  >
+                    Avg Quarterly Spend
+                  </div>{" "}
+                  <div
+                    className="kpi-value"
+                    style={{
+                      fontSize: "1.5rem",
+                      fontWeight: "700",
+                      color: "#2d3a4a",
+                      marginBottom: "0.5rem",
+                    }}
+                  >
+                    {formatCurrencyFull(avgQuarterlyAdjusted)}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "#6b7a8f",
+                      marginBottom: "0.25rem",
+                    }}
+                  >
+                    Regular: {formatCurrencyFull(avgQuarterlySpend)}
+                  </div>
+                  <div
+                    className="kpi-context"
+                    style={{
+                      fontSize: "0.8rem",
+                      color: "#8b949e",
+                      marginTop: "0.25rem",
+                    }}
+                  >
+                    Q{lastCompletedQuarter} average ({quarterData.length}{" "}
+                    months)
+                  </div>
+                </div>
+              </>
+            );
+          })()}
+        </div>
+      </div>
+      {/* Monthly Trend Data Table - Collapsible */}
+      <div className="trend-data-table-section">
+        <div
+          className="collapsible-header"
+          onClick={() =>
+            setMonthlyTrendTableCollapsed(!monthlyTrendTableCollapsed)
+          }
+          style={{ cursor: "pointer" }}
+        >
+          <h3>
+            {monthlyTrendTableCollapsed ? "+" : "−"} Monthly Trend Chart Data
+          </h3>
+        </div>{" "}
+        {!monthlyTrendTableCollapsed && (
+          <div className="trend-data-table">
+            <table className="trend-table monthly-trend-table">
+              <thead>
+                <tr>
+                  <th>Period</th>
+                  <th>Monthly Budget</th>
+                  <th>Monthly Actual</th>
+                  <th>Monthly Forecast</th>
+                  <th>Monthly Adj Actual</th>
+                </tr>
+              </thead>
+              <tbody>
+                {trend.map((data: any, index: any) => (
+                  <tr
+                    key={index}
+                    style={
+                      !data.isFinalMonth
+                        ? { fontStyle: "italic", opacity: 0.85 }
+                        : {}
+                    }
+                  >
+                    {" "}
+                    <td>{data.period}</td>
+                    <td>
+                      {data.monthlyBudget !== null
+                        ? formatCurrencyFull(data.monthlyBudget)
+                        : "-"}
+                    </td>
+                    <td>
+                      {data.monthlyActual !== null
+                        ? formatCurrencyFull(data.monthlyActual)
+                        : "-"}
+                    </td>
+                    <td>
+                      {data.monthlyReforecast !== null
+                        ? formatCurrencyFull(data.monthlyReforecast)
+                        : "-"}
+                    </td>
+                    <td>
+                      {data.monthlyAdjusted !== null
+                        ? formatCurrencyFull(data.monthlyAdjusted)
+                        : "-"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}{" "}
+      </div>{" "}
       {/* Divider between Trend Chart Data and Resource Allocation */}
       <div className="section-divider"></div>
       <div className="resource-allocation-section">
@@ -3221,25 +3574,35 @@ const getTrendData = (state: any) => {
         cumulativeForecast += monthlyActual; // Add actuals from final months to build the base
       } else {
         cumulativeForecast += monthlyReforecast; // Add reforecasts from forecast months
-      }
-
-      // For adjusted forecast: build cumulative total including adjusted actuals from final months + adjusted forecasts from forecast months
+      } // For adjusted forecast: build cumulative total including adjusted actuals from final months + adjusted forecasts from forecast months
       if (isFinalMonth) {
         cumulativeAdjForecast += monthlyActual - monthlyAdjustments; // Add adjusted actuals from final months to build the base
       } else {
         cumulativeAdjForecast += monthlyReforecast - monthlyAdjustments; // Add adjusted reforecasts from forecast months
       }
+
+      // Create a combined rolling adjusted actual that starts from January
+      const rollingAdjActual = cumulativeAdjForecast; // This combines both actual (for final months) and forecast (for forecast months)
+
       return {
         period: monthNames[month],
         budget: cumulativeBudget,
         actual: isFinalMonth ? cumulativeActual : null, // Only show actual for final months
         forecast: !isFinalMonth ? cumulativeForecast : null, // Only show forecast for forecast months
-        adjActual: isFinalMonth ? cumulativeAdjActual : null, // Only show adjusted actual for final months
+        adjActual: rollingAdjActual > 0 ? rollingAdjActual : null, // Combined rolling adjusted actual starting from January
         adjForecast: !isFinalMonth ? cumulativeAdjForecast : null, // Only show adjusted forecast for forecast months
-        monthlyBudget,
-        monthlyActual,
+        monthlyBudget: monthlyBudget > 0 ? monthlyBudget : null,
+        monthlyActual: isFinalMonth && monthlyActual > 0 ? monthlyActual : null,
         monthlyAdjustments,
-        monthlyReforecast,
+        monthlyReforecast:
+          !isFinalMonth && monthlyReforecast > 0 ? monthlyReforecast : null,
+        monthlyAdjusted: isFinalMonth
+          ? monthlyActual - monthlyAdjustments > 0
+            ? monthlyActual - monthlyAdjustments
+            : null
+          : !isFinalMonth && monthlyReforecast - monthlyAdjustments > 0
+          ? monthlyReforecast - monthlyAdjustments
+          : null, // Calculated field for chart
         isFinalMonth,
       };
     })

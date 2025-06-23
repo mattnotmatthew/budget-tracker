@@ -6,7 +6,7 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
   padding: 2rem;
   margin: 2rem auto;
-  max-width: 900px;
+  max-width: 1200px;
   font-family: "Segoe UI", Arial, sans-serif;
 }
 .executive-summary h2 {
@@ -758,12 +758,15 @@
 
 .trend-data-table {
   padding: 1.5rem;
+  overflow-x: auto; /* Enable horizontal scrolling for the table container */
 }
 
 .trend-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9rem;
+  min-width: 600px; /* Adjusted minimum width for 5-column tables */
+  table-layout: fixed;
 }
 
 .trend-table th {
@@ -773,12 +776,38 @@
   font-weight: 600;
   color: #2d3a4a;
   border-bottom: 2px solid #dee2e6;
+  border-right: 1px solid #e1e8ed;
 }
 
 .trend-table td {
   padding: 0.75rem 1rem;
   border-bottom: 1px solid #e1e8ed;
+  border-right: 1px solid #e1e8ed;
   color: #495057;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Column width specifications for better alignment */
+.trend-table th:nth-child(1),
+.trend-table td:nth-child(1) {
+  width: 15%;
+  text-align: center;
+}
+
+/* For 5-column tables (monthly and rolling separated) */
+.trend-table th:nth-child(2),
+.trend-table td:nth-child(2),
+.trend-table th:nth-child(3),
+.trend-table td:nth-child(3),
+.trend-table th:nth-child(4),
+.trend-table td:nth-child(4),
+.trend-table th:nth-child(5),
+.trend-table td:nth-child(5) {
+  width: 21.25%;
+  text-align: right;
 }
 
 .trend-table tbody tr:hover {
@@ -791,10 +820,183 @@
   color: #2d3a4a;
 }
 
+/* Visual grouping with chart line colors for Monthly tables - using chart line colors */
+.trend-table:not(.rolling-trend-table) th:nth-child(2),
+.trend-table:not(.rolling-trend-table) td:nth-child(2) {
+  background-color: rgba(
+    45,
+    120,
+    251,
+    0.1
+  ) !important; /* Light blue for Monthly Budget */
+}
+
+.trend-table:not(.rolling-trend-table) th:nth-child(3),
+.trend-table:not(.rolling-trend-table) td:nth-child(3) {
+  background-color: rgba(
+    51,
+    202,
+    127,
+    0.1
+  ) !important; /* Light green for Monthly Actual */
+}
+
+.trend-table:not(.rolling-trend-table) th:nth-child(4),
+.trend-table:not(.rolling-trend-table) td:nth-child(4) {
+  background-color: rgba(
+    255,
+    140,
+    0,
+    0.1
+  ) !important; /* Light orange for Monthly Forecast */
+}
+
+.trend-table:not(.rolling-trend-table) th:nth-child(5),
+.trend-table:not(.rolling-trend-table) td:nth-child(5) {
+  background-color: rgba(
+    139,
+    0,
+    0,
+    0.1
+  ) !important; /* Light dark red for Monthly Adj Actual */
+}
+
+/* Hover effects for monthly tables - using chart line colors */
+.trend-table:not(.rolling-trend-table) tbody tr:hover td:nth-child(2) {
+  background-color: rgba(
+    45,
+    120,
+    251,
+    0.2
+  ) !important; /* Darker blue for Monthly Budget on hover */
+}
+
+.trend-table:not(.rolling-trend-table) tbody tr:hover td:nth-child(3) {
+  background-color: rgba(
+    51,
+    202,
+    127,
+    0.2
+  ) !important; /* Darker green for Monthly Actual on hover */
+}
+
+.trend-table:not(.rolling-trend-table) tbody tr:hover td:nth-child(4) {
+  background-color: rgba(
+    255,
+    140,
+    0,
+    0.2
+  ) !important; /* Darker orange for Monthly Forecast on hover */
+}
+
+.trend-table:not(.rolling-trend-table) tbody tr:hover td:nth-child(5) {
+  background-color: rgba(
+    139,
+    0,
+    0,
+    0.2
+  ) !important; /* Darker dark red for Monthly Adj Actual on hover */
+}
+
+/* Different colors for Rolling tables to distinguish them - using chart line colors */
+.rolling-trend-table th:nth-child(2),
+.rolling-trend-table td:nth-child(2) {
+  background-color: rgba(
+    45,
+    120,
+    251,
+    0.1
+  ) !important; /* Light blue for Rolling Budget */
+}
+
+.rolling-trend-table th:nth-child(3),
+.rolling-trend-table td:nth-child(3) {
+  background-color: rgba(
+    51,
+    202,
+    127,
+    0.1
+  ) !important; /* Light green for Rolling Actual */
+}
+
+.rolling-trend-table th:nth-child(4),
+.rolling-trend-table td:nth-child(4) {
+  background-color: rgba(
+    255,
+    140,
+    0,
+    0.1
+  ) !important; /* Light orange for Rolling Forecast */
+}
+
+.rolling-trend-table th:nth-child(5),
+.rolling-trend-table td:nth-child(5) {
+  background-color: rgba(
+    153,
+    50,
+    204,
+    0.1
+  ) !important; /* Light purple for Rolling Adj Actual */
+}
+
+/* Hover effects for rolling tables - using chart line colors */
+.rolling-trend-table tbody tr:hover td:nth-child(2) {
+  background-color: rgba(
+    45,
+    120,
+    251,
+    0.2
+  ) !important; /* Darker blue for Rolling Budget on hover */
+}
+
+.rolling-trend-table tbody tr:hover td:nth-child(3) {
+  background-color: rgba(
+    51,
+    202,
+    127,
+    0.2
+  ) !important; /* Darker green for Rolling Actual on hover */
+}
+
+.rolling-trend-table tbody tr:hover td:nth-child(4) {
+  background-color: rgba(
+    255,
+    140,
+    0,
+    0.2
+  ) !important; /* Darker orange for Rolling Forecast on hover */
+}
+
+.rolling-trend-table tbody tr:hover td:nth-child(5) {
+  background-color: rgba(
+    153,
+    50,
+    204,
+    0.2
+  ) !important; /* Darker purple for Rolling Adj Actual on hover */
+}
+
 /* Responsive table */
+@media (max-width: 1200px) {
+  .executive-summary {
+    margin: 1rem;
+    padding: 1.5rem;
+  }
+
+  .trend-table {
+    font-size: 0.85rem;
+  }
+
+  .trend-table th,
+  .trend-table td {
+    padding: 0.6rem 0.8rem;
+  }
+}
+
 @media (max-width: 768px) {
   .trend-table {
     font-size: 0.8rem;
+    min-width: 500px; /* Adjust minimum width for mobile with 5 columns */
   }
 
   .trend-table th,

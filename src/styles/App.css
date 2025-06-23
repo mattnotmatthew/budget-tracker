@@ -2901,7 +2901,6 @@ button small {
 }
 
 .file-section p {
-  color: #666;
   margin-bottom: 1rem;
   line-height: 1.5;
 }
@@ -2976,6 +2975,18 @@ button small {
 .restore-btn:disabled {
   background: #999;
   cursor: not-allowed;
+}
+
+.cancel-btn {
+  background: #172a3a;
+  color: #ffffff;
+    border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 400px;
 }
 
 /* Year Selector Styles */
@@ -3783,7 +3794,7 @@ button small {
 .input-with-suffix input:focus {
   outline: none;
   border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.25);
 }
 
 .input-suffix {
@@ -4080,69 +4091,234 @@ button small {
   font-size: 1.1rem;
 }
 
-/* Button Sizes */
-.btn-sm {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
+/* Enhanced File Manager Load Sections */
+.load-from-file-section {
+  background: linear-gradient(135deg, #2e5c2e, #3f703f);
+  color: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 12px rgba(46, 92, 46, 0.2);
 }
 
-.btn-danger {
-  background-color: #dc3545;
-  border-color: #dc3545;
+.load-from-file-section h5 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
   color: white;
 }
 
-.btn-danger:hover {
-  background-color: #c82333;
-  border-color: #bd2130;
+.load-description {
+  margin: 0 0 1rem 0;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.4;
+  color: white;
 }
 
-.btn-danger:disabled {
-  background-color: #6c757d;
-  border-color: #6c757d;
-  opacity: 0.6;
+.primary-load {
+  background: #ffffff !important;
+  color: #2e5c2e !important;
+  border: 2px solid transparent;
+  font-weight: 600 !important;
+  padding: 0.875rem 1.5rem;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.primary-load:hover {
+  background: #f8f9fa !important;
+  color: #1e4a1e !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.file-timestamp {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+}
+
+.load-separator {
+  text-align: center;
+  margin: 1.5rem 0;
+  position: relative;
+}
+
+.load-separator::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #dee2e6;
+  z-index: 1;
+}
+
+.load-separator span {
+  background: white;
+  padding: 0 1rem;
+  color: #6b7a8f;
+  font-weight: 500;
+  position: relative;
+  z-index: 2;
+  font-size: 0.9rem;
+}
+
+.restore-cached-section {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.restore-cached-section h5 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  color: #495057;
+  font-weight: 600;
+}
+
+.restore-description {
+  margin: 0 0 1rem 0;
+  font-size: 0.9rem;
+  color: #6c757d;
+  line-height: 1.4;
+}
+
+.secondary-load {
+  background: #6c757d !important;
+  color: white !important;
+  font-size: 0.95rem;
+  margin-bottom: 0.75rem;
+}
+
+.secondary-load:hover {
+  background: #5a6268 !important;
+}
+
+/* File Manager Danger Section */
+.danger-section {
+  background: linear-gradient(135deg, #dc3545, #c82333);
+  color: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-top: 2rem;
+  border: 2px solid #b21e2d;
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);
+}
+
+.danger-section h4 {
+  color: white !important;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.danger-section h4::before {
+  content: "⚠️";
+  font-size: 1.2em;
+}
+
+.danger-section p {
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+}
+
+.danger-btn {
+  background: #ffffff !important;
+  color: #dc3545 !important;
+  border: 2px solid #ffffff !important;
+  font-weight: 600 !important;
+  padding: 0.875rem 1.5rem;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.danger-btn:hover {
+  background: #f8f9fa !important;
+  color: #b21e2d !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Clear Confirmation Dialog */
+.clear-confirmation {
+  margin-top: 1rem;
+}
+
+.confirmation-warning {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  font-weight: 500;
+}
+
+.confirmation-instruction {
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.confirmation-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #ffffff;
+  border-radius: 6px;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  background: #ffffff;
+  color: #333;
+}
+
+.confirmation-input:focus {
+  outline: none;
+  border-color: #f8f9fa;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+}
+
+.confirmation-buttons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.confirm-clear-btn {
+  flex: 1;
+  min-width: 200px;
+}
+
+.confirm-clear-btn:disabled {
+  background: #6c757d !important;
+  color: #ffffff !important;
   cursor: not-allowed;
+  opacity: 0.6;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .scenarios-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
+.cancel-clear-btn {
+  background: #6c757d !important;
+  color: white !important;
+  border: 2px solid #6c757d !important;
+  padding: 0.875rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  min-width: 120px;
+}
 
-  .scenarios-tabs {
-    flex-wrap: wrap;
-  }
-
-  .scenario-card-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-
-  .assumptions-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .scenario-actions {
-    justify-content: center;
-  }
-
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .form-actions {
-    flex-direction: column;
-  }
-
-  .comparison-table {
-    overflow-x: auto;
-  }
-
-  .comparison-table table {
-    min-width: 600px;
-  }
+.cancel-clear-btn:hover {
+  background: #5a6268 !important;
+  border-color: #5a6268 !important;
 }

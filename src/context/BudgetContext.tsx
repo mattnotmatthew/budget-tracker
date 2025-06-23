@@ -31,7 +31,12 @@ type BudgetAction =
   | {
       type: "SET_CURRENT_FILE";
       payload:
-        | { name: string; handle?: FileSystemFileHandle; lastSaved?: Date }
+        | {
+            name: string;
+            handle?: FileSystemFileHandle;
+            lastSaved?: Date;
+            userLastSaved?: Date;
+          }
         | undefined;
     }
   | { type: "CLEAR_ALL_DATA" }
@@ -616,7 +621,6 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
           },
           state.currentFile?.handle
         );
-
         if (result.saved && result.fileHandle) {
           dispatch({
             type: "SET_CURRENT_FILE",
@@ -624,6 +628,8 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
               name: result.fileName,
               handle: result.fileHandle,
               lastSaved: new Date(),
+              // Preserve existing userLastSaved when auto-saving from context
+              userLastSaved: state.currentFile?.userLastSaved,
             },
           });
 
@@ -743,15 +749,15 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
         dispatch({
           type: "SET_SELECTED_PERIOD",
           payload: { year: loadedData.year as number },
-        });
-
-        // Set current file
+        }); // Set current file
         dispatch({
           type: "SET_CURRENT_FILE",
           payload: {
             name: file.name,
             handle: selectedFileHandle,
             lastSaved: new Date(),
+            // Clear userLastSaved when loading a new file
+            userLastSaved: undefined,
           },
         });
 
@@ -800,15 +806,15 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
 
         if (!fileHandle) {
           return false;
-        }
-
-        // Set current file
+        } // Set current file
         dispatch({
           type: "SET_CURRENT_FILE",
           payload: {
             name: fileHandle.name,
             handle: fileHandle,
             lastSaved: new Date(),
+            // Clear userLastSaved when creating a new file
+            userLastSaved: undefined,
           },
         });
 

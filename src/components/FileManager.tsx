@@ -1,10 +1,7 @@
 import React, { useState } from "react";
 import { useBudget } from "../context/BudgetContext";
 import {
-  saveBudgetData,
   loadBudgetData,
-  mergeBudgetData,
-  saveToFileHandle,
   supportsFileSystemAccess,
   attemptRestoreCachedFile,
 } from "../utils/fileManager";
@@ -20,67 +17,10 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
     type: "success" | "error" | "info";
     text: string;
   } | null>(null);
-  const [mergeStrategy, setMergeStrategy] = useState<
-    "replace" | "append" | "update"
-  >("replace");
-  const handleSave = async () => {
-    try {
-      let result;
-      if (supportsFileSystemAccess()) {
-        // Use new file handle system
-        result = await saveToFileHandle(
-          {
-            entries: state.entries,
-            selectedYear: state.selectedYear,
-            yearlyBudgetTargets: state.yearlyBudgetTargets,
-            monthlyForecastModes: state.monthlyForecastModes,
-          },
-          state.currentFile?.handle
-        );
-
-        // Update the current file if a new one was created
-        if (result.saved && result.fileHandle) {
-          dispatch({
-            type: "SET_CURRENT_FILE",
-            payload: {
-              name: result.fileName,
-              handle: result.fileHandle,
-              lastSaved: new Date(),
-            },
-          });
-        }
-      } else {
-        // Fallback to traditional download
-        const savedData = saveBudgetData({
-          entries: state.entries,
-          selectedYear: state.selectedYear,
-          yearlyBudgetTargets: state.yearlyBudgetTargets,
-          monthlyForecastModes: state.monthlyForecastModes,
-        });
-        result = {
-          saved: true,
-          fileName: `budget-data-${state.selectedYear}.json`,
-        };
-      }
-
-      if (result.saved) {
-        setMessage({
-          type: "success",
-          text: `Successfully saved data for ${state.selectedYear} to ${result.fileName}`,
-        });
-      } else {
-        setMessage({
-          type: "error",
-          text: result.error || "Failed to save file",
-        });
-      }
-    } catch (error) {
-      setMessage({
-        type: "error",
-        text: "Failed to save file: " + (error as Error).message,
-      });
-    }
-  };
+  const [lastSelectedFileTimestamp, setLastSelectedFileTimestamp] =
+    useState<Date | null>(null);
+  const [showClearConfirmation, setShowClearConfirmation] = useState(false);
+  const [clearConfirmationText, setClearConfirmationText] = useState("");
   const handleLoad = async () => {
     setIsLoading(true);
     setMessage(null);
@@ -115,12 +55,14 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
           if (!file) {
             throw new Error("Could not read file");
           }
-
           content = await file.text();
           loadedData = JSON.parse(content);
           fileHandle = selectedFileHandle;
           fileName = file.name;
           fileObj = file;
+
+          // Capture file timestamp
+          setLastSelectedFileTimestamp(new Date(file.lastModified));
 
           // Validate and convert dates
           if (
@@ -148,12 +90,8 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
         loadedData = await loadBudgetData();
       }
 
-      const mergedEntries = mergeBudgetData(
-        state.entries,
-        loadedData,
-        mergeStrategy
-      );
-      dispatch({ type: "LOAD_ENTRIES", payload: mergedEntries }); // Load yearly budget targets if they exist
+      // Replace all data with loaded data (no merging)
+      dispatch({ type: "LOAD_ENTRIES", payload: loadedData.entries }); // Load yearly budget targets if they exist
       if (loadedData.yearlyBudgetTargets) {
         Object.entries(loadedData.yearlyBudgetTargets).forEach(
           ([year, amount]) => {
@@ -201,6 +139,8 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
             name: fileName,
             handle: fileHandle,
             lastSaved: new Date(),
+            // Preserve existing userLastSaved if it exists
+            userLastSaved: state.currentFile?.userLastSaved,
           },
         });
       }
@@ -227,13 +167,8 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
       const result = await attemptRestoreCachedFile();
 
       if (result.success && result.data) {
-        // Load the restored data
-        const mergedEntries = mergeBudgetData(
-          state.entries,
-          result.data,
-          mergeStrategy
-        );
-        dispatch({ type: "LOAD_ENTRIES", payload: mergedEntries });
+        // Replace all data with restored data (no merging)
+        dispatch({ type: "LOAD_ENTRIES", payload: result.data.entries });
 
         // Load yearly budget targets if they exist
         if (result.data.yearlyBudgetTargets) {
@@ -275,14 +210,14 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
             type: "SET_SELECTED_PERIOD",
             payload: { year: result.data.year as number },
           });
-        }
-
-        // Update current file info
+        } // Update current file info
         dispatch({
           type: "SET_CURRENT_FILE",
           payload: {
             name: result.fileName || "restored-file.json",
             lastSaved: new Date(),
+            // Preserve existing userLastSaved if it exists
+            userLastSaved: state.currentFile?.userLastSaved,
           },
         });
 
@@ -306,18 +241,32 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
     }
   };
   const handleClearAll = () => {
-    if (
-      window.confirm(
-        "Are you sure you want to clear all data? This action cannot be undone."
-      )
-    ) {
+    setShowClearConfirmation(true);
+    setClearConfirmationText("");
+  };
+
+  const confirmClearAll = () => {
+    if (clearConfirmationText.toLowerCase() === "clear all my data") {
       dispatch({ type: "CLEAR_ALL_DATA" });
       // Note: localStorage caching removed - only clearing in-memory data
       setMessage({
         type: "info",
         text: "All data cleared successfully",
       });
+      setShowClearConfirmation(false);
+      setClearConfirmationText("");
+    } else {
+      setMessage({
+        type: "error",
+        text: "Please type exactly 'clear all my data' to confirm",
+      });
     }
+  };
+
+  const cancelClearAll = () => {
+    setShowClearConfirmation(false);
+    setClearConfirmationText("");
+    setMessage(null);
   };
   const getCurrentStats = () => {
     const currentYearEntries = state.entries.filter(
@@ -344,10 +293,98 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
           <button className="close-btn" onClick={onClose}>
             ×
           </button>
-        </div>
-
+        </div>{" "}
         <div className="file-manager-content">
-          {" "}
+          {/* Load Section - Moved to top */}
+          <div className="file-section">
+            <h4>Load Data</h4>
+            <p>
+              Load budget data from a JSON file. This will replace all current
+              data.
+            </p>
+
+            {/* Load from File - Primary Action */}
+            <div className="load-from-file-section">
+              <h5>Load from File</h5>
+              <p className="load-description">
+                Select a JSON file from your computer to load budget data.
+              </p>
+              <button
+                className="load-btn primary-load"
+                onClick={handleLoad}
+                disabled={isLoading}
+              >
+                {isLoading ? "Loading..." : "📁 Load Data from File"}
+              </button>
+              {lastSelectedFileTimestamp && (
+                <div className="file-timestamp">
+                  <strong>Last selected file modified:</strong>{" "}
+                  {lastSelectedFileTimestamp.toLocaleString()}
+                </div>
+              )}
+            </div>
+
+            {/* Restore Cached File - Secondary Action */}
+            {state.currentFile && supportsFileSystemAccess() && (
+              <>
+                <div className="load-separator">
+                  <span>OR</span>
+                </div>
+                <div className="restore-cached-section">
+                  <h5>Restore Cached File</h5>
+                  <p className="restore-description">
+                    Restore the previously opened file from browser cache.
+                  </p>
+                  <button
+                    className="restore-btn secondary-load"
+                    onClick={handleRestoreCached}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Restoring..." : "🔄 Restore Cached File"}
+                  </button>
+                  {state.currentFile.lastSaved && (
+                    <div className="cache-timestamp">
+                      <strong>Cache last saved:</strong>{" "}
+                      {new Date(state.currentFile.lastSaved).toLocaleString()}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>{" "}
+          {/* Current Session - Enhanced with both timestamps */}
+          {state.currentFile && (
+            <div className="file-section current-session-compact">
+              <h4>Current Session</h4>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "1rem",
+                  flexWrap: "wrap",
+                }}
+              >
+                <span>
+                  <strong>File:</strong> {state.currentFile.name}
+                </span>
+                <span>
+                  <strong>Cache Last Saved:</strong>{" "}
+                  {state.currentFile.lastSaved
+                    ? new Date(state.currentFile.lastSaved).toLocaleString()
+                    : "Never"}
+                </span>
+                <span>
+                  <strong>User Last Saved:</strong>{" "}
+                  {state.currentFile.userLastSaved
+                    ? new Date(state.currentFile.userLastSaved).toLocaleString()
+                    : "Never"}
+                </span>
+                <span style={{ fontSize: "0.9em", color: "#666" }}>
+                  📝 <em>Cached - will restore on refresh</em>
+                </span>
+              </div>
+            </div>
+          )}
           {/* Current Data Stats */}
           <div className="data-stats">
             <h4>Current Data</h4>
@@ -370,126 +407,63 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
                   {stats.years.join(", ") || "None"}
                 </span>
               </div>
-              {state.currentFile ? (
-                <>
-                  <div className="stat-item">
-                    <span className="stat-label">Attached File:</span>
-                    <span className="stat-value">{state.currentFile.name}</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">Last Saved:</span>
-                    <span className="stat-value">
-                      {state.currentFile.lastSaved
-                        ? new Date(state.currentFile.lastSaved).toLocaleString()
-                        : "Unknown"}
-                    </span>
-                  </div>
-                </>
-              ) : (
+              {!state.currentFile && (
                 <div className="stat-item">
                   <span className="stat-label">Attached File:</span>
                   <span className="stat-value">None (saving locally)</span>
                 </div>
               )}
             </div>
-          </div>{" "}
-          {/* Current File Info */}
-          {state.currentFile && (
-            <div className="file-section current-file-info">
-              <h4>Current Session</h4>
-              <div className="current-file-details">
-                <p>
-                  <strong>File:</strong> {state.currentFile.name}
-                </p>
-                {state.currentFile.lastSaved && (
-                  <p>
-                    <strong>Last Saved:</strong>{" "}
-                    {state.currentFile.lastSaved.toLocaleString()}
-                  </p>
-                )}
-                <p className="cache-info">
-                  📝{" "}
-                  <em>
-                    File location is cached - will be restored on page refresh
-                  </em>
-                </p>
-              </div>
-            </div>
-          )}
-          {/* Save Section */}
-          <div className="file-section">
-            <h4>Save Data</h4>
-            <p>
-              Save current year ({state.selectedYear}) data to a JSON file.{" "}
-              {stats.currentYearEntries === 0
-                ? "(Will create an empty file for this year)"
-                : ""}
-            </p>
-            <button className="save-btn" onClick={handleSave}>
-              Save {state.selectedYear} Data{" "}
-              {stats.currentYearEntries === 0
-                ? "(Empty)"
-                : `(${stats.currentYearEntries} entries)`}
-            </button>
-          </div>
-          {/* Load Section */}
-          <div className="file-section">
-            <h4>Load Data</h4>
-            <p>Load budget data from a JSON file.</p>
-            <div className="merge-strategy">
-              <label>Merge Strategy:</label>
-              <select
-                value={mergeStrategy}
-                onChange={(e) =>
-                  setMergeStrategy(
-                    e.target.value as "replace" | "append" | "update"
-                  )
-                }
-              >
-                <option value="replace">
-                  Replace (overwrite data for the loaded year)
-                </option>
-                <option value="append">Append (add to existing data)</option>
-                <option value="update">Update (merge by entry ID)</option>
-              </select>
-            </div>{" "}
-            <button
-              className="load-btn"
-              onClick={handleLoad}
-              disabled={isLoading}
-            >
-              {isLoading ? "Loading..." : "Load Data from File"}
-            </button>
-            {/* Restore Cached File Button - only show if cached file exists and FileSystem API is supported */}
-            {state.currentFile && supportsFileSystemAccess() && (
-              <button
-                className="restore-btn"
-                onClick={handleRestoreCached}
-                disabled={isLoading}
-                style={{ marginTop: "0.5rem" }}
-              >
-                {isLoading ? "Restoring..." : "Restore Cached File"}
-              </button>
-            )}
           </div>
           {/* Clear Data Section */}
           <div className="file-section danger-section">
             <h4>Clear All Data</h4>
             <p>Remove all budget entries and auto-saved data.</p>
-            <button className="clear-btn danger-btn" onClick={handleClearAll}>
-              Clear All Data
-            </button>
+
+            {!showClearConfirmation ? (
+              <button className="clear-btn danger-btn" onClick={handleClearAll}>
+                Clear All Data
+              </button>
+            ) : (
+              <div className="clear-confirmation">
+                <p className="confirmation-warning">
+                  ⚠️ This action will permanently delete all your budget data
+                  and cannot be undone.
+                </p>
+                <p className="confirmation-instruction">
+                  To confirm, please type <strong>"clear all my data"</strong>{" "}
+                  below:
+                </p>
+                <input
+                  type="text"
+                  className="confirmation-input"
+                  value={clearConfirmationText}
+                  onChange={(e) => setClearConfirmationText(e.target.value)}
+                  placeholder="Type: clear all my data"
+                  autoFocus
+                />
+                <div className="confirmation-buttons">
+                  <button
+                    className="confirm-clear-btn danger-btn"
+                    onClick={confirmClearAll}
+                    disabled={
+                      clearConfirmationText.toLowerCase() !==
+                      "clear all my data"
+                    }
+                  >
+                    Confirm Clear All Data
+                  </button>
+                  <button className="cancel-clear-btn" onClick={cancelClearAll}>
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
           {/* Message Display */}
           {message && (
             <div className={`message ${message.type}`}>{message.text}</div>
           )}
-        </div>
-
-        <div className="file-manager-footer">
-          <button className="close-footer-btn" onClick={onClose}>
-            Close
-          </button>
         </div>
       </div>
     </div>

@@ -97,7 +97,8 @@ export interface BudgetState {
   currentFile?: {
     name: string;
     handle?: FileSystemFileHandle;
-    lastSaved?: Date;
+    lastSaved?: Date; // Cache last saved timestamp
+    userLastSaved?: Date; // User manual save timestamp
     size?: number;
     lastModified?: Date;
     contentHash?: string;
