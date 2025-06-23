@@ -40,6 +40,7 @@ const Dashboard: React.FC = () => {
   const [collapseAll, setCollapseAll] = useState(true);
   const [selectedQuarters, setSelectedQuarters] = useState<number[]>([]);
   const [showHotkeysHelp, setShowHotkeysHelp] = useState(false);
+  const [isReadOnly, setIsReadOnly] = useState(true); // Default to Read Only mode
   const navigate = useNavigate();
 
   // Generate year options dynamically (year-agnostic)
@@ -163,6 +164,11 @@ const Dashboard: React.FC = () => {
             event.preventDefault();
             setShowFileManager(!showFileManager);
             break;
+          case "s":
+          case "S":
+            event.preventDefault();
+            navigate("/executive-summary");
+            break;
         }
       }
 
@@ -174,17 +180,25 @@ const Dashboard: React.FC = () => {
             event.preventDefault();
             setCollapseAll(!collapseAll);
             break;
-          case "t":
-          case "T":
+          case "q":
+          case "Q":
             event.preventDefault();
-            // Toggle current quarter on/off for quick access
-            const currentQuarter = getCurrentQuarter();
-            if (selectedQuarters.includes(currentQuarter)) {
-              setSelectedQuarters(
-                selectedQuarters.filter((q) => q !== currentQuarter)
-              );
+            // Rotate through quarters: Q1 -> Q2 -> Q3 -> Q4 -> None -> Q1...
+            if (selectedQuarters.length === 0) {
+              // No quarters selected, start with Q1
+              setSelectedQuarters([1]);
+            } else if (selectedQuarters.length === 1) {
+              const currentQuarter = selectedQuarters[0];
+              if (currentQuarter === 4) {
+                // Q4 selected, go to none
+                setSelectedQuarters([]);
+              } else {
+                // Q1, Q2, or Q3 selected, go to next quarter
+                setSelectedQuarters([currentQuarter + 1]);
+              }
             } else {
-              setSelectedQuarters([currentQuarter]);
+              // Multiple quarters selected, start fresh with Q1
+              setSelectedQuarters([1]);
             }
             break;
         }
@@ -263,10 +277,8 @@ const Dashboard: React.FC = () => {
         style={{
           display: "flex",
           justifyContent: "flex-end",
-          marginBottom: 16,
         }}
       ></div>
-
       <div className="dashboard-header">
         <div className="view-controls">
           <div className="year-selector">
@@ -286,12 +298,153 @@ const Dashboard: React.FC = () => {
                   <div className="mode-indicator planning-mode">
                     📋 Planning Mode
                   </div>
-                )}
+                )}{" "}
             </div>
           </div>
           <button className={`view-btn active`} title="Monthly View">
             Monthly View
+          </button>{" "}
+          <QuarterSelector
+            selectedQuarters={selectedQuarters}
+            onQuarterToggle={handleQuarterToggle}
+          />
+          <div className="toggle-control">
+            <label className="toggle-label">
+              <span className="toggle-text">
+                {isReadOnly ? "Read Only" : "Edit Mode"}
+              </span>
+              <label className="toggle-switch">
+                <input
+                  type="checkbox"
+                  checked={isReadOnly}
+                  onChange={() => setIsReadOnly(!isReadOnly)}
+                />
+                <span className="toggle-slider round"></span>
+              </label>
+            </label>
+          </div>
+        </div>{" "}
+        <div className="action-controls">
+          <button
+            className="executive-summary-btn"
+            onClick={() => navigate("/executive-summary")}
+            title="View Executive Summary"
+          >
+            📎 Executive Summary
+          </button>{" "}
+          <button
+            className="input-btn"
+            onClick={handleEditDataClick}
+            title={isReadOnly ? "View Data (Ctrl+E)" : "Edit/Add Data (Ctrl+E)"}
+          >
+            {showInput ? "Close" : isReadOnly ? "👁️ View Data" : "✏️ Edit Data"}{" "}
+            <small>(Ctrl+E)</small>
           </button>
+          <button
+            className="file-manager-btn"
+            onClick={() => setShowFileManager(!showFileManager)}
+            title="Save/Load budget data (Ctrl+F)"
+          >
+            💾 File Manager <small>(Ctrl+F)</small>
+          </button>
+          <button
+            className="help-btn"
+            onClick={() => setShowHotkeysHelp(!showHotkeysHelp)}
+            title="Show keyboard shortcuts (F1)"
+          >
+            ❓ Help <small>(F1)</small>
+          </button>
+        </div>
+      </div>
+      <br />
+      <AlertPanel />{" "}
+      {showInput && (
+        <BudgetInput
+          onClose={() => setShowInput(false)}
+          onForceFileManager={handleFileManagerToEditTransition}
+          isReadOnly={isReadOnly}
+        />
+      )}{" "}
+      {showFileManager && (
+        <FileManager onClose={() => setShowFileManager(false)} />
+      )}
+      {showHotkeysHelp && (
+        <div
+          className="hotkeys-overlay"
+          onClick={() => setShowHotkeysHelp(false)}
+        >
+          <div className="hotkeys-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="hotkeys-header">
+              <h2>Keyboard Shortcuts</h2>
+              <button
+                className="close-btn"
+                onClick={() => setShowHotkeysHelp(false)}
+                title="Close (Esc)"
+              >
+                ×
+              </button>
+            </div>
+            <div className="hotkeys-content">
+              <div className="hotkeys-section">
+                <h3>General</h3>
+                <div className="hotkey-item">
+                  <span className="hotkey">F1</span>
+                  <span className="description">Show/Hide this help</span>
+                </div>
+                <div className="hotkey-item">
+                  <span className="hotkey">Esc</span>
+                  <span className="description">Close modals/help</span>
+                </div>
+              </div>{" "}
+              <div className="hotkeys-section">
+                <h3>File Operations</h3>
+                <div className="hotkey-item">
+                  <span className="hotkey">Ctrl + E</span>
+                  <span className="description">Edit/Add Data</span>
+                </div>
+                <div className="hotkey-item">
+                  <span className="hotkey">Ctrl + F</span>
+                  <span className="description">File Manager</span>
+                </div>
+                <div className="hotkey-item">
+                  <span className="hotkey">Ctrl + S</span>
+                  <span className="description">Executive Summary</span>
+                </div>
+              </div>
+              <div className="hotkeys-section">
+                <h3>View Controls</h3>
+                <div className="hotkey-item">
+                  <span className="hotkey">Alt + C</span>
+                  <span className="description">Toggle Collapse All</span>
+                </div>{" "}
+                <div className="hotkey-item">
+                  <span className="hotkey">Alt + Q</span>
+                  <span className="description">
+                    Rotate Quarters (Q1→Q2→Q3→Q4→None)
+                  </span>
+                </div>
+              </div>
+              <div className="hotkeys-section">
+                <h3>Year Selection</h3>
+                <div className="hotkey-item">
+                  <span className="hotkey">Ctrl + 1</span>
+                  <span className="description">Switch to first year</span>
+                </div>
+                <div className="hotkey-item">
+                  <span className="hotkey">Ctrl + 2</span>
+                  <span className="description">Switch to second year</span>
+                </div>
+                <div className="hotkey-item">
+                  <span className="hotkey">Ctrl + 3</span>
+                  <span className="description">Switch to third year</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}{" "}
+      <div className="dashboard-content">
+        <div className="controls-and-currency">
           <div className="toggle-control">
             <label className="toggle-label">
               <span className="toggle-text">
@@ -307,60 +460,9 @@ const Dashboard: React.FC = () => {
               </label>
             </label>
           </div>
-          <QuarterSelector
-            selectedQuarters={selectedQuarters}
-            onQuarterToggle={handleQuarterToggle}
-          />
-        </div>
-
-        <div className="action-controls">
-          <button
-            className="executive-summary-btn"
-            onClick={() => navigate("/executive-summary")}
-            title="View Executive Summary"
-          >
-            📎 Executive Summary
-          </button>
-          <button
-            className="input-btn"
-            onClick={handleEditDataClick}
-            title="Edit/Add Data (Ctrl+E)"
-          >
-            {showInput ? "Close" : "✏️ Edit Data"} <small>(Ctrl+E)</small>
-          </button>
-          <button
-            className="file-manager-btn"
-            onClick={() => setShowFileManager(!showFileManager)}
-            title="Save/Load budget data (Ctrl+F)"
-          >
-            💾 File Manager <small>(Ctrl+F)</small>
-          </button>
-
-          <button
-            className="help-btn"
-            onClick={() => setShowHotkeysHelp(!showHotkeysHelp)}
-            title="Show keyboard shortcuts (F1)"
-          >
-            ❓ Help <small>(F1)</small>
-          </button>
-        </div>
-      </div>
-      <br />
-      <AlertPanel />
-
-      {showInput && (
-        <BudgetInput
-          onClose={() => setShowInput(false)}
-          onForceFileManager={handleFileManagerToEditTransition}
-        />
-      )}
-      {showFileManager && (
-        <FileManager onClose={() => setShowFileManager(false)} />
-      )}
-
-      <div className="dashboard-content">
-        <div className="currency-note">
-          <small>💡 (USD in Thousands)</small>
+          <span className="currency-note">
+            <small>💡 (USD in Thousands)</small>
+          </span>
         </div>
 
         {/* Yearly Budget Dashboard

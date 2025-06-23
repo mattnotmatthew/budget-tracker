@@ -109,13 +109,13 @@ export class PersistenceManager {
         );
       }
 
-      localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-
-      // Update persistence state
+      localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));      // Update persistence state - but preserve the current hasUnsavedChanges value
+      // since saveToCache is called for both data changes and periodic saves
       const persistenceState =
         this.getPersistenceState() || this.createDefaultPersistenceState();
       persistenceState.lastCacheUpdate = new Date();
-      persistenceState.hasUnsavedChanges = true;
+      // Don't automatically set hasUnsavedChanges = true here
+      // This should only be set when actual data changes occur
       this.savePersistenceState(persistenceState);
 
       console.log(
@@ -391,5 +391,15 @@ export class PersistenceManager {
         : null,
       sizeMB: Math.round(((cacheSize * 2) / 1024 / 1024) * 100) / 100, // approximate size in MB
     };
+  }
+
+  /**
+   * Mark that data has changed (separate from cache saves)
+   */
+  public markDataChanged(): void {
+    const state =
+      this.getPersistenceState() || this.createDefaultPersistenceState();
+    state.hasUnsavedChanges = true;
+    this.savePersistenceState(state);
   }
 }

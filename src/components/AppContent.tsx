@@ -40,7 +40,7 @@ const AppContent: React.FC = () => {
     <BrowserRouter>
       <div className="App">
         <header className="app-header">
-          <h1>Budget vs Actual Tracker 2025</h1>
+          <h1>Budget vs Actual</h1>
         </header>
 
         <main className="app-main">

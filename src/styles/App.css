@@ -88,7 +88,7 @@ body {
 }
 
 .ios-toggle-label.active {
-  color: #007aff;
+  color: white;
 }
 
 .ios-toggle:focus {
@@ -138,6 +138,7 @@ body {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  display: none;
 }
 
 .view-btn:hover {
@@ -258,12 +259,6 @@ body {
   border-radius: 8px;
   text-align: right;
   max-width: auto;
-}
-
-.currency-note small {
-  color: #172a3a;
-  font-size: 0.875rem;
-  font-weight: 500;
 }
 
 /* Alert Panel Styles */
@@ -1456,7 +1451,7 @@ body {
   border: 1px solid #334915;
 }
 
-.hotkey-item span {
+.hotkey-item span.description {
   flex: 1;
   margin-left: 1rem;
   color: #434947;
@@ -2777,25 +2772,68 @@ button small {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
   z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease-out;
 }
 
 .file-manager-modal {
   background: #ffffff;
   border-radius: 12px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  width: 90%;
-  max-width: 700px;
+  max-width: 800px;
   max-height: 90vh;
-  overflow-y: auto;
+  width: 90%;
+  overflow: hidden;
+  animation: slideIn 0.3s ease-out;
+}
+
+.file-manager-header {
+  background: linear-gradient(135deg, #122415 0%, #023f40 100%);
+  color: white;
+  padding: 1.5rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #334915;
+}
+
+.file-manager-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  flex: 1;
+}
+
+.file-manager-header .close-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: all 0.2s ease;
+}
+
+.file-manager-header .close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
 }
 
 .file-manager-content {
   padding: 2rem;
+  max-height: 60vh;
+  overflow-y: auto;
 }
 
 .file-manager-btn {
@@ -2891,13 +2929,16 @@ button small {
   border-radius: 8px;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
+  border-left: 4px solid #334915;
 }
 
 .file-section h4 {
-  color: #3f3a35;
+  color: #122415;
   font-weight: 600;
   margin-bottom: 1rem;
   font-size: 1.1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e0e4e7;
 }
 
 .file-section p {
@@ -2980,7 +3021,7 @@ button small {
 .cancel-btn {
   background: #172a3a;
   color: #ffffff;
-    border: none;
+  border: none;
   border-radius: 8px;
   padding: 0.75rem 1.5rem;
   font-weight: 500;
@@ -3316,7 +3357,7 @@ button small {
 .form-item textarea:focus {
   outline: none;
   border-color: #2196f3;
-  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.25);
 }
 
 .form-item textarea {
@@ -3693,7 +3734,7 @@ button small {
 .form-group select:focus {
   outline: none;
   border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.25);
 }
 
 .form-group small {
@@ -4302,7 +4343,6 @@ button small {
   background: #6c757d !important;
   color: #ffffff !important;
   cursor: not-allowed;
-  opacity: 0.6;
 }
 
 .cancel-clear-btn {
@@ -4321,4 +4361,73 @@ button small {
 .cancel-clear-btn:hover {
   background: #5a6268 !important;
   border-color: #5a6268 !important;
+}
+
+/* Controls and Currency Container */
+.controls-and-currency {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.hotkey {
+  background: #122415;
+  color: white;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #334915;
+  min-width: 80px;
+  text-align: center;
+}
+
+.description {
+  flex: 1;
+  margin-left: 1rem;
+  color: #434947;
+  font-size: 0.9rem;
+}
+
+/* Collapsible Section Styles for File Manager */
+.collapsible-header {
+  user-select: none;
+  transition: background-color 0.2s ease;
+  border-radius: 4px;
+  padding: 0.25rem;
+  margin: -0.25rem;
+}
+
+.collapsible-header:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.collapsible-header h4 {
+  margin: 0;
+}
+
+.collapse-icon {
+  font-size: 0.8rem;
+  transition: transform 0.2s ease;
+  color: white;
+}
+
+.collapsible-content {
+  margin-top: 1rem;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

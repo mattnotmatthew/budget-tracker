@@ -5,13 +5,14 @@ import {
   supportsFileSystemAccess,
   attemptRestoreCachedFile,
 } from "../utils/fileManager";
+import { PersistenceManager } from "../services/persistenceManager";
 
 interface FileManagerProps {
   onClose: () => void;
 }
 
 const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
-  const { state, dispatch } = useBudget();
+  const { state, dispatch, clearAllData } = useBudget();
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{
     type: "success" | "error" | "info";
@@ -21,6 +22,7 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
     useState<Date | null>(null);
   const [showClearConfirmation, setShowClearConfirmation] = useState(false);
   const [clearConfirmationText, setClearConfirmationText] = useState("");
+  const [isClearSectionCollapsed, setIsClearSectionCollapsed] = useState(true);
   const handleLoad = async () => {
     setIsLoading(true);
     setMessage(null);
@@ -244,21 +246,37 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
     setShowClearConfirmation(true);
     setClearConfirmationText("");
   };
-
+  const handleClearCacheOnly = () => {
+    const persistenceManager = PersistenceManager.getInstance();
+    persistenceManager.clearCache();
+    setMessage({
+      type: "success",
+      text: "✅ Cache cleared successfully! Your JSON file remains intact.",
+    });
+    // Scroll to top to make the message visible
+    const modal = document.querySelector(".file-manager-content");
+    if (modal) {
+      modal.scrollTop = 0;
+    }
+  };
   const confirmClearAll = () => {
     if (clearConfirmationText.toLowerCase() === "clear all my data") {
-      dispatch({ type: "CLEAR_ALL_DATA" });
-      // Note: localStorage caching removed - only clearing in-memory data
+      clearAllData();
       setMessage({
-        type: "info",
-        text: "All data cleared successfully",
+        type: "success",
+        text: "✅ All data cleared successfully! Both cache and file data have been removed.",
       });
       setShowClearConfirmation(false);
       setClearConfirmationText("");
+      // Scroll to top to make the message visible
+      const modal = document.querySelector(".file-manager-content");
+      if (modal) {
+        modal.scrollTop = 0;
+      }
     } else {
       setMessage({
         type: "error",
-        text: "Please type exactly 'clear all my data' to confirm",
+        text: "❌ Please type exactly 'clear all my data' to confirm",
       });
     }
   };
@@ -284,17 +302,30 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
   };
 
   const stats = getCurrentStats();
-
   return (
     <div className="file-manager-overlay">
       <div className="file-manager-modal">
-        <div className="modal-header">
-          <h3>File Manager</h3>
-          <button className="close-btn" onClick={onClose}>
+        <div className="file-manager-header">
+          <h2>File Manager</h2>
+          <button className="close-btn" onClick={onClose} title="Close (Esc)">
             ×
-          </button>
-        </div>{" "}
+          </button>{" "}
+        </div>
         <div className="file-manager-content">
+          {/* Message Display - Moved to top for better visibility */}
+          {message && (
+            <div
+              className={`message ${message.type}`}
+              style={{
+                marginBottom: "1.5rem",
+                padding: "1rem",
+                borderRadius: "8px",
+                fontWeight: "500",
+              }}
+            >
+              {message.text}
+            </div>
+          )}
           {/* Load Section - Moved to top */}
           <div className="file-section">
             <h4>Load Data</h4>
@@ -414,56 +445,100 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
                 </div>
               )}
             </div>
-          </div>
+          </div>{" "}
           {/* Clear Data Section */}
           <div className="file-section danger-section">
-            <h4>Clear All Data</h4>
-            <p>Remove all budget entries and auto-saved data.</p>
+            <div
+              className="collapsible-header"
+              onClick={() =>
+                setIsClearSectionCollapsed(!isClearSectionCollapsed)
+              }
+              style={{
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <h4>Clear Data</h4>
+              <span className="collapse-icon">
+                {isClearSectionCollapsed ? "▶" : "▼"}
+              </span>
+            </div>
 
-            {!showClearConfirmation ? (
-              <button className="clear-btn danger-btn" onClick={handleClearAll}>
-                Clear All Data
-              </button>
-            ) : (
-              <div className="clear-confirmation">
-                <p className="confirmation-warning">
-                  ⚠️ This action will permanently delete all your budget data
-                  and cannot be undone.
+            {!isClearSectionCollapsed && (
+              <div className="collapsible-content">
+                <p>
+                  Clear JSON file AND clear cache OR clear cache only and leave
+                  JSON file intact.
                 </p>
-                <p className="confirmation-instruction">
-                  To confirm, please type <strong>"clear all my data"</strong>{" "}
-                  below:
-                </p>
-                <input
-                  type="text"
-                  className="confirmation-input"
-                  value={clearConfirmationText}
-                  onChange={(e) => setClearConfirmationText(e.target.value)}
-                  placeholder="Type: clear all my data"
-                  autoFocus
-                />
-                <div className="confirmation-buttons">
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "1rem",
+                    marginBottom: "1rem",
+                    flexWrap: "wrap",
+                  }}
+                >
                   <button
-                    className="confirm-clear-btn danger-btn"
-                    onClick={confirmClearAll}
-                    disabled={
-                      clearConfirmationText.toLowerCase() !==
-                      "clear all my data"
-                    }
+                    className="clear-btn danger-btn"
+                    onClick={handleClearCacheOnly}
+                    style={{ flex: "1", minWidth: "200px" }}
                   >
-                    Confirm Clear All Data
+                    Clear Cache Only
                   </button>
-                  <button className="cancel-clear-btn" onClick={cancelClearAll}>
-                    Cancel
-                  </button>
+
+                  {!showClearConfirmation ? (
+                    <button
+                      className="clear-btn danger-btn"
+                      onClick={handleClearAll}
+                      style={{ flex: "1", minWidth: "200px" }}
+                    >
+                      Clear All Data
+                    </button>
+                  ) : null}
                 </div>
+                {showClearConfirmation && (
+                  <div className="clear-confirmation">
+                    <p className="confirmation-warning">
+                      ⚠️ This action will permanently delete all your budget
+                      data and cannot be undone.
+                    </p>
+                    <p className="confirmation-instruction">
+                      To confirm, please type{" "}
+                      <strong>"clear all my data"</strong> below:
+                    </p>
+                    <input
+                      type="text"
+                      className="confirmation-input"
+                      value={clearConfirmationText}
+                      onChange={(e) => setClearConfirmationText(e.target.value)}
+                      placeholder="Type: clear all my data"
+                      autoFocus
+                    />
+                    <div className="confirmation-buttons">
+                      <button
+                        className="confirm-clear-btn danger-btn"
+                        onClick={confirmClearAll}
+                        disabled={
+                          clearConfirmationText.toLowerCase() !==
+                          "clear all my data"
+                        }
+                      >
+                        Confirm Clear All Data
+                      </button>
+                      <button
+                        className="cancel-clear-btn"
+                        onClick={cancelClearAll}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}{" "}
               </div>
             )}
           </div>
-          {/* Message Display */}
-          {message && (
-            <div className={`message ${message.type}`}>{message.text}</div>
-          )}
         </div>
       </div>
     </div>

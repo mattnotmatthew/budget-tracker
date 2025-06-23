@@ -15,18 +15,19 @@ interface CategoryData {
 interface BudgetInputProps {
   onClose: () => void;
   onForceFileManager?: () => void;
+  isReadOnly?: boolean;
 }
 
 const BudgetInput: React.FC<BudgetInputProps> = ({
   onClose,
   onForceFileManager,
+  isReadOnly = false,
 }) => {
   const { state, dispatch } = useBudget();
   const [selectedQuarter, setSelectedQuarter] = useState(1);
   const [selectedMonth, setSelectedMonth] = useState(1);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
-
   // Separate categories by parent category
   const costOfSalesCategories = state.categories.filter(
     (cat) => cat.parentCategory === "cost-of-sales"
@@ -35,11 +36,9 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
     (cat) => cat.parentCategory === "opex"
   );
   const allCategories = [...costOfSalesCategories, ...opexCategories];
-
   // Initialize category data
   const initializeCategoryData = (): { [key: string]: CategoryData } => {
     const data: { [key: string]: CategoryData } = {};
-
     // Get existing entries for the selected period
     const existingEntries = state.entries.filter(
       (entry) =>
@@ -47,7 +46,6 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
         entry.quarter === selectedQuarter &&
         entry.month === selectedMonth
     );
-
     state.categories.forEach((category) => {
       // Find existing entry for this category
       const existingEntry = existingEntries.find(
@@ -75,18 +73,15 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
     });
     return data;
   };
-
   const [categoryData, setCategoryData] = useState<{
     [key: string]: CategoryData;
   }>(initializeCategoryData);
-
   // Show last saved timestamp when component opens
   useEffect(() => {
     if (state.currentFile?.lastSaved) {
       setLastSavedAt(state.currentFile.lastSaved);
     }
   }, [state.currentFile?.lastSaved]);
-
   // Check if file is attached on mount - if not, force file manager
   useEffect(() => {
     if (!state.currentFile && onForceFileManager) {
@@ -98,24 +93,20 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
       }, 2000);
     }
   }, [state.currentFile, onForceFileManager]);
-
   // Reload data when quarter or month changes (NO AUTO-SAVE)
   useEffect(() => {
     setCategoryData(initializeCategoryData());
   }, [selectedQuarter, selectedMonth, state.selectedYear, state.entries]);
-
   // Reset month to first month of quarter when quarter changes
   useEffect(() => {
     const firstMonthOfQuarter = (selectedQuarter - 1) * 3 + 1;
     setSelectedMonth(firstMonthOfQuarter);
   }, [selectedQuarter]);
-
   // Get months for the selected quarter
   const getMonthsForQuarter = (quarter: number): number[] => {
     const startMonth = (quarter - 1) * 3 + 1;
     return [startMonth, startMonth + 1, startMonth + 2];
   };
-
   const getMonthName = (month: number): string => {
     const monthNames = [
       "",
@@ -134,7 +125,6 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
     ];
     return monthNames[month] || "";
   };
-
   // Keyboard navigation handler
   const handleKeyDown = (
     e: React.KeyboardEvent<HTMLInputElement>,
@@ -144,9 +134,7 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
     if (!["ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight"].includes(e.key)) {
       return;
     }
-
     e.preventDefault();
-
     const currentCategoryIndex = allCategories.findIndex(
       (cat) => cat.id === categoryId
     );
@@ -160,10 +148,8 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
     const currentFieldIndex = fieldTypes.findIndex(
       (field) => field === fieldType
     );
-
     let targetCategoryIndex = currentCategoryIndex;
     let targetFieldIndex = currentFieldIndex;
-
     switch (e.key) {
       case "ArrowDown":
         targetCategoryIndex = Math.min(
@@ -184,11 +170,9 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
         targetFieldIndex = Math.max(currentFieldIndex - 1, 0);
         break;
     }
-
     const targetCategoryId = allCategories[targetCategoryIndex].id;
     const targetFieldType = fieldTypes[targetFieldIndex];
     const targetInputId = `${targetCategoryId}-${targetFieldType}`;
-
     // Use setTimeout to ensure DOM is ready
     setTimeout(() => {
       const targetInput = document.getElementById(
@@ -200,21 +184,17 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
       }
     }, 0);
   };
-
   // Clean Excel number formats
   const cleanExcelNumber = (value: string): number | null => {
     if (!value || value === "-" || value === "") return 0;
-
     // Remove common Excel formatting
     let cleaned = value
       .replace(/[$,]/g, "") // Remove $ and commas
       .replace(/^\((.+)\)$/, "-$1") // Convert (123) to -123
       .trim();
-
     const num = parseFloat(cleaned);
     return isNaN(num) ? null : num;
   };
-
   // Excel paste handler
   const handlePaste = async (
     e: React.ClipboardEvent<HTMLInputElement>,
@@ -222,28 +202,21 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
     fieldType: keyof CategoryData
   ) => {
     e.preventDefault();
-
     try {
       const pasteData = e.clipboardData.getData("text");
       const lines = pasteData.split("\n").filter((line) => line.trim() !== "");
-
       if (lines.length === 0) return;
-
       const startCategoryIndex = allCategories.findIndex(
         (cat) => cat.id === categoryId
       );
       if (startCategoryIndex === -1) return;
-
       let successCount = 0;
       const newCategoryData = { ...categoryData };
-
       for (let i = 0; i < lines.length; i++) {
         const targetCategoryIndex = startCategoryIndex + i;
         if (targetCategoryIndex >= allCategories.length) break;
-
         const targetCategory = allCategories[targetCategoryIndex];
         let value = lines[i].trim();
-
         // Process the value based on field type
         if (fieldType === "notes") {
           // For notes, just use the text as-is
@@ -264,9 +237,7 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
           }
         }
       }
-
       setCategoryData(newCategoryData);
-
       if (successCount > 0) {
         setSaveMessage(`✅ Pasted ${successCount} values successfully!`);
         setTimeout(() => setSaveMessage(null), 3000);
@@ -279,7 +250,6 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
       setTimeout(() => setSaveMessage(null), 3000);
     }
   };
-
   const handleInputChange = (
     categoryId: string,
     field: keyof CategoryData,
@@ -293,13 +263,11 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
       },
     }));
   };
-
   // Save function that processes current form data and saves to file
   const handleSave = async () => {
     try {
       // Process current form data into entries
       const entriesToSave: BudgetEntry[] = [];
-
       // Get all existing entries except those for current period
       const otherEntries = state.entries.filter(
         (entry) =>
@@ -315,7 +283,6 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
         const hasReforecast = catData.reforecastAmount !== "";
         const hasAdjustment = catData.adjustmentAmount !== "";
         const hasNotes = catData.notes !== "";
-
         // Only create entry if at least one field has data
         if (
           hasBudget ||
@@ -350,7 +317,6 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
             notes: catData.notes || undefined,
             updatedAt: new Date(),
           };
-
           if (existingEntry) {
             // Update existing entry
             const updatedEntry: BudgetEntry = {
@@ -373,7 +339,6 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
           }
         }
       });
-
       // Also handle deletion of entries that no longer have data
       state.entries.forEach((entry) => {
         if (
@@ -388,7 +353,6 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
             const hasReforecast = catData.reforecastAmount !== "";
             const hasAdjustment = catData.adjustmentAmount !== "";
             const hasNotes = catData.notes !== "";
-
             // If all fields are empty, delete the entry
             if (
               !hasBudget &&
@@ -435,7 +399,6 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
           },
         });
       }
-
       if (result.saved) {
         if (result.fileHandle) {
           setSaveMessage("✅ Data saved to new file successfully!");
@@ -454,11 +417,9 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
       setTimeout(() => setSaveMessage(null), 3000);
     }
   };
-
   const handleReset = () => {
     setCategoryData(initializeCategoryData());
   };
-
   const handleClose = async () => {
     // Check if there are unsaved changes
     const hasUnsavedChanges = Object.values(categoryData).some((catData) => {
@@ -474,7 +435,6 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
       const hasReforecast = catData.reforecastAmount !== "";
       const hasAdjustment = catData.adjustmentAmount !== "";
       const hasNotes = catData.notes !== "";
-
       // Check if current data differs from existing entry
       if (existingEntry) {
         const budgetChanged =
@@ -490,7 +450,6 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
           (parseFloat(catData.adjustmentAmount) || 0) !==
           (existingEntry.adjustmentAmount || 0);
         const notesChanged = catData.notes !== (existingEntry.notes || "");
-
         return (
           budgetChanged ||
           actualChanged ||
@@ -505,7 +464,6 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
         );
       }
     });
-
     if (hasUnsavedChanges) {
       if (!state.currentFile) {
         const confirmed = window.confirm(
@@ -522,15 +480,15 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
         }
       }
     }
-
     onClose();
   };
-
   return (
     <div className="budget-input-overlay">
       <div className="budget-input-modal">
         <div className="modal-header">
-          <h3>Budget Input - {state.selectedYear}</h3>
+          <h3>
+            {isReadOnly ? "Budget View" : "Budget Input"} - {state.selectedYear}
+          </h3>
           <button className="close-btn" onClick={handleClose}>
             ×
           </button>
@@ -541,6 +499,7 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
             <select
               value={selectedQuarter}
               onChange={(e) => setSelectedQuarter(parseInt(e.target.value))}
+              disabled={isReadOnly}
             >
               <option value={1}>Q1</option>
               <option value={2}>Q2</option>
@@ -548,12 +507,12 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
               <option value={4}>Q4</option>
             </select>
           </div>
-
           <div className="form-group">
             <label>Month:</label>
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+              disabled={isReadOnly}
             >
               {getMonthsForQuarter(selectedQuarter).map((month) => (
                 <option key={month} value={month}>
@@ -576,6 +535,8 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
               <button
                 className="btn btn-success floating-save-btn"
                 onClick={handleSave}
+                disabled={isReadOnly}
+                style={{ opacity: isReadOnly ? 0.5 : 1 }}
               >
                 💾 Save to File
               </button>
@@ -805,5 +766,4 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
     </div>
   );
 };
-
 export default BudgetInput;
