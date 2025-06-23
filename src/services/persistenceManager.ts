@@ -109,7 +109,7 @@ export class PersistenceManager {
         );
       }
 
-      localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));      // Update persistence state - but preserve the current hasUnsavedChanges value
+      localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData)); // Update persistence state - but preserve the current hasUnsavedChanges value
       // since saveToCache is called for both data changes and periodic saves
       const persistenceState =
         this.getPersistenceState() || this.createDefaultPersistenceState();

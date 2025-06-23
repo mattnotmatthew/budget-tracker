@@ -241,7 +241,8 @@ const budgetReducer = (
   state: BudgetState,
   action: BudgetAction
 ): BudgetState => {
-  switch (action.type) {    case "ADD_ENTRY":
+  switch (action.type) {
+    case "ADD_ENTRY":
       return {
         ...state,
         entries: [...state.entries, action.payload],
@@ -601,13 +602,13 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
     }
 
     persistenceManager.saveToCache(state);
-    
+
     // Only mark as unsaved if this is not triggered by loading from cache
     // Check if hasUnsavedChanges is already true (meaning actual changes occurred)
     if (state.persistence.hasUnsavedChanges) {
       persistenceManager.markDataChanged();
     }
-    
+
     dispatch({ type: "UPDATE_CACHE_TIMESTAMP" });
   }, [state.entries, state.yearlyBudgetTargets, state.monthlyForecastModes]);
 
