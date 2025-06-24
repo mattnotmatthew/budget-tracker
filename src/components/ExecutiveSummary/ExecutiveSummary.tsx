@@ -346,7 +346,7 @@ const ExecutiveSummary = () => {
 
     // Forecast vs Target Analysis - continues in paragraph 1
     const forecastVariance = kpiData.forecastVsTargetVariance;
-    summary += `Based on our current forecast, we project total annual spending of ${formatCurrencyFull(
+    summary += `Based on our current forecast, we project a remaining spending total of ${formatCurrencyFull(
       kpiData.fullYearForecast
     )}. `;
 
@@ -372,9 +372,13 @@ const ExecutiveSummary = () => {
     const totalCompensationYTD = resourceData.totalCompensation.ytdActual;
     if (Math.abs(capitalizedSalariesYTD) > 1000) {
       // Only mention if over $1K
-      summary += `\n\nYear-to-date we have ${formatCurrencyFull(
+      summary += `\n\nYear-to-date a total of ${formatCurrencyFull(
         Math.abs(capitalizedSalariesYTD)
-      )} in salary capitalization. The annual budget above factors in capitalization, and so does our year-to-date actual number. Additionally, adjustments were made to our actual spend numbers to ensure accurate financial reporting. `;
+      )} of resource salaries have been capitalized. The total budget for this year of ${formatCurrencyFull(
+        kpiData.annualBudgetTarget
+      )} for ${
+        state.selectedYear
+      } factors in this capitalization as does our year-to-date numbers.`;
     } // Hiring Runway Analysis - third paragraph
     const hiringData = resourceData.hiringCapacity;
     const projectedTotalSpend =
@@ -2099,13 +2103,13 @@ const ExecutiveSummary = () => {
     <div className="executive-summary">
       {" "}
       {/* Floating Back Button */}
-      <button
+      {/* <button
         className="floating-back-button"
         onClick={() => navigate("/")}
         title="Back to Dashboard"
       >
         ← Back
-      </button>{" "}
+      </button>{" "} */}
       {/* Floating Export Button */}
       <button
         className="floating-export-button"

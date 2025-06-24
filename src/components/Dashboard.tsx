@@ -15,6 +15,7 @@ import YearlyBudgetDashboard from "./YearlyBudgetDashboard";
 
 import "../styles/App.css";
 import { useNavigate } from "react-router-dom";
+import ExecutiveSummary from "./ExecutiveSummary/ExecutiveSummary";
 
 // Utility function to get current quarter
 const getCurrentQuarter = (): number => {
@@ -41,6 +42,9 @@ const Dashboard: React.FC = () => {
   const [selectedQuarters, setSelectedQuarters] = useState<number[]>([]);
   const [showHotkeysHelp, setShowHotkeysHelp] = useState(false);
   const [isReadOnly, setIsReadOnly] = useState(true); // Default to Read Only mode
+  const [currentView, setCurrentView] = useState<"executive" | "budget">(
+    "executive"
+  ); // Default to Executive Summary
   const navigate = useNavigate();
 
   // Generate year options dynamically (year-agnostic)
@@ -167,7 +171,9 @@ const Dashboard: React.FC = () => {
           case "s":
           case "S":
             event.preventDefault();
-            navigate("/executive-summary");
+            setCurrentView(
+              currentView === "executive" ? "budget" : "executive"
+            );
             break;
         }
       }
@@ -254,11 +260,19 @@ const Dashboard: React.FC = () => {
       collapseAll,
       selectedQuarters,
       showHotkeysHelp,
+      currentView,
       state.viewMode,
       dispatch,
       yearOptions,
     ]
   );
+  // Close input when switching away from Budget view
+  useEffect(() => {
+    if (currentView !== "budget" && showInput) {
+      setShowInput(false);
+    }
+  }, [currentView, showInput]);
+
   // Add event listener for hotkeys
   useEffect(() => {
     document.addEventListener("keydown", handleKeyDown);
@@ -269,16 +283,31 @@ const Dashboard: React.FC = () => {
   if (currentMode === "planning" && isFeatureEnabled("BUDGET_PLANNING")) {
     return null; // The useEffect will handle navigation
   }
-
   return (
     <div className="dashboard">
-      {/* Executive Summary Button */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-        }}
-      ></div>
+      {/* Welcome message for new users */}
+      {!state.currentFile && (
+        <div
+          className="welcome-message"
+          style={{
+            background: "linear-gradient(135deg, #affe76 0%, #023f40 100%)",
+            color: "white",
+            padding: "15px 20px",
+            borderRadius: "8px",
+            margin: "0 0 20px 0",
+            textAlign: "center",
+            boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+          }}
+        >
+          {" "}
+          <strong>👋 Welcome to Budget Tracker!</strong>
+          <p style={{ margin: "5px 0 0 0", fontSize: "0.9rem" }}>
+            To get started, click <strong>"💾 File Manager"</strong> below to
+            create a new budget file or load an existing one, or click{" "}
+            <strong>"✏️ Edit Data"</strong> to begin entering data immediately.
+          </p>
+        </div>
+      )}{" "}
       <div className="dashboard-header">
         <div className="view-controls">
           <div className="year-selector">
@@ -301,45 +330,69 @@ const Dashboard: React.FC = () => {
                 )}{" "}
             </div>
           </div>
-          <button className={`view-btn active`} title="Monthly View">
-            Monthly View
-          </button>{" "}
-          <QuarterSelector
-            selectedQuarters={selectedQuarters}
-            onQuarterToggle={handleQuarterToggle}
-          />
-          <div className="toggle-control">
-            <label className="toggle-label">
-              <span className="toggle-text">
-                {isReadOnly ? "Read Only" : "Edit Mode"}
-              </span>
-              <label className="toggle-switch">
-                <input
-                  type="checkbox"
-                  checked={isReadOnly}
-                  onChange={() => setIsReadOnly(!isReadOnly)}
-                />
-                <span className="toggle-slider round"></span>
-              </label>
-            </label>
-          </div>
+
+          {/* Navigation buttons */}
+          <button
+            className={`view-btn ${currentView === "budget" ? "active" : ""}`}
+            onClick={() => setCurrentView("budget")}
+            title="Budget View"
+          >
+            Budget
+          </button>
+          <button
+            className={`view-btn ${
+              currentView === "executive" ? "active" : ""
+            }`}
+            onClick={() => setCurrentView("executive")}
+            title="Executive Summary"
+          >
+            Executive Summary
+          </button>
+
+          {/* Only show quarter selector and read-only toggle when viewing Budget */}
+          {currentView === "budget" && (
+            <>
+              <QuarterSelector
+                selectedQuarters={selectedQuarters}
+                onQuarterToggle={handleQuarterToggle}
+              />
+              <div className="toggle-control">
+                <label className="toggle-label">
+                  <span className="toggle-text">
+                    {isReadOnly ? "Read Only" : "Edit Mode"}
+                  </span>
+                  <label className="toggle-switch">
+                    <input
+                      type="checkbox"
+                      checked={isReadOnly}
+                      onChange={() => setIsReadOnly(!isReadOnly)}
+                    />
+                    <span className="toggle-slider round"></span>
+                  </label>
+                </label>
+              </div>
+            </>
+          )}
         </div>{" "}
         <div className="action-controls">
-          <button
-            className="executive-summary-btn"
-            onClick={() => navigate("/executive-summary")}
-            title="View Executive Summary"
-          >
-            📎 Executive Summary
-          </button>{" "}
-          <button
-            className="input-btn"
-            onClick={handleEditDataClick}
-            title={isReadOnly ? "View Data (Ctrl+E)" : "Edit/Add Data (Ctrl+E)"}
-          >
-            {showInput ? "Close" : isReadOnly ? "👁️ View Data" : "✏️ Edit Data"}{" "}
-            <small>(Ctrl+E)</small>
-          </button>
+          {/* Only show View/Edit Data button when viewing Budget */}
+          {currentView === "budget" && (
+            <button
+              className="input-btn"
+              onClick={handleEditDataClick}
+              title={
+                isReadOnly ? "View Data (Ctrl+E)" : "Edit/Add Data (Ctrl+E)"
+              }
+            >
+              {showInput
+                ? "Close"
+                : isReadOnly
+                ? "👁️ View Data"
+                : "✏️ Edit Data"}{" "}
+              <small>(Ctrl+E)</small>
+            </button>
+          )}
+
           <button
             className="file-manager-btn"
             onClick={() => setShowFileManager(!showFileManager)}
@@ -358,7 +411,7 @@ const Dashboard: React.FC = () => {
       </div>
       <br />
       <AlertPanel />{" "}
-      {showInput && (
+      {showInput && currentView === "budget" && (
         <BudgetInput
           onClose={() => setShowInput(false)}
           onForceFileManager={handleFileManagerToEditTransition}
@@ -405,10 +458,12 @@ const Dashboard: React.FC = () => {
                 <div className="hotkey-item">
                   <span className="hotkey">Ctrl + F</span>
                   <span className="description">File Manager</span>
-                </div>
+                </div>{" "}
                 <div className="hotkey-item">
                   <span className="hotkey">Ctrl + S</span>
-                  <span className="description">Executive Summary</span>
+                  <span className="description">
+                    Toggle Executive Summary/Budget
+                  </span>
                 </div>
               </div>
               <div className="hotkeys-section">
@@ -444,34 +499,39 @@ const Dashboard: React.FC = () => {
         </div>
       )}{" "}
       <div className="dashboard-content">
-        <div className="controls-and-currency">
-          <div className="toggle-control">
-            <label className="toggle-label">
-              <span className="toggle-text">
-                Collapse All <small>(Alt+C)</small>
+        {currentView === "budget" && (
+          <>
+            <div className="controls-and-currency">
+              <div className="toggle-control">
+                <label className="toggle-label">
+                  <span className="toggle-text">
+                    Collapse All <small>(Alt+C)</small>
+                  </span>
+                  <label className="toggle-switch">
+                    <input
+                      type="checkbox"
+                      checked={collapseAll}
+                      onChange={() => setCollapseAll(!collapseAll)}
+                    />
+                    <span className="toggle-slider round"></span>
+                  </label>
+                </label>
+              </div>
+              <span className="currency-note">
+                <small>💡 (USD in Thousands)</small>
               </span>
-              <label className="toggle-switch">
-                <input
-                  type="checkbox"
-                  checked={collapseAll}
-                  onChange={() => setCollapseAll(!collapseAll)}
-                />
-                <span className="toggle-slider round"></span>
-              </label>
-            </label>
-          </div>
-          <span className="currency-note">
-            <small>💡 (USD in Thousands)</small>
-          </span>
-        </div>
+            </div>
 
-        {/* Yearly Budget Dashboard
-        <YearlyBudgetDashboard collapseAll={collapseAll} /> */}
+            <YearlyBudgetDashboard collapseAll={collapseAll} />
 
-        <MonthlyView
-          collapseAll={collapseAll}
-          selectedQuarters={selectedQuarters}
-        />
+            <MonthlyView
+              collapseAll={collapseAll}
+              selectedQuarters={selectedQuarters}
+            />
+          </>
+        )}
+
+        {currentView === "executive" && <ExecutiveSummary />}
       </div>
     </div>
   );

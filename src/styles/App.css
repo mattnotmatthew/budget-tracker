@@ -138,7 +138,7 @@ body {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  display: none;
+  display: inline-block;
 }
 
 .view-btn:hover {
@@ -382,10 +382,12 @@ body {
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  backdrop-filter: blur(4px);
   z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease-out;
 }
 
 .budget-input-modal {
@@ -394,9 +396,71 @@ body {
   width: 95%;
   max-width: 1400px; /* Expanded to accommodate popout button */
   max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   position: relative; /* Added for absolute positioning of popout */
+  animation: slideIn 0.3s ease-out;
+}
+
+.budget-input-header {
+  background: linear-gradient(135deg, #122415 0%, #023f40 100%);
+  color: white;
+  padding: 1.5rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #334915;
+}
+
+.budget-input-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  flex: 1;
+}
+
+.budget-input-header .close-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.budget-input-header .close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+}
+
+.budget-input-content {
+  max-height: calc(90vh - 120px);
+  overflow-y: auto;
+  padding: 0;
+}
+
+/* Read-only styling for BudgetInput modal */
+.budget-input-modal.read-only {
+  opacity: 0.9;
+}
+
+.budget-input-modal.read-only input,
+.budget-input-modal.read-only select {
+  background-color: #f8f9fa !important;
+  color: #6c757d !important;
+  cursor: not-allowed !important;
+  border-color: #dee2e6 !important;
+}
+
+.budget-input-modal.read-only .btn:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
 }
 
 .modal-header {
@@ -1677,6 +1741,7 @@ button small {
   font-size: 0.8rem;
   transition: transform 0.2s ease;
   flex-shrink: 0;
+  color: black;
 }
 
 .monthly-view .inline-budget,
@@ -1820,7 +1885,6 @@ button small {
 
   border-top: 1px solid #000;
   z-index: 99;
-  max-height: 40px;
 }
 
 /* Quarterly View Adjustments */
@@ -4430,4 +4494,132 @@ button small {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Yearly Budget Target Section in BudgetInput */
+.yearly-budget-section {
+  margin: 1.5rem 2rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.yearly-budget-card {
+  background: white;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.yearly-budget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #122415 0%, #023f40 100%);
+  color: white;
+  border-bottom: 1px solid #334915;
+}
+
+.yearly-budget-header h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.yearly-budget-header .edit-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.yearly-budget-header .edit-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.yearly-budget-content {
+  padding: 1.5rem;
+}
+
+.yearly-budget-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.yearly-budget-input {
+  padding: 0.75rem;
+  border: 2px solid #dee2e6;
+  border-radius: 4px;
+  font-size: 1.1rem;
+  transition: border-color 0.2s ease;
+}
+
+.yearly-budget-input:focus {
+  outline: none;
+  border-color: #023f40;
+  box-shadow: 0 0 0 3px rgba(2, 63, 64, 0.1);
+}
+
+.yearly-budget-buttons {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.btn-small {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+}
+
+.yearly-budget-hint {
+  color: #6c757d;
+  font-style: italic;
+}
+
+.yearly-budget-display {
+  text-align: center;
+}
+
+.yearly-budget-amount {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #023f40;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.no-budget-hint {
+  color: #6c757d;
+  margin: 0;
+  font-style: italic;
+}
+
+/* Collapsible functionality for yearly budget */
+.yearly-budget-header.collapsible-header {
+  user-select: none;
+  transition: background-color 0.2s ease;
+}
+
+.yearly-budget-header.collapsible-header:hover {
+  background: linear-gradient(135deg, #0f1f11 0%, #01383a 100%);
+}
+
+.collapse-icon {
+  font-size: 0.9rem;
+  transition: transform 0.2s ease;
+  color: white;
+}
+
+.yearly-budget-preview {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
 }

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useBudget } from "../context/BudgetContext";
 import { BudgetEntry } from "../types";
 import { smartAutoSave } from "../utils/fileManager";
+import { formatCurrencyExcelStyle } from "../utils/currencyFormatter";
 
 interface CategoryData {
   categoryId: string;
@@ -28,6 +29,11 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
   const [selectedMonth, setSelectedMonth] = useState(1);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+  // Yearly budget target state
+  const [isEditingYearlyBudget, setIsEditingYearlyBudget] = useState(false);
+  const [yearlyBudgetInput, setYearlyBudgetInput] = useState("");
+  const [isYearlyBudgetCollapsed, setIsYearlyBudgetCollapsed] = useState(true); // Collapsed by default
+  const currentYearTarget = state.yearlyBudgetTargets[state.selectedYear] || 0;
   // Separate categories by parent category
   const costOfSalesCategories = state.categories.filter(
     (cat) => cat.parentCategory === "cost-of-sales"
@@ -255,6 +261,9 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
     field: keyof CategoryData,
     value: string
   ) => {
+    // Don't allow changes in read-only mode
+    if (isReadOnly) return;
+
     setCategoryData((prev) => ({
       ...prev,
       [categoryId]: {
@@ -263,6 +272,21 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
       },
     }));
   };
+  // Helper function to get common input props
+  const getInputProps = (
+    categoryId: string,
+    fieldType: keyof CategoryData
+  ) => ({
+    disabled: isReadOnly,
+    readOnly: isReadOnly,
+    value: categoryData[categoryId]?.[fieldType] || "",
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+      handleInputChange(categoryId, fieldType, e.target.value),
+    onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) =>
+      !isReadOnly && handleKeyDown(e, categoryId, fieldType),
+    onPaste: (e: React.ClipboardEvent<HTMLInputElement>) =>
+      !isReadOnly && handlePaste(e, categoryId, fieldType),
+  });
   // Save function that processes current form data and saves to file
   const handleSave = async () => {
     try {
@@ -374,8 +398,21 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
           monthlyForecastModes: state.monthlyForecastModes,
         },
         state.currentFile
-      ); // Update the current file if a new one was created
-      if (result.fileHandle) {
+      ); // Update the current file if a new one was created or reconnected
+      if (result.newFileHandle) {
+        // Handle reconnection case - update with the new file handle
+        const now = new Date();
+        setLastSavedAt(now);
+        dispatch({
+          type: "SET_CURRENT_FILE",
+          payload: {
+            name: result.newFileHandle.name,
+            handle: result.newFileHandle,
+            lastSaved: now,
+            userLastSaved: now,
+          },
+        });
+      } else if (result.fileHandle) {
         const now = new Date();
         setLastSavedAt(now);
         dispatch({
@@ -482,284 +519,332 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
     }
     onClose();
   };
+
+  // Yearly Budget Target Functions
+  const handleEditYearlyBudget = () => {
+    setIsEditingYearlyBudget(true);
+    setYearlyBudgetInput(
+      currentYearTarget > 0 ? currentYearTarget.toString() : ""
+    );
+  };
+
+  const handleSaveYearlyBudget = async () => {
+    const amount = parseFloat(yearlyBudgetInput.replace(/,/g, "")) || 0;
+
+    // Update the state
+    dispatch({
+      type: "SET_YEARLY_BUDGET_TARGET",
+      payload: { year: state.selectedYear, amount },
+    });
+
+    // Auto-save to file if one is attached
+    try {
+      if (state.currentFile) {
+        const updatedState = {
+          entries: state.entries,
+          selectedYear: state.selectedYear,
+          yearlyBudgetTargets: {
+            ...state.yearlyBudgetTargets,
+            [state.selectedYear]: amount,
+          },
+          monthlyForecastModes: state.monthlyForecastModes,
+        };
+
+        await smartAutoSave(updatedState, state.currentFile);
+        setSaveMessage("✅ Yearly budget saved to file");
+      } else {
+        setSaveMessage("✅ Yearly budget saved (file not attached)");
+      }
+    } catch (error) {
+      console.error("Failed to save yearly budget:", error);
+      setSaveMessage("⚠️ Yearly budget saved locally, but file save failed");
+    }
+
+    setIsEditingYearlyBudget(false);
+    setTimeout(() => setSaveMessage(null), 3000);
+  };
+
+  const handleCancelYearlyBudget = () => {
+    setIsEditingYearlyBudget(false);
+    setYearlyBudgetInput(
+      currentYearTarget > 0 ? currentYearTarget.toString() : ""
+    );
+  };
+
+  const handleYearlyBudgetKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSaveYearlyBudget();
+    } else if (e.key === "Escape") {
+      handleCancelYearlyBudget();
+    }
+  };
+
+  // Initialize yearly budget input when component loads
+  useEffect(() => {
+    setYearlyBudgetInput(
+      currentYearTarget > 0 ? currentYearTarget.toString() : ""
+    );
+  }, [currentYearTarget]);
+
   return (
     <div className="budget-input-overlay">
-      <div className="budget-input-modal">
-        <div className="modal-header">
-          <h3>
+      <div className={`budget-input-modal ${isReadOnly ? "read-only" : ""}`}>
+        <div className="budget-input-header">
+          <h2>
             {isReadOnly ? "Budget View" : "Budget Input"} - {state.selectedYear}
-          </h3>
+          </h2>{" "}
           <button className="close-btn" onClick={handleClose}>
             ×
           </button>
         </div>
-        <div className="period-selectors">
-          <div className="form-group">
-            <label>Quarter:</label>
-            <select
-              value={selectedQuarter}
-              onChange={(e) => setSelectedQuarter(parseInt(e.target.value))}
-              disabled={isReadOnly}
-            >
-              <option value={1}>Q1</option>
-              <option value={2}>Q2</option>
-              <option value={3}>Q3</option>
-              <option value={4}>Q4</option>
-            </select>
-          </div>
-          <div className="form-group">
-            <label>Month:</label>
-            <select
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-              disabled={isReadOnly}
-            >
-              {getMonthsForQuarter(selectedQuarter).map((month) => (
-                <option key={month} value={month}>
-                  {getMonthName(month)}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-        {saveMessage && <div className="save-message">{saveMessage}</div>}
-        {lastSavedAt && (
-          <div className="last-saved">
-            Last saved: {lastSavedAt.toLocaleString()}
-          </div>
-        )}{" "}
-        <div className="budget-form">
-          <div className="categories-container">
-            {/* Floating Save Button - Sticky positioned outside form */}
-            <div className="floating-save-container">
-              <button
-                className="btn btn-success floating-save-btn"
-                onClick={handleSave}
+        <div className="budget-input-content">
+          <div className="period-selectors">
+            <div className="form-group">
+              <label>Quarter:</label>
+              <select
+                value={selectedQuarter}
+                onChange={(e) => setSelectedQuarter(parseInt(e.target.value))}
                 disabled={isReadOnly}
-                style={{ opacity: isReadOnly ? 0.5 : 1 }}
               >
-                💾 Save to File
-              </button>
+                <option value={1}>Q1</option>
+                <option value={2}>Q2</option>
+                <option value={3}>Q3</option>
+                <option value={4}>Q4</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Month:</label>
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                disabled={isReadOnly}
+              >
+                {getMonthsForQuarter(selectedQuarter).map((month) => (
+                  <option key={month} value={month}>
+                    {getMonthName(month)}
+                  </option>
+                ))}
+              </select>
             </div>{" "}
-            <div className="category-headers">
-              <div className="category-name-header">Category</div>
-              <span>Budget</span>
-              <span>Actual</span>
-              <span>Forecast</span>
-              <span>Adjustments</span>
-              <span>Notes</span>
-            </div>
-            {/* Cost of Sales Section */}
-            <div className="category-section">
-              <h3 className="category-section-title">Cost of Sales</h3>
-              <div className="category-grid">
-                {costOfSalesCategories.map((category) => (
-                  <div key={category.id} className="category-row">
-                    <div className="category-name">{category.name}</div>
-                    <input
-                      id={`${category.id}-budgetAmount`}
-                      type="text"
-                      placeholder="Budget"
-                      className="amount-input"
-                      value={categoryData[category.id]?.budgetAmount || ""}
-                      onChange={(e) =>
-                        handleInputChange(
-                          category.id,
-                          "budgetAmount",
-                          e.target.value
-                        )
-                      }
-                      onKeyDown={(e) =>
-                        handleKeyDown(e, category.id, "budgetAmount")
-                      }
-                      onPaste={(e) =>
-                        handlePaste(e, category.id, "budgetAmount")
-                      }
-                    />
-                    <input
-                      id={`${category.id}-actualAmount`}
-                      type="text"
-                      placeholder="Actual"
-                      className="amount-input"
-                      value={categoryData[category.id]?.actualAmount || ""}
-                      onChange={(e) =>
-                        handleInputChange(
-                          category.id,
-                          "actualAmount",
-                          e.target.value
-                        )
-                      }
-                      onKeyDown={(e) =>
-                        handleKeyDown(e, category.id, "actualAmount")
-                      }
-                      onPaste={(e) =>
-                        handlePaste(e, category.id, "actualAmount")
-                      }
-                    />
-                    <input
-                      id={`${category.id}-reforecastAmount`}
-                      type="text"
-                      placeholder="Reforecast"
-                      className="amount-input"
-                      value={categoryData[category.id]?.reforecastAmount || ""}
-                      onChange={(e) =>
-                        handleInputChange(
-                          category.id,
-                          "reforecastAmount",
-                          e.target.value
-                        )
-                      }
-                      onKeyDown={(e) =>
-                        handleKeyDown(e, category.id, "reforecastAmount")
-                      }
-                      onPaste={(e) =>
-                        handlePaste(e, category.id, "reforecastAmount")
-                      }
-                    />
-                    <input
-                      id={`${category.id}-adjustmentAmount`}
-                      type="text"
-                      placeholder="Adjustments"
-                      className="amount-input"
-                      value={categoryData[category.id]?.adjustmentAmount || ""}
-                      onChange={(e) =>
-                        handleInputChange(
-                          category.id,
-                          "adjustmentAmount",
-                          e.target.value
-                        )
-                      }
-                      onKeyDown={(e) =>
-                        handleKeyDown(e, category.id, "adjustmentAmount")
-                      }
-                      onPaste={(e) =>
-                        handlePaste(e, category.id, "adjustmentAmount")
-                      }
-                    />
-                    <input
-                      id={`${category.id}-notes`}
-                      type="text"
-                      placeholder="Notes"
-                      className="notes-input"
-                      value={categoryData[category.id]?.notes || ""}
-                      onChange={(e) =>
-                        handleInputChange(category.id, "notes", e.target.value)
-                      }
-                      onKeyDown={(e) => handleKeyDown(e, category.id, "notes")}
-                      onPaste={(e) => handlePaste(e, category.id, "notes")}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-            {/* Operating Expenses Section */}
-            <div className="category-section">
-              <h3 className="category-section-title">Operating Expenses</h3>
-              <div className="category-grid">
-                {opexCategories.map((category) => (
-                  <div key={category.id} className="category-row">
-                    <div className="category-name">{category.name}</div>
-                    <input
-                      id={`${category.id}-budgetAmount`}
-                      type="text"
-                      placeholder="Budget"
-                      className="amount-input"
-                      value={categoryData[category.id]?.budgetAmount || ""}
-                      onChange={(e) =>
-                        handleInputChange(
-                          category.id,
-                          "budgetAmount",
-                          e.target.value
-                        )
-                      }
-                      onKeyDown={(e) =>
-                        handleKeyDown(e, category.id, "budgetAmount")
-                      }
-                      onPaste={(e) =>
-                        handlePaste(e, category.id, "budgetAmount")
-                      }
-                    />
-                    <input
-                      id={`${category.id}-actualAmount`}
-                      type="text"
-                      placeholder="Actual"
-                      className="amount-input"
-                      value={categoryData[category.id]?.actualAmount || ""}
-                      onChange={(e) =>
-                        handleInputChange(
-                          category.id,
-                          "actualAmount",
-                          e.target.value
-                        )
-                      }
-                      onKeyDown={(e) =>
-                        handleKeyDown(e, category.id, "actualAmount")
-                      }
-                      onPaste={(e) =>
-                        handlePaste(e, category.id, "actualAmount")
-                      }
-                    />
-                    <input
-                      id={`${category.id}-reforecastAmount`}
-                      type="text"
-                      placeholder="Reforecast"
-                      className="amount-input"
-                      value={categoryData[category.id]?.reforecastAmount || ""}
-                      onChange={(e) =>
-                        handleInputChange(
-                          category.id,
-                          "reforecastAmount",
-                          e.target.value
-                        )
-                      }
-                      onKeyDown={(e) =>
-                        handleKeyDown(e, category.id, "reforecastAmount")
-                      }
-                      onPaste={(e) =>
-                        handlePaste(e, category.id, "reforecastAmount")
-                      }
-                    />
-                    <input
-                      id={`${category.id}-adjustmentAmount`}
-                      type="text"
-                      placeholder="Adjustments"
-                      className="amount-input"
-                      value={categoryData[category.id]?.adjustmentAmount || ""}
-                      onChange={(e) =>
-                        handleInputChange(
-                          category.id,
-                          "adjustmentAmount",
-                          e.target.value
-                        )
-                      }
-                      onKeyDown={(e) =>
-                        handleKeyDown(e, category.id, "adjustmentAmount")
-                      }
-                      onPaste={(e) =>
-                        handlePaste(e, category.id, "adjustmentAmount")
-                      }
-                    />
-                    <input
-                      id={`${category.id}-notes`}
-                      type="text"
-                      placeholder="Notes"
-                      className="notes-input"
-                      value={categoryData[category.id]?.notes || ""}
-                      onChange={(e) =>
-                        handleInputChange(category.id, "notes", e.target.value)
-                      }
-                      onKeyDown={(e) => handleKeyDown(e, category.id, "notes")}
-                      onPaste={(e) => handlePaste(e, category.id, "notes")}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>{" "}
-          <div className="budget-input-actions">
-            <button className="btn btn-secondary" onClick={handleReset}>
-              Reset
-            </button>{" "}
+          {/* Yearly Budget Target Section */}
+          <div className="yearly-budget-section">
+            <div className="yearly-budget-card">
+              <div
+                className="yearly-budget-header collapsible-header"
+                onClick={() =>
+                  setIsYearlyBudgetCollapsed(!isYearlyBudgetCollapsed)
+                }
+                style={{ cursor: "pointer" }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                  }}
+                >
+                  <span className="collapse-icon">
+                    {isYearlyBudgetCollapsed ? "▶" : "▼"}
+                  </span>
+                  <h4>📊 {state.selectedYear} Annual Budget Target</h4>
+                  {currentYearTarget > 0 && (
+                    <span className="yearly-budget-preview">
+                      ({formatCurrencyExcelStyle(currentYearTarget)})
+                    </span>
+                  )}
+                </div>
+                {!isYearlyBudgetCollapsed &&
+                  !isEditingYearlyBudget &&
+                  !isReadOnly && (
+                    <button
+                      className="edit-btn"
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent collapse toggle
+                        handleEditYearlyBudget();
+                      }}
+                      title="Edit yearly budget target"
+                    >
+                      ✏️ Edit
+                    </button>
+                  )}
+              </div>
+
+              {!isYearlyBudgetCollapsed && (
+                <div className="yearly-budget-content">
+                  {isEditingYearlyBudget ? (
+                    <div className="yearly-budget-edit-form">
+                      <input
+                        type="text"
+                        value={yearlyBudgetInput}
+                        onChange={(e) => setYearlyBudgetInput(e.target.value)}
+                        onKeyDown={handleYearlyBudgetKeyPress}
+                        placeholder="Enter yearly budget (e.g., 1200000)"
+                        className="yearly-budget-input"
+                        autoFocus
+                      />
+                      <div className="yearly-budget-buttons">
+                        <button
+                          className="btn btn-success btn-small"
+                          onClick={handleSaveYearlyBudget}
+                        >
+                          💾 Save
+                        </button>
+                        <button
+                          className="btn btn-secondary btn-small"
+                          onClick={handleCancelYearlyBudget}
+                        >
+                          ❌ Cancel
+                        </button>
+                      </div>
+                      <small className="yearly-budget-hint">
+                        Press Enter to save, Escape to cancel
+                      </small>
+                    </div>
+                  ) : (
+                    <div className="yearly-budget-display">
+                      <span className="yearly-budget-amount">
+                        {currentYearTarget > 0
+                          ? formatCurrencyExcelStyle(currentYearTarget)
+                          : "Not Set"}
+                      </span>
+                      {currentYearTarget === 0 && (
+                        <p className="no-budget-hint">
+                          Click Edit to set your {state.selectedYear} budget
+                          target
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+          {saveMessage && <div className="save-message">{saveMessage}</div>}
+          {lastSavedAt && (
+            <div className="last-saved">
+              Last saved: {lastSavedAt.toLocaleString()}
+            </div>
+          )}{" "}
+          <div className="budget-form">
+            <div className="categories-container">
+              {/* Floating Save Button - Sticky positioned outside form */}
+              <div className="floating-save-container">
+                <button
+                  className="btn btn-success floating-save-btn"
+                  onClick={handleSave}
+                  disabled={isReadOnly}
+                  style={{ opacity: isReadOnly ? 0.5 : 1 }}
+                >
+                  💾 Save to File
+                </button>
+              </div>{" "}
+              <div className="category-headers">
+                <div className="category-name-header">Category</div>
+                <span>Budget</span>
+                <span>Actual</span>
+                <span>Forecast</span>
+                <span>Adjustments</span>
+                <span>Notes</span>
+              </div>
+              {/* Cost of Sales Section */}
+              <div className="category-section">
+                <h3 className="category-section-title">Cost of Sales</h3>
+                <div className="category-grid">
+                  {costOfSalesCategories.map((category) => (
+                    <div key={category.id} className="category-row">
+                      <div className="category-name">{category.name}</div>
+                      <input
+                        id={`${category.id}-budgetAmount`}
+                        type="text"
+                        placeholder="Budget"
+                        className="amount-input"
+                        {...getInputProps(category.id, "budgetAmount")}
+                      />
+                      <input
+                        id={`${category.id}-actualAmount`}
+                        type="text"
+                        placeholder="Actual"
+                        className="amount-input"
+                        {...getInputProps(category.id, "actualAmount")}
+                      />
+                      <input
+                        id={`${category.id}-reforecastAmount`}
+                        type="text"
+                        placeholder="Reforecast"
+                        className="amount-input"
+                        {...getInputProps(category.id, "reforecastAmount")}
+                      />
+                      <input
+                        id={`${category.id}-adjustmentAmount`}
+                        type="text"
+                        placeholder="Adjustments"
+                        className="amount-input"
+                        {...getInputProps(category.id, "adjustmentAmount")}
+                      />
+                      <input
+                        id={`${category.id}-notes`}
+                        type="text"
+                        placeholder="Notes"
+                        className="notes-input"
+                        {...getInputProps(category.id, "notes")}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* Operating Expenses Section */}
+              <div className="category-section">
+                <h3 className="category-section-title">Operating Expenses</h3>
+                <div className="category-grid">
+                  {opexCategories.map((category) => (
+                    <div key={category.id} className="category-row">
+                      <div className="category-name">{category.name}</div>
+                      <input
+                        id={`${category.id}-budgetAmount`}
+                        type="text"
+                        placeholder="Budget"
+                        className="amount-input"
+                        {...getInputProps(category.id, "budgetAmount")}
+                      />
+                      <input
+                        id={`${category.id}-actualAmount`}
+                        type="text"
+                        placeholder="Actual"
+                        className="amount-input"
+                        {...getInputProps(category.id, "actualAmount")}
+                      />
+                      <input
+                        id={`${category.id}-reforecastAmount`}
+                        type="text"
+                        placeholder="Reforecast"
+                        className="amount-input"
+                        {...getInputProps(category.id, "reforecastAmount")}
+                      />
+                      <input
+                        id={`${category.id}-adjustmentAmount`}
+                        type="text"
+                        placeholder="Adjustments"
+                        className="amount-input"
+                        {...getInputProps(category.id, "adjustmentAmount")}
+                      />
+                      <input
+                        id={`${category.id}-notes`}
+                        type="text"
+                        placeholder="Notes"
+                        className="notes-input"
+                        {...getInputProps(category.id, "notes")}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>{" "}
+            <div className="budget-input-actions">
+              <button className="btn btn-secondary" onClick={handleReset}>
+                Reset
+              </button>{" "}
+            </div>
           </div>
         </div>
       </div>

@@ -66,14 +66,13 @@ const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
                 ? "Loading..."
                 : "Load from File"}
             </button>
-          </div>
-
+          </div>{" "}
           <div className="option-card">
             <div className="option-icon">📝</div>
             <h3>Start New Budget</h3>
             <p>
-              Create a new budget file and choose where to save it. You'll start
-              with a clean slate and can begin entering your budget data.
+              Begin with a fresh budget. You'll be taken to the main dashboard
+              where you can create and save a new budget file when you're ready.
             </p>
             <button
               className="option-button new-button"
@@ -82,10 +81,9 @@ const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
             >
               {isLoading && loadingAction === "Setting up new file..."
                 ? "Setting up..."
-                : "Start New File"}
+                : "Start New Budget"}
             </button>
           </div>
-
           <div className="option-card">
             <div className="option-icon">⏭️</div>
             <h3>Skip for Now</h3>

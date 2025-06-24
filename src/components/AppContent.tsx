@@ -17,9 +17,9 @@ const AppContent: React.FC = () => {
   const handleLoadFromFile = async (): Promise<void> => {
     await loadFromFile();
   };
-
   const handleCreateNewFile = async (): Promise<void> => {
-    await createNewFile();
+    // Simply transition to main dashboard - let user create file via File Manager
+    dispatch({ type: "SET_FIRST_TIME_USER", payload: false });
   };
 
   const handleSkipForNow = (): void => {
@@ -37,7 +37,7 @@ const AppContent: React.FC = () => {
     );
   } // Show main application
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/budget">
       <div className="App">
         <header className="app-header">
           <h1>Budget vs Actual</h1>

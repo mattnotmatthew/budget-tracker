@@ -617,22 +617,46 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
     try {
       const fileManager = await import("../utils/fileManager");
 
-      let result;
-      if (fileManager.supportsFileSystemAccess()) {
-        result = await fileManager.saveToFileHandle(
-          {
-            entries: state.entries,
-            selectedYear: state.selectedYear,
-            yearlyBudgetTargets: state.yearlyBudgetTargets,
-            monthlyForecastModes: state.monthlyForecastModes,
-          },
-          state.currentFile?.handle
-        );
-        if (result.saved && result.fileHandle) {
+      // Use smartAutoSave with enhanced handle validation
+      const result = await fileManager.smartAutoSave(
+        {
+          entries: state.entries,
+          selectedYear: state.selectedYear,
+          yearlyBudgetTargets: state.yearlyBudgetTargets,
+          monthlyForecastModes: state.monthlyForecastModes,
+        },
+        state.currentFile
+      );
+
+      if (result.saved) {
+        // Check if we got a new file handle from reconnection
+        if (result.newFileHandle) {
+          console.log("🔄 Updating context with reconnected file handle");
+
+          // Update the file handle in the context
           dispatch({
             type: "SET_CURRENT_FILE",
             payload: {
-              name: result.fileName,
+              name: result.newFileHandle.name,
+              handle: result.newFileHandle,
+              lastSaved: new Date(),
+              // Clear userLastSaved when reconnecting
+              userLastSaved: new Date(),
+            },
+          });
+
+          // Update persistence manager
+          persistenceManager.saveFileInfo({
+            name: result.newFileHandle.name,
+            handle: result.newFileHandle,
+            lastSaved: new Date(),
+          });
+        } else if (result.fileHandle) {
+          // Normal save with existing or new file handle
+          dispatch({
+            type: "SET_CURRENT_FILE",
+            payload: {
+              name: result.fileName || state.currentFile?.name || "budget.json",
               handle: result.fileHandle,
               lastSaved: new Date(),
               // Preserve existing userLastSaved when auto-saving from context
@@ -642,30 +666,27 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
 
           // Save file info to persistence manager
           persistenceManager.saveFileInfo({
-            name: result.fileName,
+            name: result.fileName || "budget.json",
             handle: result.fileHandle,
             lastSaved: new Date(),
           });
         }
-      } else {
-        // Fallback to traditional download
-        fileManager.saveBudgetData({
-          entries: state.entries,
-          selectedYear: state.selectedYear,
-          yearlyBudgetTargets: state.yearlyBudgetTargets,
-          monthlyForecastModes: state.monthlyForecastModes,
-        });
-        result = { saved: true };
-      }
 
-      if (result.saved) {
         dispatch({ type: "MARK_SAVED_TO_FILE" });
         persistenceManager.markAsSavedToFile();
+
+        // Show success message if provided
+        if (result.message) {
+          console.log("📢 Save result message:", result.message);
+        }
+
         return true;
+      } else {
+        console.log("❌ Save failed or was cancelled:", result);
+        return false;
       }
-      return false;
     } catch (error) {
-      console.error("Failed to save file:", error);
+      console.error("❌ Save to file failed:", error);
       return false;
     }
   };
@@ -823,9 +844,7 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
             // Clear userLastSaved when creating a new file
             userLastSaved: undefined,
           },
-        });
-
-        // Save file info to persistence manager
+        }); // Save file info to persistence manager
         persistenceManager.saveFileInfo({
           name: fileHandle.name,
           handle: fileHandle,
@@ -836,8 +855,29 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
         persistenceManager.markUserAsReturning();
         dispatch({ type: "SET_FIRST_TIME_USER", payload: false });
 
-        // Save initial empty state to file
-        await saveToFile();
+        // Save initial empty state directly to the new file handle
+        const initialData = {
+          version: "1.0.0",
+          exportDate: new Date().toISOString(),
+          year: state.selectedYear,
+          entries: [],
+          yearlyBudgetTargets: state.yearlyBudgetTargets || {},
+          monthlyForecastModes: state.monthlyForecastModes || {},
+          metadata: {
+            totalEntries: 0,
+            dateRange: { earliest: "", latest: "" },
+            categories: [],
+          },
+        };
+
+        // Write initial data to the file
+        const writable = await (fileHandle as any).createWritable();
+        await writable.write(JSON.stringify(initialData, null, 2));
+        await writable.close();
+
+        // Mark as saved
+        dispatch({ type: "MARK_SAVED_TO_FILE" });
+        persistenceManager.markAsSavedToFile();
 
         return true;
       }

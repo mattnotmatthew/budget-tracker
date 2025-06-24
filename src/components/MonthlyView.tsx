@@ -477,9 +477,9 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({
           </span>
           <span className="variance-amount">{formatCurrency(0)}</span>
         </div>
-        {/* Budget Tracking */}
+        {/* Tracking */}
         <div className="budget-tracking">
-          <span className="total-label">Budget Tracking</span>{" "}
+          <span className="total-label">Tracking</span>{" "}
           <span className="actual-amount">
             {formatCurrency(summary.budgetTracking.actual)}
           </span>
@@ -691,9 +691,9 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({
                   </span>
                   <span className="variance-amount">{formatCurrency(0)}</span>
                 </div>{" "}
-                {/* Budget Tracking */}{" "}
+                {/* Tracking */}{" "}
                 <div className="budget-tracking">
-                  <span className="total-label">Budget Tracking</span>
+                  <span className="total-label">Tracking</span>
                   <span className="actual-amount">
                     {formatCurrency(
                       getMonthForecastMode(month.month)

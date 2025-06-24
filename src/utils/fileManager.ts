@@ -28,6 +28,34 @@ export interface BudgetDataFile {
   };
 }
 
+// Enhanced SaveResult interface with new properties
+export interface SaveResult {
+  saved: boolean;
+  method: "file" | "newFile" | "download";
+  fileHandle?: FileSystemFileHandle;
+  fileName?: string;
+  userCancelled?: boolean;
+  error?: string;
+  newFileHandle?: FileSystemFileHandle;
+  message?: string;
+}
+
+/**
+ * Validates if a file handle is still valid and accessible
+ */
+export const validateFileHandle = async (
+  handle: FileSystemFileHandle
+): Promise<boolean> => {
+  try {
+    // Try to get file info - this will fail if handle is invalid/expired
+    await handle.getFile();
+    return true;
+  } catch (error) {
+    console.log("File handle expired or invalid:", error);
+    return false;
+  }
+};
+
 // Save budget data to JSON file
 export const saveBudgetData = (
   state: Omit<
@@ -329,34 +357,154 @@ export const smartAutoSave = async (
     handle?: FileSystemFileHandle;
     lastSaved?: Date;
   }
-): Promise<{
-  saved: boolean;
-  method: "file" | "newFile";
-  fileHandle?: FileSystemFileHandle;
-  fileName?: string;
-  userCancelled?: boolean;
-}> => {
-  // If we have a file handle, save directly to it
+): Promise<SaveResult> => {
+  console.log("🔄 Smart auto-save triggered:", {
+    hasCurrentFile: !!currentFile,
+    hasHandle: !!currentFile?.handle,
+    supportsFileSystemAccess: supportsFileSystemAccess(),
+  });
+
+  // Check if we have a file handle and browser supports File System Access API
   if (currentFile?.handle && supportsFileSystemAccess()) {
+    console.log("📁 File handle available, validating...");
+
+    // Validate handle before attempting save
+    const isHandleValid = await validateFileHandle(currentFile.handle);
+
+    if (!isHandleValid) {
+      console.log("🔄 File handle expired - prompting for file reselection");
+
+      const shouldReselect = window.confirm(
+        `Your connection to "${currentFile.name}" has expired due to browser security policies.\n\n` +
+          "This happens when the browser tab is inactive for extended periods (typically 20-30 minutes).\n\n" +
+          "Would you like to reconnect to your existing file to save your changes?\n\n" +
+          "Click OK to select your file again, or Cancel to continue without saving."
+      );
+
+      if (shouldReselect) {
+        console.log("👤 User chose to reconnect to existing file");
+        // Prompt user to reselect the same file
+        try {
+          const fileHandles = await window.showOpenFilePicker?.({
+            types: [
+              {
+                description: "Budget JSON files",
+                accept: { "application/json": [".json"] },
+              },
+            ],
+            multiple: false,
+          });
+
+          if (!fileHandles || fileHandles.length === 0) {
+            return {
+              saved: false,
+              method: "file",
+              userCancelled: true,
+              message: "File selection cancelled.",
+            };
+          }
+
+          const newFileHandle = fileHandles[0];
+          // Save to the newly selected file
+          const result = await saveToFileHandle(state, newFileHandle);
+          if (result.saved) {
+            console.log("✅ Successfully reconnected and saved to file");
+            return {
+              ...result,
+              method: "file",
+              newFileHandle: newFileHandle,
+              message: `Reconnected to "${newFileHandle.name}" and saved successfully.`,
+            };
+          }
+          return { ...result, method: "file" };
+        } catch (error) {
+          console.log(
+            "❌ User cancelled file selection or error occurred:",
+            error
+          );
+          return {
+            saved: false,
+            method: "file",
+            userCancelled: true,
+            message: "File reconnection cancelled.",
+          };
+        }
+      } else {
+        console.log("👤 User chose not to reconnect");
+        return {
+          saved: false,
+          method: "file",
+          userCancelled: true,
+          message: "Save cancelled - file handle expired.",
+        };
+      }
+    }
+    // Handle is valid, proceed with normal save
+    console.log("✅ File handle is valid, proceeding with save");
     try {
       const result = await saveToFileHandle(state, currentFile.handle);
       if (result.saved) {
-        return {
-          saved: true,
-          method: "file",
-          fileHandle: result.fileHandle,
-          fileName: result.fileName,
-        };
+        console.log("💾 Successfully saved to existing file handle");
       }
+      return { ...result, method: "file" };
     } catch (error) {
-      console.warn("Failed to save to attached file:", error);
-      throw error; // Don't fall back to localStorage, require explicit file operations
+      console.error("❌ Save failed despite valid handle:", error);
+      // Fall through to prompt for new file
     }
   }
 
-  // No attached file - prompt to create a file (required, no localStorage fallback)
+  // Check if we had a file before (handle expired scenario vs truly no file)
+  if (currentFile?.name && !currentFile?.handle) {
+    console.log("🔄 Had file before but handle is missing - likely expired");
+
+    const shouldReconnect = window.confirm(
+      `Connection to "${currentFile.name}" has been lost.\n\n` +
+        "This happens when the browser tab is inactive for extended periods.\n\n" +
+        "Would you like to reconnect to your file to save your changes?\n\n" +
+        "Click OK to select your file, or Cancel to create a new file."
+    );
+
+    if (shouldReconnect) {
+      console.log("👤 User chose to reconnect to lost file");
+      try {
+        const fileHandles = await window.showOpenFilePicker?.({
+          types: [
+            {
+              description: "Budget JSON files",
+              accept: { "application/json": [".json"] },
+            },
+          ],
+          multiple: false,
+        });
+
+        if (!fileHandles || fileHandles.length === 0) {
+          // Fall through to create new file prompt
+        } else {
+          const newFileHandle = fileHandles[0];
+          const result = await saveToFileHandle(state, newFileHandle);
+          if (result.saved) {
+            return {
+              ...result,
+              method: "file",
+              newFileHandle: newFileHandle,
+              message: `Reconnected to "${newFileHandle.name}" and saved successfully.`,
+            };
+          }
+          return { ...result, method: "file" };
+        }
+      } catch (error) {
+        console.log("❌ User cancelled reconnection or error occurred:", error);
+        // Fall through to create new file prompt
+      }
+    }
+  }
+
+  // Truly no file attached - show regular prompt
+  console.log("📄 No file attached - prompting user to create new file");
+
   const shouldSave = window.confirm(
-    "No file attached. Would you like to save your budget data to a file?\n\nClick OK to create a file, or Cancel to abort saving."
+    "No file attached. Would you like to save your budget data to a file?\n\n" +
+      "Click OK to create a file, or Cancel to abort saving."
   );
 
   if (shouldSave) {

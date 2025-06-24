@@ -12,7 +12,7 @@ interface FileManagerProps {
 }
 
 const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
-  const { state, dispatch, clearAllData } = useBudget();
+  const { state, dispatch, clearAllData, createNewFile } = useBudget();
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{
     type: "success" | "error" | "info";
@@ -301,6 +301,33 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
     };
   };
 
+  const handleCreateNewFile = async () => {
+    setIsLoading(true);
+    setMessage(null);
+    try {
+      const success = await createNewFile();
+      if (success) {
+        setMessage({
+          type: "success",
+          text: "✅ New file created successfully! You can now start entering budget data.",
+        });
+      } else {
+        setMessage({
+          type: "info",
+          text: "❌ File creation cancelled",
+        });
+      }
+    } catch (error) {
+      console.error("Error creating new file:", error);
+      setMessage({
+        type: "error",
+        text: "❌ Failed to create new file: " + (error as Error).message,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const stats = getCurrentStats();
   return (
     <div className="file-manager-overlay">
@@ -310,7 +337,7 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
           <button className="close-btn" onClick={onClose} title="Close (Esc)">
             ×
           </button>{" "}
-        </div>
+        </div>{" "}
         <div className="file-manager-content">
           {/* Message Display - Moved to top for better visibility */}
           {message && (
@@ -324,6 +351,41 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
               }}
             >
               {message.text}
+            </div>
+          )}
+          {/* Create New File Section - For new users */}
+          {!state.currentFile && (
+            <div className="file-section">
+              <h4>Create New Budget File</h4>
+              <p>
+                Start fresh with a new budget file. You'll choose where to save
+                it on your computer.
+              </p>
+              <button
+                className="create-btn primary-create"
+                onClick={handleCreateNewFile}
+                disabled={isLoading}
+                style={{
+                  background:
+                    "linear-gradient(135deg, #affe76 0%, #023f40 100%)",
+                  color: "white",
+                  border: "none",
+                  padding: "12px 24px",
+                  borderRadius: "8px",
+                  fontSize: "1rem",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  width: "100%",
+                  marginBottom: "1rem",
+                }}
+              >
+                {isLoading ? "Creating..." : "📝 Create New Budget File"}
+              </button>
+              <div
+                style={{ textAlign: "center", margin: "1rem 0", color: "#666" }}
+              >
+                <span>— OR —</span>
+              </div>
             </div>
           )}
           {/* Load Section - Moved to top */}
