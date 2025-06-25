@@ -1,4 +1,4 @@
-import { BudgetEntry, BudgetState } from "../types";
+import { BudgetEntry, BudgetState, VendorData } from "../types";
 
 // Cache key for storing file information
 const CACHE_KEY = "budget-tracker-file-info";
@@ -18,6 +18,7 @@ export interface BudgetDataFile {
   entries: BudgetEntry[];
   yearlyBudgetTargets?: { [year: number]: number };
   monthlyForecastModes?: { [year: number]: { [month: number]: boolean } };
+  vendorData?: VendorData[]; // NEW: Vendor data
   metadata: {
     totalEntries: number;
     dateRange: {
@@ -67,12 +68,17 @@ export const saveBudgetData = (
     | "persistence"
   >
 ) => {
-  const { entries, selectedYear } = state;
+  const { entries, selectedYear, vendorData } = state;
 
   // Filter entries for the selected year
   const yearEntries = entries.filter(
     (entry: BudgetEntry) => entry.year === selectedYear
   );
+
+  // Filter vendor data for the selected year
+  const yearVendorData =
+    vendorData?.filter((vendor: VendorData) => vendor.year === selectedYear) ||
+    [];
 
   // Create metadata
   const dates = yearEntries.map((entry: BudgetEntry) => entry.createdAt);
@@ -88,6 +94,7 @@ export const saveBudgetData = (
     entries: yearEntries,
     yearlyBudgetTargets: state.yearlyBudgetTargets || {},
     monthlyForecastModes: state.monthlyForecastModes || {},
+    vendorData: yearVendorData,
     metadata: {
       totalEntries: yearEntries.length,
       dateRange: {
@@ -257,11 +264,16 @@ export const saveToFileHandle = async (
         fileName: `budget-data-${state.selectedYear}.json`,
       };
     }
-
-    const { entries, selectedYear } = state;
+    const { entries, selectedYear, vendorData } = state;
     const yearEntries = entries.filter(
       (entry: BudgetEntry) => entry.year === selectedYear
     );
+
+    // Filter vendor data for the selected year
+    const yearVendorData =
+      vendorData?.filter(
+        (vendor: VendorData) => vendor.year === selectedYear
+      ) || [];
 
     const dates = yearEntries.map((entry: BudgetEntry) => entry.createdAt);
     const categorySet = new Set(
@@ -275,6 +287,7 @@ export const saveToFileHandle = async (
       entries: yearEntries,
       yearlyBudgetTargets: state.yearlyBudgetTargets || {},
       monthlyForecastModes: state.monthlyForecastModes || {},
+      vendorData: yearVendorData,
       metadata: {
         totalEntries: yearEntries.length,
         dateRange: {

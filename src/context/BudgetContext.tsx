@@ -12,6 +12,7 @@ import {
   BudgetState,
   PlanningData,
   HistoricalAnalysis,
+  VendorData,
 } from "../types";
 import { attemptRestoreCachedFile } from "../utils/fileManager";
 import { PersistenceManager } from "../services/persistenceManager";
@@ -65,7 +66,12 @@ type BudgetAction =
   | {
       type: "SET_HISTORICAL_ANALYSIS";
       payload: { year: number; analysis: HistoricalAnalysis };
-    };
+    }
+  // NEW: Vendor management actions
+  | { type: "ADD_VENDOR_DATA"; payload: VendorData }
+  | { type: "UPDATE_VENDOR_DATA"; payload: VendorData }
+  | { type: "DELETE_VENDOR_DATA"; payload: string }
+  | { type: "LOAD_VENDOR_DATA"; payload: VendorData[] };
 
 const initialCategories: BudgetCategory[] = [
   // Cost of Sales
@@ -226,12 +232,14 @@ const getInitialState = (): BudgetState => {
       lastFileSave: null,
       isFirstTimeUser: persistenceManager.isFirstTimeUser(),
       cacheAutoSaveInterval: 5 * 60 * 1000, // 5 minutes
-    },
-    // NEW: Planning feature properties (optional, only initialized if feature enabled)
+    }, // NEW: Planning feature properties (optional, only initialized if feature enabled)
     planningMode: false, // Always start in tracking mode
     planningData: {}, // Empty planning data by default
     selectedScenario: undefined, // No scenario selected initially
     historicalAnalysis: {}, // Empty historical analysis by default
+
+    // NEW: Vendor management data
+    vendorData: [], // Empty vendor data by default
   };
 };
 
@@ -365,6 +373,7 @@ const budgetReducer = (
       return {
         ...state,
         entries: action.payload.entries || [],
+        vendorData: action.payload.vendorData || [],
         selectedYear: action.payload.selectedYear || state.selectedYear,
         yearlyBudgetTargets: action.payload.yearlyBudgetTargets || {},
         monthlyForecastModes: action.payload.monthlyForecastModes || {},
@@ -488,6 +497,48 @@ const budgetReducer = (
         },
       };
 
+    // NEW: Vendor management action handlers
+    case "ADD_VENDOR_DATA":
+      return {
+        ...state,
+        vendorData: [...(state.vendorData || []), action.payload],
+        persistence: {
+          ...state.persistence,
+          hasUnsavedChanges: true,
+        },
+      };
+    case "UPDATE_VENDOR_DATA":
+      return {
+        ...state,
+        vendorData: (state.vendorData || []).map((vendor) =>
+          vendor.id === action.payload.id ? action.payload : vendor
+        ),
+        persistence: {
+          ...state.persistence,
+          hasUnsavedChanges: true,
+        },
+      };
+    case "DELETE_VENDOR_DATA":
+      return {
+        ...state,
+        vendorData: (state.vendorData || []).filter(
+          (vendor) => vendor.id !== action.payload
+        ),
+        persistence: {
+          ...state.persistence,
+          hasUnsavedChanges: true,
+        },
+      };
+    case "LOAD_VENDOR_DATA":
+      return {
+        ...state,
+        vendorData: action.payload,
+        persistence: {
+          ...state.persistence,
+          hasUnsavedChanges: false,
+        },
+      };
+
     default:
       return state;
   }
@@ -581,9 +632,9 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
       console.log("Skipping cache save - still on initial state");
       return;
     }
-
     console.log("Data changed, immediately saving to cache:", {
       entriesCount: state.entries.length,
+      vendorDataCount: (state.vendorData || []).length,
       yearlyTargetsCount: Object.keys(state.yearlyBudgetTargets).length,
       monthlyModesCount: Object.keys(state.monthlyForecastModes).length,
       currentFile: state.currentFile?.name,
@@ -594,6 +645,7 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
     // Don't save empty data to cache
     if (
       state.entries.length === 0 &&
+      (state.vendorData || []).length === 0 &&
       Object.keys(state.yearlyBudgetTargets).length === 0 &&
       Object.keys(state.monthlyForecastModes).length === 0
     ) {
@@ -608,22 +660,25 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
     if (state.persistence.hasUnsavedChanges) {
       persistenceManager.markDataChanged();
     }
-
     dispatch({ type: "UPDATE_CACHE_TIMESTAMP" });
-  }, [state.entries, state.yearlyBudgetTargets, state.monthlyForecastModes]);
+  }, [
+    state.entries,
+    state.yearlyBudgetTargets,
+    state.monthlyForecastModes,
+    state.vendorData,
+  ]);
 
   // Persistence functions
   const saveToFile = async (): Promise<boolean> => {
     try {
-      const fileManager = await import("../utils/fileManager");
-
-      // Use smartAutoSave with enhanced handle validation
+      const fileManager = await import("../utils/fileManager"); // Use smartAutoSave with enhanced handle validation
       const result = await fileManager.smartAutoSave(
         {
           entries: state.entries,
           selectedYear: state.selectedYear,
           yearlyBudgetTargets: state.yearlyBudgetTargets,
           monthlyForecastModes: state.monthlyForecastModes,
+          vendorData: state.vendorData,
         },
         state.currentFile
       );
@@ -773,6 +828,21 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
           );
         }
 
+        // Load vendor data
+        if (loadedData.vendorData) {
+          const vendorDataWithDates = loadedData.vendorData.map(
+            (vendor: any) => ({
+              ...vendor,
+              createdAt: new Date(vendor.createdAt),
+              updatedAt: new Date(vendor.updatedAt),
+            })
+          );
+          dispatch({
+            type: "LOAD_VENDOR_DATA",
+            payload: vendorDataWithDates,
+          });
+        }
+
         // Update selected year
         dispatch({
           type: "SET_SELECTED_PERIOD",
@@ -853,9 +923,7 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
 
         // Mark as no longer first-time user
         persistenceManager.markUserAsReturning();
-        dispatch({ type: "SET_FIRST_TIME_USER", payload: false });
-
-        // Save initial empty state directly to the new file handle
+        dispatch({ type: "SET_FIRST_TIME_USER", payload: false }); // Save initial empty state directly to the new file handle
         const initialData = {
           version: "1.0.0",
           exportDate: new Date().toISOString(),
@@ -863,6 +931,7 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
           entries: [],
           yearlyBudgetTargets: state.yearlyBudgetTargets || {},
           monthlyForecastModes: state.monthlyForecastModes || {},
+          vendorData: state.vendorData || [],
           metadata: {
             totalEntries: 0,
             dateRange: { earliest: "", latest: "" },

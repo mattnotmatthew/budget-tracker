@@ -16,6 +16,7 @@ import YearlyBudgetDashboard from "./YearlyBudgetDashboard";
 import "../styles/App.css";
 import { useNavigate } from "react-router-dom";
 import ExecutiveSummary from "./ExecutiveSummary/ExecutiveSummary";
+import VendorManagement from "./VendorManagement";
 
 // Utility function to get current quarter
 const getCurrentQuarter = (): number => {
@@ -42,9 +43,9 @@ const Dashboard: React.FC = () => {
   const [selectedQuarters, setSelectedQuarters] = useState<number[]>([]);
   const [showHotkeysHelp, setShowHotkeysHelp] = useState(false);
   const [isReadOnly, setIsReadOnly] = useState(true); // Default to Read Only mode
-  const [currentView, setCurrentView] = useState<"executive" | "budget">(
-    "executive"
-  ); // Default to Executive Summary
+  const [currentView, setCurrentView] = useState<
+    "executive" | "budget" | "vendor"
+  >("executive"); // Default to Executive Summary
   const navigate = useNavigate();
 
   // Generate year options dynamically (year-agnostic)
@@ -171,9 +172,19 @@ const Dashboard: React.FC = () => {
           case "s":
           case "S":
             event.preventDefault();
-            setCurrentView(
-              currentView === "executive" ? "budget" : "executive"
-            );
+            // Cycle through views: executive -> budget -> vendor -> executive
+            if (currentView === "executive") {
+              setCurrentView("budget");
+            } else if (currentView === "budget") {
+              setCurrentView("vendor");
+            } else {
+              setCurrentView("executive");
+            }
+            break;
+          case "v":
+          case "V":
+            event.preventDefault();
+            setCurrentView("vendor");
             break;
         }
       }
@@ -265,8 +276,7 @@ const Dashboard: React.FC = () => {
       dispatch,
       yearOptions,
     ]
-  );
-  // Close input when switching away from Budget view
+  ); // Close input when switching away from Budget view
   useEffect(() => {
     if (currentView !== "budget" && showInput) {
       setShowInput(false);
@@ -329,8 +339,7 @@ const Dashboard: React.FC = () => {
                   </div>
                 )}{" "}
             </div>
-          </div>
-
+          </div>{" "}
           {/* Navigation buttons */}
           <button
             className={`view-btn ${currentView === "budget" ? "active" : ""}`}
@@ -338,6 +347,14 @@ const Dashboard: React.FC = () => {
             title="Budget View"
           >
             Budget
+          </button>
+          <button
+            className={`view-btn ${currentView === "vendor" ? "active" : ""}`}
+            onClick={() => setCurrentView("vendor")}
+            title="Vendor Management"
+            // style={{ display: "none" }} //vendor management display none for now.
+          >
+            Vendor Management
           </button>
           <button
             className={`view-btn ${
@@ -348,7 +365,6 @@ const Dashboard: React.FC = () => {
           >
             Executive Summary
           </button>
-
           {/* Only show quarter selector and read-only toggle when viewing Budget */}
           {currentView === "budget" && (
             <>
@@ -462,8 +478,12 @@ const Dashboard: React.FC = () => {
                 <div className="hotkey-item">
                   <span className="hotkey">Ctrl + S</span>
                   <span className="description">
-                    Toggle Executive Summary/Budget
+                    Cycle Views (Executive→Budget→Vendor)
                   </span>
+                </div>
+                <div className="hotkey-item">
+                  <span className="hotkey">Ctrl + V</span>
+                  <span className="description">Vendor Management</span>
                 </div>
               </div>
               <div className="hotkeys-section">
@@ -499,6 +519,7 @@ const Dashboard: React.FC = () => {
         </div>
       )}{" "}
       <div className="dashboard-content">
+        {" "}
         {currentView === "budget" && (
           <>
             <div className="controls-and-currency">
@@ -520,17 +541,15 @@ const Dashboard: React.FC = () => {
               <span className="currency-note">
                 <small>💡 (USD in Thousands)</small>
               </span>
-            </div>
-
+            </div>{" "}
             <YearlyBudgetDashboard collapseAll={collapseAll} />
-
             <MonthlyView
               collapseAll={collapseAll}
               selectedQuarters={selectedQuarters}
             />
           </>
         )}
-
+        {currentView === "vendor" && <VendorManagement />}
         {currentView === "executive" && <ExecutiveSummary />}
       </div>
     </div>

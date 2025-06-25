@@ -1,4 +1,4 @@
-import { BudgetState, BudgetEntry } from "../types";
+import { BudgetState, BudgetEntry, VendorData } from "../types";
 
 // Cache keys
 const CACHE_KEY = "budget-tracker-data";
@@ -27,6 +27,7 @@ export interface FileInfo {
 
 export interface CachedBudgetData {
   entries: BudgetEntry[];
+  vendorData: VendorData[];
   selectedYear: number;
   yearlyBudgetTargets: { [year: number]: number };
   monthlyForecastModes: { [year: number]: { [month: number]: boolean } };
@@ -83,16 +84,16 @@ export class PersistenceManager {
     try {
       const cacheData: CachedBudgetData = {
         entries: budgetState.entries,
+        vendorData: budgetState.vendorData || [],
         selectedYear: budgetState.selectedYear,
         yearlyBudgetTargets: budgetState.yearlyBudgetTargets,
         monthlyForecastModes: budgetState.monthlyForecastModes,
         lastUpdated: new Date().toISOString(),
         version: "1.0",
-      };
-
-      // Debug logging to track empty data saves
+      }; // Debug logging to track empty data saves
       console.log("PersistenceManager.saveToCache called with:", {
         entriesCount: cacheData.entries.length,
+        vendorDataCount: cacheData.vendorData.length,
         yearlyTargetsCount: Object.keys(cacheData.yearlyBudgetTargets).length,
         monthlyModesCount: Object.keys(cacheData.monthlyForecastModes).length,
         timestamp: cacheData.lastUpdated,

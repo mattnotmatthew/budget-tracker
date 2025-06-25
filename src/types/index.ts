@@ -1,6 +1,21 @@
 // Planning feature imports (added for 2026 planning functionality)
 import { PlanningData, HistoricalAnalysis } from "./planning";
 
+export interface VendorData {
+  id: string;
+  vendorName: string;
+  financeMappedCategory: string;
+  billingType: string;
+  budget: number;
+  description: string;
+  month: string;
+  inBudget: boolean;
+  notes: string;
+  year: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface BudgetCategory {
   id: string;
   name: string;
@@ -125,6 +140,9 @@ export interface BudgetState {
   planningData?: Record<number, PlanningData>; // Default: {} - planning data by year
   selectedScenario?: string; // Default: undefined - active scenario ID
   historicalAnalysis?: Record<number, HistoricalAnalysis>; // Default: {} - analysis by base year
+
+  // NEW: Vendor management data
+  vendorData?: VendorData[]; // Default: [] - vendor management data
 }
 
 // Re-export planning types for convenience

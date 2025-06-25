@@ -176,27 +176,37 @@ budget-tracker/
 
 ## 📚 Documentation
 
-Extensive documentation is available in the `docs/` folder with 40+ detailed guides:
+Comprehensive documentation suite with 50+ guides covering all aspects of the application:
 
-### **Core Features**
+### **📋 Complete Documentation Suite**
 
-- **[📋 Documentation Index](./docs/INDEX.md)** - Complete guide to all documentation
-- **[🎯 Monthly Budget Tracking](./docs/MONTHLY_BUDGET_TRACKING_COMPLETE.md)** - Core tracking functionality
-- **[📊 Quarterly Summaries](./docs/QUARTERLY_SUMMARY_FINAL_LOGIC_COMPLETE.md)** - Quarterly aggregation logic
-- **[🎚️ IOSToggle Logic](./docs/BUDGET_TRACKING_IOSTOGGLE_LOGIC_COMPLETE.md)** - Final/Forecast mode behavior
+- **[� Documentation Index](./docs/DOCUMENTATION_INDEX.md)** - Master guide to all documentation
+- **[👤 User Guide](./docs/USER_GUIDE.md)** - Complete user manual and workflow guide
+- **[🔧 Technical Guide](./docs/TECHNICAL_GUIDE.md)** - Architecture and development documentation
+- **[⭐ Application Features](./docs/APPLICATION_FEATURES.md)** - Detailed feature reference and status
+- **[👨‍💻 Development Workflow](./docs/DEVELOPMENT_WORKFLOW.md)** - Developer setup and contribution guide
 
-### **Advanced Features**
+### **🎯 Core Features Documentation**
 
-- **[📈 YTD Budget Performance](./docs/YTD_BUDGET_PERFORMANCE_CARD_UPDATE.md)** - Executive dashboard metrics
-- **[🔄 Copy to Quarter](./docs/COPY_TO_QUARTER_FEATURE.md)** - Bulk data operations
-- **[� Excel Paste Feature](./docs/EXCEL_PASTE_FEATURE.md)** - Data import capabilities
-- **[💾 Auto-Save System](./docs/ENHANCED_SAVE_FEATURE.md)** - File management
+- **[🎚️ IOSToggle Logic](./docs/complete-features/BUDGET_TRACKING_IOSTOGGLE_LOGIC_COMPLETE.md)** - Final/Forecast mode behavior
+- **[📊 Monthly Budget Tracking](./docs/complete-features/MONTHLY_BUDGET_TRACKING_COMPLETE.md)** - Core tracking functionality
+- **[📈 Quarterly Summaries](./docs/complete-features/QUARTERLY_SUMMARY_FINAL_LOGIC_COMPLETE.md)** - Quarterly aggregation logic
+- **[💳 YTD Performance](./docs/complete-features/YTD_BUDGET_PERFORMANCE_CARD_UPDATE.md)** - Executive dashboard metrics
 
-### **User Guides**
+### **🚀 Advanced Features Documentation**
 
-- **[⌨️ Keyboard Navigation](./docs/KEYBOARD_NAVIGATION_GUIDE.md)** - Accessibility features
-- **[💰 Currency Formatting](./docs/PARENTHESES_FORMATTING_COMPLETE.md)** - Excel-style display
-- **[🎨 UI Components](./docs/HELP_BUTTON_STYLING_FIX_COMPLETE.md)** - Interface design
+- **[🔄 Copy to Quarter](./docs/complete-features/COPY_TO_QUARTER_FEATURE.md)** - Bulk data operations
+- **[📋 Excel Integration](./docs/complete-features/EXCEL_PASTE_FEATURE.md)** - Data import capabilities
+- **[💾 File Management](./docs/complete-features/ENHANCED_SAVE_FEATURE.md)** - Auto-save and file operations
+- **[⌨️ Keyboard Navigation](./docs/complete-features/KEYBOARD_NAVIGATION_GUIDE.md)** - Accessibility features
+
+### **� Planning Features** (Future)
+
+- **[🎯 2026 Planning Overview](./docs/planning-feature/README.md)** - Next-generation planning features
+- **[📋 Implementation Plan](./docs/planning-feature/IMPLEMENTATION_PLAN.md)** - Detailed development roadmap
+- **[📊 Implementation Status](./docs/planning-feature/IMPLEMENTATION_STATUS.md)** - Current development progress
+
+_For a complete overview of all documentation, visit the [Documentation Index](./docs/DOCUMENTATION_INDEX.md)._
 
 _See the complete [docs folder](./docs/) for implementation details, testing guides, and technical specifications._
 
