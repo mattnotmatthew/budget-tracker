@@ -1,0 +1,192 @@
+/* iOS Toggle Styles */
+.ios-toggle-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.ios-toggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background-color: #e5e5ea;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background-color var(--transition-normal);
+  user-select: none;
+}
+
+.ios-toggle.on {
+  background-color: #34c759;
+}
+
+.ios-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background-color: white;
+  border-radius: 10px;
+  transition: transform var(--transition-normal);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.ios-toggle.on .ios-toggle-thumb {
+  transform: translateX(20px);
+}
+
+.ios-toggle-label {
+  color: #8e8e93;
+  transition: color var(--transition-fast);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ios-toggle-label.active {
+  color: white;
+}
+
+.ios-toggle:focus {
+  outline: 2px solid #007aff;
+  outline-offset: 2px;
+}
+
+.ios-toggle:focus-visible {
+  outline: 2px solid #007aff;
+  outline-offset: 2px;
+}
+
+/* Quarter Selector Styles */
+.quarter-selector {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm);
+}
+
+.quarter-selector-label {
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.quarter-toggles {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.quarter-toggle {
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.quarter-checkbox {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.quarter-toggle-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 50px;
+  min-height: 45px;
+  padding: 0.4rem 0.6rem;
+  background: var(--background-card);
+  border: 2px solid #d1d5db;
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+}
+
+.quarter-toggle-button:hover {
+  background: #f8faff;
+  border-color: var(--info-light);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+.quarter-checkbox:checked + .quarter-toggle-button {
+  background: var(--info-light);
+  border-color: var(--info-light);
+  color: white;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.quarter-checkbox:checked + .quarter-toggle-button:hover {
+  background: var(--info-color);
+  border-color: var(--info-color);
+}
+
+.quarter-label {
+  font-weight: bold;
+  font-size: 0.875rem;
+  line-height: 1;
+  margin-bottom: 0.1rem;
+}
+
+.quarter-months {
+  font-size: 0.75rem;
+  opacity: 0.8;
+  line-height: 1;
+}
+
+.quarter-checkbox:checked + .quarter-toggle-button .quarter-label,
+.quarter-checkbox:checked + .quarter-toggle-button .quarter-months {
+  color: white;
+  opacity: 1;
+}
+
+/* Year Selector Styles */
+.year-selector {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.year-selector label {
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.year-selector select {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--background-card);
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  min-width: 80px;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23434947' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6,9 12,15 18,9'></polyline></svg>");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 16px;
+  padding-right: 2.5rem;
+}
+
+.year-selector select:hover {
+  border-color: var(--info-light);
+}
+
+.year-selector select:focus {
+  outline: none;
+  border-color: var(--info-light);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}

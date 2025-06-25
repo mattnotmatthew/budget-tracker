@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useBudget } from "../context/BudgetContext";
 import { VendorData } from "../types";
 import { formatCurrencyExcelStyle } from "../utils/currencyFormatter";
-import "../styles/App.css";
+import "../styles/App-new.css";
 
 const VendorManagement: React.FC = () => {
   const { state, dispatch } = useBudget();

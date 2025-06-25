@@ -1,0 +1,202 @@
+/* Budget Dashboard and Planning Styles */
+
+/* Yearly Budget Dashboard */
+.yearly-budget-dashboard {
+  background: var(--background-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  margin-bottom: var(--spacing-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.yearly-budget-dashboard.collapsed {
+  background: var(--background-grey);
+  border: 1px solid var(--border-beige);
+  padding: 0.75rem var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.yearly-summary-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  font-size: 0.9rem;
+}
+
+.yearly-title {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.yearly-actual {
+  color: var(--info-color);
+  font-weight: 500;
+}
+
+.yearly-variance {
+  font-weight: 600;
+}
+
+.yearly-variance.positive-variance {
+  color: var(--success-light);
+}
+
+.yearly-variance.negative-variance {
+  color: var(--danger-dark);
+}
+
+.yearly-variance.neutral-variance {
+  color: var(--text-muted);
+}
+
+.yearly-header {
+  background: var(--background-beige);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.yearly-header h3 {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.yearly-content {
+  padding: var(--spacing-lg);
+}
+
+.yearly-budget-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+/* Budget Target Card */
+.budget-target-card {
+  background: var(--background-grey);
+  border: 1px solid var(--border-beige);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.card-header {
+  background: var(--primary-blue);
+  color: white;
+  padding: 0.75rem var(--spacing-md);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.edit-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.edit-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.card-content {
+  padding: var(--spacing-lg);
+}
+
+/* Budget Edit Form */
+.budget-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.budget-input {
+  padding: 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  width: 100%;
+  max-width: 300px;
+  transition: var(--transition-fast);
+}
+
+.budget-input:focus {
+  outline: none;
+  border-color: var(--info-color);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.edit-buttons {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.save-btn-small,
+.cancel-btn-small {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.save-btn-small {
+  background: var(--success-light);
+  color: var(--background-card);
+}
+
+.save-btn-small:hover {
+  background: #047857;
+}
+
+.cancel-btn-small {
+  background: var(--text-muted);
+  color: var(--background-card);
+}
+
+.cancel-btn-small:hover {
+  background: #4b5563;
+}
+
+.input-hint {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Budget Display */
+.budget-display {
+  text-align: center;
+}
+
+.budget-amount-large {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  display: block;
+  margin-bottom: var(--spacing-sm);
+}
+
+.no-budget-hint {
+  color: var(--text-muted);
+  font-style: italic;
+  margin: 0;
+}
