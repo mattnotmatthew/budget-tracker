@@ -93,7 +93,9 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
       }
 
       // Replace all data with loaded data (no merging)
-      dispatch({ type: "LOAD_ENTRIES", payload: loadedData.entries }); // Load yearly budget targets if they exist
+      dispatch({ type: "LOAD_ENTRIES", payload: loadedData.entries });
+
+      // Load yearly budget targets if they exist
       if (loadedData.yearlyBudgetTargets) {
         Object.entries(loadedData.yearlyBudgetTargets).forEach(
           ([year, amount]) => {
@@ -103,7 +105,9 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
             });
           }
         );
-      } // Load monthly forecast modes if they exist
+      }
+
+      // Load monthly forecast modes if they exist
       if (loadedData.monthlyForecastModes) {
         Object.entries(loadedData.monthlyForecastModes).forEach(
           ([year, monthModes]) => {
@@ -123,6 +127,37 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
             }
           }
         );
+      }
+
+      // Load vendor data if it exists
+      if (loadedData.vendorData) {
+        const vendorDataWithDates = loadedData.vendorData.map((vendor: any) => {
+          // Transform legacy data structure to current structure
+          const transformedVendor = {
+            id: vendor.id,
+            vendorName: vendor.vendorName || "",
+            category: vendor.category || "",
+            financeMappedCategory:
+              vendor.financeMappedCategory || vendor.mapsTo || "",
+            billingType: vendor.billingType || "",
+            budget: vendor.budget || 0,
+            description: vendor.description || "",
+            month: vendor.month || "N/A",
+            inBudget:
+              vendor.inBudget !== undefined
+                ? vendor.inBudget
+                : !vendor.notInBudget,
+            notes: vendor.notes || "",
+            year: vendor.year,
+            createdAt: new Date(vendor.createdAt),
+            updatedAt: new Date(vendor.updatedAt),
+          };
+          return transformedVendor;
+        });
+        dispatch({
+          type: "LOAD_VENDOR_DATA",
+          payload: vendorDataWithDates,
+        });
       }
 
       // Update selected year to the loaded year
@@ -204,6 +239,39 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
               }
             }
           );
+        }
+
+        // Load vendor data if it exists
+        if (result.data.vendorData) {
+          const vendorDataWithDates = result.data.vendorData.map(
+            (vendor: any) => {
+              // Transform legacy data structure to current structure
+              const transformedVendor = {
+                id: vendor.id,
+                vendorName: vendor.vendorName || "",
+                category: vendor.category || "",
+                financeMappedCategory:
+                  vendor.financeMappedCategory || vendor.mapsTo || "",
+                billingType: vendor.billingType || "",
+                budget: vendor.budget || 0,
+                description: vendor.description || "",
+                month: vendor.month || "N/A",
+                inBudget:
+                  vendor.inBudget !== undefined
+                    ? vendor.inBudget
+                    : !vendor.notInBudget,
+                notes: vendor.notes || "",
+                year: vendor.year,
+                createdAt: new Date(vendor.createdAt),
+                updatedAt: new Date(vendor.updatedAt),
+              };
+              return transformedVendor;
+            }
+          );
+          dispatch({
+            type: "LOAD_VENDOR_DATA",
+            payload: vendorDataWithDates,
+          });
         }
 
         // Update selected year to the loaded year

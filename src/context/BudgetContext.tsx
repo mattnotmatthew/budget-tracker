@@ -831,11 +831,29 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
         // Load vendor data
         if (loadedData.vendorData) {
           const vendorDataWithDates = loadedData.vendorData.map(
-            (vendor: any) => ({
-              ...vendor,
-              createdAt: new Date(vendor.createdAt),
-              updatedAt: new Date(vendor.updatedAt),
-            })
+            (vendor: any) => {
+              // Transform legacy data structure to current structure
+              const transformedVendor = {
+                id: vendor.id,
+                vendorName: vendor.vendorName || "",
+                category: vendor.category || "",
+                financeMappedCategory:
+                  vendor.financeMappedCategory || vendor.mapsTo || "",
+                billingType: vendor.billingType || "",
+                budget: vendor.budget || 0,
+                description: vendor.description || "",
+                month: vendor.month || "N/A",
+                inBudget:
+                  vendor.inBudget !== undefined
+                    ? vendor.inBudget
+                    : !vendor.notInBudget,
+                notes: vendor.notes || "",
+                year: vendor.year,
+                createdAt: new Date(vendor.createdAt),
+                updatedAt: new Date(vendor.updatedAt),
+              };
+              return transformedVendor;
+            }
           );
           dispatch({
             type: "LOAD_VENDOR_DATA",
