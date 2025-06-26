@@ -79,7 +79,7 @@
   display: grid;
   grid-template-columns: var(--grid-quarterly);
   gap: var(--spacing-sm);
-  padding: 0.75rem var(--spacing-md);
+  padding: 0.5rem;
   background: var(--background-beige);
   border-bottom: 1px solid var(--border-color);
   font-weight: 600;
@@ -87,7 +87,9 @@
   text-align: center;
   line-height: 1.2;
 }
-
+.header-category {
+  text-align: left;
+}
 /* Group Styles */
 .quarterly-view .category-group {
   border-bottom: 1px solid var(--border-beige);

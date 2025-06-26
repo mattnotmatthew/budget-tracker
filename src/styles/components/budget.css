@@ -200,3 +200,825 @@
   font-style: italic;
   margin: 0;
 }
+
+/* Budget Input Modal Styles */
+.budget-input-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.budget-input-modal {
+  background: #ffffff;
+  border-radius: 12px;
+  width: 95%;
+  max-width: 1400px; /* Expanded to accommodate popout button */
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  position: relative; /* Added for absolute positioning of popout */
+  animation: slideIn 0.3s ease-out;
+}
+
+.budget-input-header {
+  background: linear-gradient(135deg, #122415 0%, #023f40 100%);
+  color: white;
+  padding: 1.5rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #334915;
+}
+
+.budget-input-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  flex: 1;
+}
+
+.budget-input-header .close-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.budget-input-header .close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+}
+
+.budget-input-content {
+  max-height: calc(90vh - 120px);
+  overflow-y: auto;
+  padding: 0;
+}
+
+/* Read-only styling for BudgetInput modal */
+.budget-input-modal.read-only {
+  opacity: 0.9;
+}
+
+.budget-input-modal.read-only input,
+.budget-input-modal.read-only select {
+  background-color: #f8f9fa !important;
+  color: #6c757d !important;
+  cursor: not-allowed !important;
+  border-color: #dee2e6 !important;
+}
+
+.budget-input-modal.read-only .btn:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #5d6a5c;
+}
+
+.modal-header h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #3f3a35;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #434947;
+  padding: 0.25rem;
+  border-radius: 4px;
+}
+
+.close-btn:hover {
+  background: #e2dcd3;
+  color: #3f3a35;
+}
+
+.budget-form {
+  padding: 2rem;
+}
+
+.save-message {
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+  border-radius: 6px;
+  color: #155724;
+  padding: 0.75rem 1rem;
+  margin: 0 2rem 1rem 2rem;
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.last-saved {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  color: #6c757d;
+  padding: 0.5rem 1rem;
+  margin: 0 2rem 1.5rem 2rem;
+  text-align: center;
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+.budget-input-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  padding: 1.5rem 2rem;
+  border-top: 1px solid #5d6a5c;
+  background: #f8f9fa;
+}
+
+/* Used in YearlyBudgetDashboard.tsx:280, MonthlyView.tsx:120,222,567, FileManager.tsx:526, BudgetInput.tsx:647 */
+.collapse-icon {
+  font-size: 1.2rem;
+  color: #5d6a5c;
+  margin-left: 0.5rem;
+  transition: transform 0.2s;
+}
+
+.period-selectors {
+  display: flex;
+  gap: 1.5rem 1rem;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: #e2dcd3;
+  border-radius: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Yearly Budget Target Section in BudgetInput */
+.yearly-budget-section {
+  margin: 1.5rem 2rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.yearly-budget-card {
+  background: white;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.yearly-budget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #122415 0%, #023f40 100%);
+  color: white;
+  border-bottom: 1px solid #334915;
+}
+
+.yearly-budget-header h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.yearly-budget-header .edit-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.yearly-budget-header .edit-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.yearly-budget-content {
+  padding: 1.5rem;
+}
+
+.yearly-budget-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.yearly-budget-input {
+  padding: 0.75rem;
+  border: 2px solid #dee2e6;
+  border-radius: 4px;
+  font-size: 1.1rem;
+  transition: border-color 0.2s ease;
+}
+
+.yearly-budget-input:focus {
+  outline: none;
+  border-color: #023f40;
+  box-shadow: 0 0 0 3px rgba(2, 63, 64, 0.1);
+}
+
+.yearly-budget-buttons {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.btn-small {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+}
+
+.yearly-budget-hint {
+  color: #6c757d;
+  font-style: italic;
+}
+
+.yearly-budget-display {
+  text-align: center;
+}
+
+.yearly-budget-amount {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #023f40;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.no-budget-hint {
+  color: #6c757d;
+  margin: 0;
+  font-style: italic;
+}
+
+/* Collapsible functionality for yearly budget */
+.yearly-budget-header.collapsible-header {
+  user-select: none;
+  transition: background-color 0.2s ease;
+}
+
+.yearly-budget-header.collapsible-header:hover {
+  background: linear-gradient(135deg, #0f1f11 0%, #01383a 100%);
+}
+
+.collapse-icon {
+  font-size: 0.9rem;
+  transition: transform 0.2s ease;
+  color: white;
+}
+
+.yearly-budget-preview {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+}
+
+.categories-container {
+  border: 1px solid #5d6a5c;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 2rem;
+  position: relative; /* Added for popout button positioning */
+}
+.floating-save-container {
+  position: fixed; /* Fixed to viewport for true stickiness */
+  left: 76%;
+  top: 25%;
+  margin-left: 0px;
+  display: flex;
+  z-index: 1001;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.floating-save-btn {
+  pointer-events: auto;
+
+  /* Popout button styling */
+  background: linear-gradient(135deg, #28a745 0%, #20a539 100%);
+  color: white;
+  border: none;
+  padding: 1rem 1.5rem;
+  border-radius: 12px 0 0 12px; /* Rounded left corners only */
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 140px;
+  box-shadow: -4px 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.floating-save-btn:hover {
+  background: linear-gradient(135deg, #218838 0%, #1e7e34 100%);
+
+  box-shadow: -6px 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.floating-save-btn:active {
+  transform: translateX(5px);
+  box-shadow: -3px 3px 8px rgba(0, 0, 0, 0.15);
+}
+floating-save-container {
+  position: fixed; /* Fixed to viewport for true stickiness */
+  left: 76%;
+  top: 25%;
+  margin-left: 0px;
+  display: flex;
+  z-index: 1001;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.floating-save-btn {
+  pointer-events: auto;
+
+  /* Popout button styling */
+  background: linear-gradient(135deg, #28a745 0%, #20a539 100%);
+  color: white;
+  border: none;
+  padding: 1rem 1.5rem;
+  border-radius: 12px 0 0 12px; /* Rounded left corners only */
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 140px;
+  box-shadow: -4px 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.floating-save-btn:hover {
+  background: linear-gradient(135deg, #218838 0%, #1e7e34 100%);
+
+  box-shadow: -6px 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.floating-save-btn:active {
+  transform: translateX(5px);
+  box-shadow: -3px 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive behavior for smaller screens */
+@media (max-width: 768px) {
+  .floating-save-btn {
+    font-size: 0.8rem;
+    padding: 0.8rem 1.2rem;
+    min-width: 120px;
+    transform: translateX(40px); /* Less slide-out on mobile */
+  }
+
+  .floating-save-btn::before {
+    font-size: 0.7rem;
+    left: -6px;
+  }
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 120px;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn-primary {
+  background: #334915;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #2a3b12;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #5a6268;
+}
+
+.btn-success {
+  background: #28a745;
+  color: white;
+}
+
+.btn-success:hover {
+  background: #218838;
+}
+
+.btn-disabled {
+  pointer-events: none;
+  opacity: 0.6;
+  background-color: #6c757d !important;
+  border-color: #6c757d !important;
+  color: white !important;
+}
+
+.input-note {
+  background: #a7c8f9;
+  border: 1px solid #172a3a;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin: 0 2rem 1.5rem 2rem;
+  text-align: center;
+}
+
+.input-note small {
+  color: #172a3a;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.period-selectors {
+  display: flex;
+  gap: 1.5rem 1rem;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: #e2dcd3;
+  border-radius: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.period-info {
+  color: #434947;
+  font-size: 0.8rem;
+  font-style: italic;
+  flex-basis: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.period-selectors .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 150px;
+}
+
+.categories-container {
+  border: 1px solid #5d6a5c;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 2rem;
+  position: relative; /* Added for popout button positioning */
+}
+
+.category-headers {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1.2fr 1.2fr 1.2fr 1.2fr;
+  background: #172a3a;
+  border-bottom: 1px solid #5d6a5c;
+  gap: 0.5rem;
+  align-items: center;
+  color: #ffffff;
+  padding: 0.75rem 1rem;
+}
+
+.category-name-header {
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.category-headers span {
+  font-weight: 600;
+  color: #ffffff;
+  text-align: right;
+  font-size: 0.875rem;
+  line-height: 1.2;
+}
+
+.category-section {
+  border-bottom: 1px solid #5d6a5c;
+}
+
+.category-section:last-child {
+  border-bottom: none;
+}
+
+.category-section-title {
+  background: #334915;
+  color: #ffffff;
+  padding: 0.75rem 1rem;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.category-grid {
+  background: #ffffff;
+}
+
+.category-row {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1.2fr 1.2fr 1.2fr 1.2fr;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-bottom: 1px solid #e2dcd3;
+  align-items: center;
+}
+
+.category-row:last-child {
+  border-bottom: none;
+}
+
+.category-row:hover {
+  background: #dfe7ef;
+}
+/* 
+.category-row .category-name {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 500;
+  color: #3f3a35;
+  /* padding: 0.5rem; */
+/* } */
+.category-row .amount-input,
+.category-row .notes-input {
+  padding: 0.5rem;
+  border: 1px solid #5d6a5c;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  transition: border-color 0.2s ease;
+}
+
+.category-row .amount-input:focus,
+.category-row .notes-input:focus {
+  outline: none;
+  border-color: #334915;
+  box-shadow: 0 0 0 2px rgba(51, 73, 21, 0.1);
+}
+
+.category-row .amount-input {
+  text-align: right;
+}
+
+.category-row .notes-input {
+  font-size: 0.8rem;
+}
+
+/* Copy to Quarter Button */
+.copy-to-quarter-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.15rem 0.3rem;
+  border: 0px;
+  border-radius: 4px;
+  background: #f8f9fa;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.75rem;
+  max-width: 50px;
+  height: 24px;
+  position: relative;
+  margin-left: 0.5rem;
+  flex-shrink: 0;
+}
+
+.copy-to-quarter-btn:hover:not(:disabled) {
+  background: #e7f3ff;
+  border-color: #2196f3;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.copy-to-quarter-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.copy-to-quarter-btn:disabled {
+  background: #f5f5f5;
+  border-color: #d0d7de;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.copy-to-quarter-btn .copy-icon {
+  font-weight: bold;
+  color: #2196f3;
+  font-size: 0.8rem;
+}
+
+.copy-to-quarter-btn .calendar-icon {
+  font-size: 0.7rem;
+}
+
+.copy-to-quarter-btn:disabled .copy-icon,
+.copy-to-quarter-btn:disabled .calendar-icon {
+  color: #9ca3af;
+}
+
+/* Tooltip styling for the copy button */
+.copy-to-quarter-btn::before {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: white;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  z-index: 1000;
+  margin-bottom: 0.5rem;
+}
+
+.copy-to-quarter-btn::after {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 0.25rem solid transparent;
+  border-top-color: #333;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  z-index: 1000;
+  margin-bottom: 0.25rem;
+}
+
+.copy-to-quarter-btn:hover::before,
+.copy-to-quarter-btn:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  font-weight: 500;
+  color: #3f3a35;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 0.75rem;
+  border: 1px solid #5d6a5c;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #334915;
+  box-shadow: 0 0 0 3px rgba(51, 73, 21, 0.1);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #5d6a5c;
+}
+
+.form-actions button {
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clear-btn {
+  background: #e2dcd3;
+  border: 1px solid #5d6a5c;
+  color: #3f3a35;
+}
+
+.clear-btn:hover {
+  background: #dfe7ef;
+}
+
+.cancel-btn {
+  background: #ffffff;
+  border: 1px solid #5d6a5c;
+  color: #3f3a35;
+}
+
+.cancel-btn:hover {
+  background: #dfe7ef;
+}
+
+.submit-btn {
+  background: #334915;
+  border: 1px solid #334915;
+  color: #ffffff;
+}
+
+.submit-btn:hover {
+  background: #122415;
+}
+
+/* Last saved info header - shows when opening the form */
+.last-saved-info-header {
+  background: #affe76;
+  border-bottom: 1px solid #334915;
+  padding: 0.75rem 2rem;
+  text-align: center;
+  color: #122415;
+}
+
+.last-saved-info-header small {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.last-saved-info-header strong {
+  font-weight: 600;
+}
+
+.last-saved-info-header em {
+  color: #334915;
+  font-style: normal;
+  font-weight: 600;
+}
+
+/* Export Button Styles */
+.export-btn {
+  padding: 0.75rem 1.5rem;
+  background: #a7c8f9;
+  color: #172a3a;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  display: none;
+}
+
+.export-btn:hover {
+  background: #172a3a;
+  color: #ffffff;
+  transform: translateY(-1px);
+}

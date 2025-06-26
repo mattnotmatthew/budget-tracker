@@ -212,7 +212,6 @@
   font-weight: 600;
   font-size: 0.85rem;
   align-items: center;
-  margin-top: var(--spacing-sm);
 }
 
 /* Monthly Adjustments */
@@ -226,5 +225,4 @@
   font-weight: 600;
   font-size: 0.85rem;
   align-items: center;
-  margin-top: var(--spacing-sm);
 }

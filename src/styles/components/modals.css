@@ -607,3 +607,104 @@
   flex: 1;
   min-width: 150px;
 }
+
+/* Used in FileManager.tsx:512 */
+.danger-section {
+  background: #ffe6e6;
+  border: 1px solid #b91c1c;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 2rem;
+}
+/* Used in FileManager.tsx:400 */
+.load-from-file-section {
+  margin-bottom: 1.5rem;
+}
+/* Used in FileManager.tsx:426 */
+.restore-cached-section {
+  margin-bottom: 1.5rem;
+}
+/* Used in FileManager.tsx:423 */
+.load-separator {
+  border-top: 1px solid #e2dcd3;
+  margin: 1.5rem 0;
+}
+/* Used in FileManager.tsx:450 */
+.current-session-compact {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+}
+
+/* Used in FileManager.tsx:532 */
+.collapsible-content {
+  padding: 1rem 1.5rem;
+  background: #f8f9fa;
+  border-radius: 0 0 8px 8px;
+}
+
+/* Used in FileManager.tsx:564 */
+.clear-confirmation {
+  background: #fffbe6;
+  border: 1px solid #ffe6a7;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+  color: #7c4700;
+}
+
+/* Used in FileManager.tsx:565 */
+.confirmation-warning {
+  color: #b91c1c;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+/* Used in FileManager.tsx:569 */
+.confirmation-instruction {
+  color: #3f3a35;
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem;
+}
+/* Used in FileManager.tsx:575 */
+.confirmation-input {
+  padding: 0.5rem;
+  border: 1px solid #b91c1c;
+  border-radius: 4px;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+/* Used in FileManager.tsx:581 */
+.confirmation-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+/* Used in FileManager.tsx:413 */
+.file-timestamp {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin-top: 0.5rem;
+}
+/* Used in FileManager.tsx:439 */
+.cache-timestamp {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin-top: 0.5rem;
+}
+/* Used in FileManager.tsx:485,489,493,497,504 */
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+}
+/* Used in FileManager.tsx:486,490,494,498,505 */
+.stat-label {
+  font-weight: 500;
+  color: #3f3a35;
+}
+/* Used in FileManager.tsx:487,491,495,499,506 */
+.stat-value {
+  font-weight: 700;
+  color: #334915;
+}

@@ -17,7 +17,7 @@
 }
 
 .vendor-management-header p {
-  color: var(--text-light);
+  color: var(--text-muted);
   font-size: 1.1rem;
 }
 
@@ -98,7 +98,9 @@
   box-shadow: 0 2px 4px rgba(51, 73, 21, 0.2);
 }
 
-/* Vendor Table Styles */
+/* =================================================================
+   SHARED TABLE CONTAINER STYLES
+   ================================================================= */
 .vendor-table-container {
   overflow-x: auto;
   border-radius: var(--radius-xl);
@@ -107,13 +109,17 @@
   margin-bottom: var(--spacing-xl);
 }
 
-.vendor-table {
+/* =================================================================
+   BUDGET MANAGEMENT TABLE STYLES
+   ================================================================= */
+.budget-management-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 1200px;
+  max-width: 1200px;
+  table-layout: auto;
 }
 
-.vendor-table th {
+.budget-management-table th {
   background: linear-gradient(
     135deg,
     var(--primary-green) 0%,
@@ -129,26 +135,251 @@
   z-index: 10;
 }
 
-.vendor-table th:first-child {
+.budget-management-table th:first-child {
   border-top-left-radius: var(--radius-xl);
 }
 
-.vendor-table th:last-child {
+.budget-management-table th:last-child {
   border-top-right-radius: var(--radius-xl);
 }
 
-.vendor-table td {
+.budget-management-table td {
   padding: 0.75rem;
   border-bottom: 1px solid var(--border-light);
   vertical-align: top;
 }
 
-.vendor-table tbody tr:hover {
+.budget-management-table tbody tr:hover {
   background-color: var(--background-grey);
 }
 
-.vendor-table tbody tr:last-child td {
+.budget-management-table tbody tr:last-child td {
   border-bottom: none;
+}
+
+/* Budget Management Table Column Styles */
+.budget-management-table .budget-col-vendor-name {
+  width: fit-content;
+  min-width: 120px;
+  max-width: 300px;
+}
+
+.budget-management-table .budget-col-finance-category {
+  width: fit-content;
+  min-width: 100px;
+  max-width: 250px;
+}
+
+.budget-management-table .budget-col-category {
+  width: fit-content;
+  min-width: 100px;
+  max-width: 250px;
+}
+
+.budget-management-table .budget-col-description {
+  width: auto;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.budget-management-table .budget-col-notes {
+  width: auto;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Budget Management Table Label Styles */
+.budget-management-table .budget-label-name {
+  width: max-content;
+  min-width: 100%;
+  overflow: visible;
+  text-overflow: initial;
+  white-space: nowrap;
+}
+
+.monthly-breakdown-table .vendor-label-finance {
+  width: max-content;
+  min-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.budget-management-table .budget-label-finance {
+  width: max-content;
+  min-width: 100%;
+  overflow: visible;
+  text-overflow: initial;
+  white-space: nowrap;
+}
+
+.budget-management-table .budget-label-category {
+  width: max-content;
+  min-width: 100%;
+  overflow: visible;
+  text-overflow: initial;
+  white-space: nowrap;
+}
+
+.budget-management-table .budget-label-description {
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.budget-management-table .budget-label-notes {
+  width: 100%;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Budget Management Table Input Styles */
+.budget-management-table .budget-col-vendor-name .vendor-input,
+.budget-management-table .budget-col-finance-category .vendor-input,
+.budget-management-table .budget-col-category .vendor-input {
+  width: 100%;
+  min-width: 100px;
+  max-width: none;
+}
+
+.budget-management-table .budget-col-description .vendor-input {
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.budget-management-table .budget-col-notes .vendor-input {
+  width: 100%;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* =================================================================
+   MONTHLY BREAKDOWN TABLE STYLES
+   ================================================================= */
+.monthly-breakdown-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1400px;
+  table-layout: fixed;
+}
+
+.monthly-breakdown-table th {
+  background: linear-gradient(
+    135deg,
+    var(--primary-green) 0%,
+    var(--primary-green-light) 100%
+  );
+  color: white;
+  padding: var(--spacing-sm) 0.5rem;
+  text-align: center;
+  font-weight: 600;
+  border: none;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  font-size: 0.85rem;
+}
+
+.monthly-breakdown-table th:first-child {
+  border-top-left-radius: var(--radius-xl);
+  text-align: left;
+  width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.monthly-breakdown-table th:nth-child(2) {
+  text-align: left;
+  width: 300px;
+  min-width: 300px;
+  max-width: 300px;
+}
+
+.monthly-breakdown-table th:nth-child(3) {
+  text-align: left;
+  width: 148px;
+  min-width: 148px;
+  max-width: 148px;
+}
+
+.monthly-breakdown-table th:last-child {
+  border-top-right-radius: var(--radius-xl);
+  background: var(--primary-green-dark);
+  font-weight: 700;
+  text-align: left;
+  width: 145px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.monthly-breakdown-table td {
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--border-light);
+  vertical-align: top;
+  font-size: 0.85rem;
+}
+
+.monthly-breakdown-table tbody tr:hover {
+  background-color: var(--background-grey);
+}
+
+.monthly-breakdown-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Monthly Breakdown Info Columns */
+.monthly-breakdown-table .monthly-col-info {
+  width: auto;
+  min-width: 120px;
+  max-width: none;
+  overflow: visible;
+  text-overflow: initial;
+  white-space: nowrap;
+}
+
+/* Monthly Breakdown Month Columns */
+.monthly-breakdown-table .monthly-col-month {
+  width: var(--max-width-large);
+  min-width: var(--max-width-large);
+  max-width: var(--max-width-large);
+  padding: var(--spacing-xs) 2px;
+  text-align: center;
+  font-size: 0.75rem;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* Monthly Breakdown Total Column */
+.monthly-breakdown-table .monthly-col-total {
+  width: 100px;
+  min-width: 100px;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--primary-green);
+  background: var(--background-grey);
+}
+
+/* Monthly Breakdown Label Styles */
+.monthly-breakdown-table .monthly-label-info {
+  width: max-content;
+  min-width: 100%;
+  overflow: visible;
+  text-overflow: initial;
+  white-space: nowrap;
 }
 
 /* Form Elements */
@@ -209,6 +440,10 @@
 .vendor-row-complete td {
   padding: 0.4rem 0.75rem;
   vertical-align: middle;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .vendor-row-editing td {
@@ -220,11 +455,11 @@
 .vendor-label {
   display: inline-block;
   width: 100%;
-  padding: 0.3rem var(--spacing-sm);
+  padding: 0.3rem 0.5rem;
   font-size: 0.9rem;
   color: #495057;
   background-color: transparent;
-  border-radius: var(--radius-sm);
+  border-radius: 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -232,17 +467,55 @@
   line-height: 1.2;
 }
 
-.vendor-label-currency {
-  text-align: right;
-  font-weight: 600;
-  color: var(--success-color);
+/* Specific label styles for text columns that should show full content */
+/* .vendor-label-name {
+  width: max-content;
+  min-width: 100%;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.9rem;
+  color: #495057;
+  background-color: transparent;
+  border-radius: 4px;
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: initial;
+  min-height: 1.2rem;
+  line-height: 1.2;
+  word-break: keep-all;
+} */
+
+.vendor-label-category {
+  display: inline-block;
+  width: max-content;
+  min-width: 100%;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.9rem;
+  color: #495057;
+  background-color: transparent;
+  border-radius: 4px;
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: initial;
+  min-height: 1.2rem;
+  line-height: 1.2;
+  word-break: keep-all;
 }
 
+/* Notes column should maintain ellipsis for long content */
 .vendor-label-notes {
+  display: inline-block;
+  width: 100%;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.9rem;
+  color: #495057;
+  background-color: transparent;
+  border-radius: 4px;
   white-space: nowrap;
-  max-width: 200px;
-  word-wrap: break-word;
-  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 1.2rem;
+  line-height: 1.2;
+  max-width: 200px; /* Set a reasonable max width for Notes column */
 }
 
 /* Actions Column */
@@ -368,7 +641,7 @@
   text-align: left;
 }
 
-/* Column Text Overflow */
+/* Column Text Overflow
 .vendor-table th:nth-child(3),
 .vendor-table td:nth-child(3) {
   max-width: 250px;
@@ -382,15 +655,7 @@
   white-space: normal;
   overflow: visible;
   text-overflow: initial;
-}
-
-.vendor-table td:nth-child(2) .vendor-label {
-  display: block;
-  width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+} */
 
 /* Footer */
 .vendor-management-footer {
@@ -449,4 +714,756 @@
   margin-left: var(--spacing-md);
   color: var(--text-secondary);
   font-size: 0.9rem;
+}
+
+/* Used in VendorManagement.tsx:347,353 */
+.budget-total-display {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+/* Used in VendorManagement.tsx:348,354 */
+.budget-total-label {
+  font-weight: 600;
+  color: #3f3a35;
+}
+/* Used in VendorManagement.tsx:349 */
+.budget-total-amount {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-light);
+}
+/* Used in VendorManagement.tsx:355 */
+.not-in-budget-total-amount {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #b91c1c;
+}
+/* Used in VendorManagement.tsx:334 */
+.vendor-management {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+/* Tab Navigation */
+.vendor-tabs {
+  display: flex;
+  margin-bottom: var(--spacing-lg);
+  border-bottom: 2px solid var(--border-light);
+}
+
+.vendor-tab {
+  background: none;
+  border: none;
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: var(--transition-fast);
+}
+
+.vendor-tab:hover {
+  color: var(--primary-green);
+  background: var(--background-grey);
+}
+
+.vendor-tab.active {
+  color: var(--primary-green);
+  border-bottom-color: var(--primary-green);
+  background: var(--background-card);
+}
+
+/* Month columns (Jan-Dec) - fixed width using CSS variable */
+
+.vendor-table.monthly-breakdown td:nth-child(4),  /* Jan */
+.vendor-table.monthly-breakdown td:nth-child(5),  /* Feb */
+.vendor-table.monthly-breakdown td:nth-child(6),  /* Mar */
+.vendor-table.monthly-breakdown td:nth-child(7),  /* Apr */
+.vendor-table.monthly-breakdown td:nth-child(8),  /* May */
+.vendor-table.monthly-breakdown td:nth-child(9),  /* Jun */
+.vendor-table.monthly-breakdown td:nth-child(10), /* Jul */
+.vendor-table.monthly-breakdown td:nth-child(11), /* Aug */
+.vendor-table.monthly-breakdown td:nth-child(12), /* Sep */
+.vendor-table.monthly-breakdown td:nth-child(13), /* Oct */
+.vendor-table.monthly-breakdown td:nth-child(14), /* Nov */
+.vendor-table.monthly-breakdown td:nth-child(15) {
+  /* Dec */
+
+  min-width: var(--max-width-large) !important;
+  max-width: var(--max-width-large) !important;
+  padding-left: var(--spacing-lg) !important;
+
+  font-size: 0.85rem !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+}
+
+/* Override monthly-amount styling for month columns to maintain fixed width */
+.vendor-table.monthly-breakdown td:nth-child(4) .monthly-amount,
+.vendor-table.monthly-breakdown td:nth-child(5) .monthly-amount,
+.vendor-table.monthly-breakdown td:nth-child(6) .monthly-amount,
+.vendor-table.monthly-breakdown td:nth-child(7) .monthly-amount,
+.vendor-table.monthly-breakdown td:nth-child(8) .monthly-amount,
+.vendor-table.monthly-breakdown td:nth-child(9) .monthly-amount,
+.vendor-table.monthly-breakdown td:nth-child(10) .monthly-amount,
+.vendor-table.monthly-breakdown td:nth-child(11) .monthly-amount,
+.vendor-table.monthly-breakdown td:nth-child(12) .monthly-amount,
+.vendor-table.monthly-breakdown td:nth-child(13) .monthly-amount,
+.vendor-table.monthly-breakdown td:nth-child(14) .monthly-amount,
+.vendor-table.monthly-breakdown td:nth-child(15) .monthly-amount {
+  min-width: var(--max-width-small) !important;
+  max-width: var(--max-width-small) !important;
+
+  padding-right: var(--spacing-lg) !important;
+  font-size: 0.75rem !important;
+  text-align: center !important;
+}
+
+.vendor-monthly-row td {
+  padding: 0.4rem 0.75rem;
+  vertical-align: middle;
+
+  /* overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap; */
+  width: 300px;
+  min-width: 300px;
+  max-width: 300px;
+}
+
+.vendor-monthly-budget-row td {
+  padding: 0.4rem 0.75rem;
+  vertical-align: middle;
+  width: 300px;
+  min-width: 300px;
+  max-width: 300px;
+}
+
+.monthly-amount {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: var(--text-primary);
+  min-width: 80px;
+}
+
+.monthly-total {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--primary-green);
+  background: var(--background-grey);
+  min-width: 100px;
+}
+
+.monthly-totals-row {
+  background: var(--primary-green);
+  color: var(--text-light);
+  font-weight: 600;
+}
+
+/* Specific styles for new total rows */
+.monthly-totals-row.in-budget-totals {
+  background: var(--primary-blue);
+  color: white;
+}
+
+.monthly-totals-row.not-in-budget-totals {
+  background: var(--warning-orange);
+  color: white;
+}
+
+.monthly-totals-row.in-budget-totals .grand-total,
+.monthly-totals-row.not-in-budget-totals .grand-total {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.monthly-totals-row td {
+  padding: var(--spacing-sm);
+  text-align: right;
+  font-family: var(--font-mono);
+}
+
+.monthly-totals-row {
+  background: var(--primary-green);
+  color: white;
+  font-weight: 600;
+}
+
+/* Specific styles for new total rows */
+.monthly-totals-row.in-budget-totals {
+  background: var(--primary-blue);
+  color: white;
+}
+
+.monthly-totals-row.not-in-budget-totals {
+  background: var(--warning-orange);
+  color: white;
+}
+
+.monthly-totals-row.in-budget-totals .grand-total,
+.monthly-totals-row.not-in-budget-totals .grand-total {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.monthly-totals-row td {
+  padding: var(--spacing-sm);
+  text-align: right;
+  font-family: var(--font-mono);
+}
+
+/* Filter and Sort Styles */
+.vendor-filters {
+  background: var(--background-grey);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.filter-row {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: end;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  min-width: 200px;
+}
+
+.filter-group label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.filter-input,
+.filter-select {
+  padding: 0.5rem;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  background: white;
+  transition: var(--transition-fast);
+}
+
+.filter-input:focus,
+.filter-select:focus {
+  outline: none;
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 2px rgba(51, 102, 51, 0.1);
+}
+
+.reset-filters-btn {
+  background: var(--text-muted);
+  color: white;
+  border: none;
+  padding: 0.5rem var(--spacing-md);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  height: fit-content;
+}
+
+.reset-filters-btn:hover {
+  background: var(--text-secondary);
+}
+
+/* Sort Header Styles */
+.sort-header {
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: var(--transition-fast);
+}
+
+.sort-header:hover {
+  color: var(--primary-green);
+}
+
+.sort-indicator {
+  font-size: 0.8rem;
+  margin-left: var(--spacing-xs);
+  color: var(--primary-green);
+  font-weight: bold;
+}
+
+/* Group By Button */
+.group-by-btn {
+  background: var(--primary-blue);
+  color: white;
+  border: none;
+  padding: 0.5rem var(--spacing-md);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  height: fit-content;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.group-by-btn:hover {
+  background: var(--primary-blue-dark);
+  transform: translateY(-1px);
+}
+
+.group-by-btn.active {
+  background: var(--primary-green);
+}
+
+.group-by-btn.active:hover {
+  background: var(--primary-green-dark);
+}
+
+/* Group by controls styling */
+.group-by-controls {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border-light);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.group-by-controls::before {
+  content: "View Options:";
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-right: var(--spacing-sm);
+}
+
+.individual-btn.active {
+  background: var(--secondary-color) !important;
+  color: white !important;
+  border-color: var(--secondary-color) !important;
+}
+
+.individual-btn.active:hover {
+  background: #8b5a3c !important;
+  border-color: #8b5a3c !important;
+}
+
+/* Collapsible Group Toggle Button */
+.group-toggle-btn {
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+  width: 100%;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  transition: var(--transition-fast);
+}
+
+.group-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+}
+
+.group-toggle-icon {
+  font-size: 1.1rem;
+  min-width: 20px;
+}
+
+.expand-indicator {
+  margin-left: auto;
+  font-size: 0.9rem;
+  opacity: 0.8;
+  transition: transform var(--transition-fast);
+}
+
+.group-toggle-btn:hover .expand-indicator {
+  transform: scale(1.1);
+}
+
+/* Grouped View Styles */
+.grouped-row {
+  background: var(--background-grey) !important;
+  border-left: 4px solid var(--primary-blue) !important;
+}
+
+.grouped-row:hover {
+  background: #e6f3ff !important;
+}
+
+.grouped-vendor-name,
+.grouped-finance-category {
+  font-weight: var(--font-weight-normal) !important;
+  color: var(--primary-blue) !important;
+}
+
+.grouped-amount {
+  background: rgba(23, 42, 58, 0.05);
+  font-weight: 500;
+  overflow: nowrap;
+  text-overflow: unset !important;
+}
+
+.grouped-total {
+  background: var(--primary-blue) !important;
+  color: white !important;
+  font-weight: 700 !important;
+  overflow: nowrap;
+  text-overflow: unset !important;
+}
+
+/* Multi-vendor display in grouped rows */
+.grouped-vendor-name {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.85rem !important;
+  line-height: 1.2 !important;
+}
+
+/* Nested Grouped View Styles */
+.group-header {
+  background: var(--background-light) !important;
+  color: var(--text-primary) !important;
+  border-left: 6px solid var(--primary-blue-dark) !important;
+}
+
+.group-header:hover {
+  background: var(--primary-blue-dark) !important;
+}
+
+.group-header .grouped-finance-category {
+  color: var(--text-primary) !important;
+  font-size: 1rem !important;
+  font-weight: var(--font-weight-normal);
+}
+
+.group-header .monthly-amount,
+.group-header .monthly-total {
+  background: var(--background-light) !important;
+  color: var(--text-primary) !important;
+  font-weight: 700 !important;
+}
+
+.nested-vendor-row {
+  background: rgba(23, 42, 58, 0.03) !important;
+  border-left: 4px solid var(--background-grey) !important;
+}
+
+.nested-vendor-row:hover {
+  background: rgba(23, 42, 58, 0.08) !important;
+}
+
+.nested-vendor-name {
+  font-size: 0.9rem !important;
+  color: var(--text-secondary) !important;
+  font-family: var(--font-mono, monospace) !important;
+}
+
+.nested-vendor-detail {
+  font-size: 0.85rem !important;
+  color: var(--text-muted) !important;
+  font-style: italic !important;
+}
+
+.nested-amount {
+  background: rgba(23, 42, 58, 0.02);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.nested-total {
+  background: rgba(23, 42, 58, 0.05) !important;
+  font-weight: 600 !important;
+  color: var(--text-primary) !important;
+  font-size: 0.9rem !important;
+}
+
+/* Enhanced styling for nested category and finance columns */
+.nested-finance {
+  font-style: italic;
+  color: var(--text-muted) !important;
+  font-size: 0.9rem !important;
+}
+
+.nested-category {
+  font-style: italic;
+  color: var(--text-muted) !important;
+  font-size: 0.9rem !important;
+}
+
+/* Placeholder for empty nested cells */
+.nested-placeholder {
+  min-height: 1.2rem;
+  display: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .filter-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-group {
+    min-width: auto;
+  }
+
+  .sort-header {
+    font-size: 0.8rem;
+  }
+}
+
+/* Category grouping styles */
+.grouped-category {
+  color: var(--primary-blue);
+  font-weight: 600 !important;
+}
+
+/* Group by buttons styling enhancement */
+.filter-group:has(.group-by-btn) {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.group-by-btn.active {
+  background: var(--primary-blue) !important;
+  color: white !important;
+  border-color: var(--primary-blue) !important;
+  font-weight: 600;
+}
+
+.group-by-btn.active:hover {
+  background: #1e56a0 !important;
+  border-color: #1e56a0 !important;
+}
+
+/* Enhanced tooltip styles for category column */
+.vendor-label[title]:hover {
+  position: relative;
+}
+
+.vendor-label[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  z-index: 1000;
+  pointer-events: none;
+  margin-bottom: 5px;
+}
+
+/* Responsive adjustments for monthly breakdown table */
+@media (max-width: 768px) {
+  .monthly-breakdown {
+    font-size: 0.8rem;
+  }
+}
+
+/* Dynamic column styling based on grouping type */
+/* When grouping by category, first column (Category) styling */
+.monthly-breakdown.category-first th:nth-child(1),
+.monthly-breakdown.category-first td:nth-child(1) {
+  width: fit-content;
+  min-width: 80px;
+  max-width: 200px;
+  font-weight: 600;
+  color: var(--primary-blue);
+}
+
+/* When grouping by category, second column (Finance Mapped Category) styling */
+.monthly-breakdown.category-first th:nth-child(2),
+.monthly-breakdown.category-first td:nth-child(2) {
+  width: fit-content;
+  min-width: 100px;
+  max-width: 250px;
+}
+
+/* When grouping by category, third column (Vendor Name) styling */
+.monthly-breakdown.category-first th:nth-child(3),
+.monthly-breakdown.category-first td:nth-child(3) {
+  width: fit-content;
+  min-width: 120px;
+  max-width: 300px;
+}
+
+/* Default column styling (Finance first) */
+.monthly-breakdown:not(.category-first) th:nth-child(1),
+.monthly-breakdown:not(.category-first) td:nth-child(1) {
+  width: fit-content;
+  min-width: 100px;
+  max-width: 250px;
+}
+
+.monthly-breakdown:not(.category-first) th:nth-child(2),
+.monthly-breakdown:not(.category-first) td:nth-child(2) {
+  width: fit-content;
+  min-width: 120px;
+  max-width: 300px;
+}
+
+.monthly-breakdown:not(.category-first) th:nth-child(3),
+.monthly-breakdown:not(.category-first) td:nth-child(3) {
+  width: fit-content;
+  min-width: 80px;
+  max-width: 200px;
+}
+
+/* Responsive adjustments for different column orders */
+@media (max-width: 768px) {
+  .monthly-breakdown.category-first th:nth-child(1),
+  .monthly-breakdown.category-first td:nth-child(1) {
+    min-width: 80px;
+  }
+
+  .monthly-breakdown.category-first th:nth-child(2),
+  .monthly-breakdown.category-first td:nth-child(2) {
+    min-width: 100px;
+  }
+
+  .monthly-breakdown.category-first th:nth-child(3),
+  .monthly-breakdown.category-first td:nth-child(3) {
+    min-width: 120px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .monthly-breakdown.category-first th:nth-child(1),
+  .monthly-breakdown.category-first td:nth-child(1) {
+    min-width: 100px;
+  }
+
+  .monthly-breakdown.category-first th:nth-child(2),
+  .monthly-breakdown.category-first td:nth-child(2) {
+    min-width: 120px;
+  }
+
+  .monthly-breakdown.category-first th:nth-child(3),
+  .monthly-breakdown.category-first td:nth-child(3) {
+    min-width: 140px;
+  }
+}
+
+/* Vendor controls left container */
+.vendor-controls-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+/* Edit All button styles */
+.edit-all-btn {
+  background: var(--info-color);
+  color: white;
+  border: none;
+  padding: 0.75rem var(--spacing-lg);
+  border-radius: var(--radius-lg);
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: 0.9rem;
+}
+
+.edit-all-btn:hover:not(:disabled) {
+  background: #0056b3;
+  transform: translateY(-1px);
+}
+
+.edit-all-btn:disabled {
+  background: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.edit-all-btn.save-mode {
+  background: var(--success-color);
+}
+
+.edit-all-btn.save-mode:hover {
+  background: #218838;
+}
+
+/* Export CSV button styles */
+.export-csv-btn {
+  background: var(--warning-color);
+  color: white;
+  border: none;
+  padding: 0.75rem var(--spacing-lg);
+  border-radius: var(--radius-lg);
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: 0.9rem;
+}
+
+.export-csv-btn:hover:not(:disabled) {
+  background: #e0a800;
+  transform: translateY(-1px);
+}
+
+.export-csv-btn:disabled {
+  background: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Override Budget Management table column styles for Monthly Breakdown first 3 columns */
+.vendor-table.monthly-breakdown th:nth-child(1),
+.vendor-table.monthly-breakdown td:nth-child(1),
+.vendor-table.monthly-breakdown th:nth-child(2),
+.vendor-table.monthly-breakdown td:nth-child(2),
+.vendor-table.monthly-breakdown th:nth-child(3),
+.vendor-table.monthly-breakdown td:nth-child(3) {
+  width: auto !important;
+  min-width: 120px !important;
+  max-width: none !important;
+  overflow: visible !important;
+  text-overflow: initial !important;
+  white-space: nowrap !important;
+}
+
+/* Specific styling for Monthly Breakdown text labels in first 3 columns */
+.vendor-table.monthly-breakdown .vendor-label-name,
+.vendor-table.monthly-breakdown .vendor-label-finance,
+.vendor-table.monthly-breakdown .vendor-label-category {
+  width: max-content !important;
+  min-width: 100% !important;
+  overflow: visible !important;
+  text-overflow: initial !important;
+  white-space: nowrap !important;
 }

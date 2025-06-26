@@ -77,15 +77,14 @@ h6 {
   font-weight: 600;
   /* Don't set color here - let components define their own header colors */
 }
-
-/* Base form elements */
-input,
+/* 
+Base form elements input,
 select,
 textarea,
 button {
   font-family: inherit;
   font-size: inherit;
-}
+} */
 
 button {
   cursor: pointer;

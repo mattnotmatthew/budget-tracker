@@ -294,3 +294,109 @@ input:checked + .toggle-slider:before {
   margin-left: var(--spacing-sm);
   font-size: 0.65rem;
 }
+
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.month-card {
+  background: var(--background-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+
+  box-shadow: var(shadow-md);
+  transition: var(--transition-fast);
+  overflow: hidden;
+  min-width: 250px;
+}
+.dashboard-content {
+  padding: 2rem;
+}
+
+/* Used in Dashboard.tsx:301 */
+.welcome-message {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #334915;
+  margin-bottom: 1.5rem;
+}
+/* Used in Dashboard.tsx:321 */
+.dashboard-header {
+  background: #e2dcd3;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #5d6a5c;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+/* Used in Dashboard.tsx:322 */
+.view-controls {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+/* Used in Dashboard.tsx:337 */
+.mode-indicator {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #334915;
+  margin-left: 1rem;
+}
+/* Used in Dashboard.tsx:337 and Planning/* */
+.planning-mode {
+  color: #047857;
+  font-weight: 600;
+}
+/* Used in Dashboard.tsx:345,352,360 */
+.view-btn {
+  padding: 0.75rem 1.5rem;
+  border: 1px solid #5d6a5c;
+  background: #ffffff;
+  color: #434947;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-block;
+}
+.view-btn:hover {
+  border-color: #334915;
+  color: #334915;
+}
+.view-btn.active {
+  background: #334915;
+  border-color: #334915;
+  color: #ffffff;
+}
+
+.help-btn:hover {
+  border-color: #334915;
+  color: #334915;
+}
+/* Used in Dashboard.tsx:413 */
+.file-manager-btn {
+  background: #ffe6a7;
+  color: #7c4700;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.75rem 1.5rem;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+.file-manager-btn:hover {
+  background: #7c4700;
+  color: #fffbe6;
+}
+/* Used in Dashboard.tsx:393 */
+.action-controls {
+  display: flex;
+  gap: 0.5rem;
+}
