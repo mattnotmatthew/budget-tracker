@@ -1,0 +1,98 @@
+/* CSS Custom Properties (Variables) */
+:root {
+  /* Colors */
+  --primary-green: #334915;
+  --primary-green-light: #4a6420;
+  --primary-green-dark: #1f2b0c;
+  --primary-blue: #172a3a;
+  --primary-blue-dark: #122415;
+  --secondary-blue: #023f40;
+
+  --background-light: #dfe7ef;
+  --background-card: #ffffff;
+  --background-grey: #f8f9fa;
+  --background-beige: #e2dcd3;
+  --background-light-beige: #dfe7ef;
+
+  --text-primary: #3f3a35;
+  --text-secondary: #434947;
+  --text-muted: #6b7280;
+  --text-light: #ffffff;
+
+  --border-color: #5d6a5c;
+  --border-light: #e9ecef;
+  --border-lighter: #f1f5f9;
+  --border-beige: #e2dcd3;
+
+  /* Status Colors */
+  --success-color: #28a745;
+  --success-light: #059669;
+  --danger-color: #dc3545;
+  --danger-dark: #dc2626;
+  --warning-color: #ffc107;
+  --warning-alt: #ffbb00d2;
+  --warning-orange: rgb(255, 153, 0);
+  --info-color: #2563eb;
+  --info-light: #3b82f6;
+
+  /* Adjustments Colors */
+  --adj-ebitda-bg: #ffbe5bdc;
+  --adjustments-bg: #ffeaa7dc;
+  --budget-tracking-bg: #a3d2f0dc;
+
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 4px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 4px 20px rgba(0, 0, 0, 0.08);
+
+  /* Grid Templates */
+  --grid-quarterly: 3.5fr 1.2fr 1.2fr 1.2fr 1.2fr;
+  --grid-ytd: 1fr 1fr 1fr 1fr;
+  --grid-monthly: 3.5fr 1.2fr 1.2fr 1.2fr 1.2fr;
+
+  /* Typography */
+  --font-mono: "Courier New", monospace;
+  --font-system: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+    "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+
+  /* font sizes */
+  --font-size-xs: 0.75rem; /* 12px */
+  --font-size-sm: 0.875rem; /* 14px */
+  --font-size-md: 1rem; /* 16px */
+  --font-size-lg: 1.125rem; /* 18px */
+  --font-size-xl: 1.25rem; /* 20px */
+  --font-size-2xl: 1.5rem; /* 24px */
+
+  --font-weight-light: 300; /* Light */
+  --font-weight-normal: 400; /* Normal */
+  --font-weight-medium: 500; /* Medium */
+  --font-weight-semibold: 600; /* Semi-Bold */
+  --font-weight-bold: 700; /* Bold */
+  --font-weight-extrabold: 800; /* Extra-Bold */
+
+  /* Transitions */
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
+
+  /*monthly view max-width values */
+  --max-width-small: 25px;
+  --max-width-medium: 50px;
+  --max-width-large: 75px;
+  --max-width-xlarge: 100px;
+  --max-width-xxlarge: 150px;
+}

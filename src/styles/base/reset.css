@@ -1,0 +1,144 @@
+/* Reset and base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-system);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--background-light);
+  color: var(--text-primary);
+}
+
+/* Default header colors for main content (not in modals or special contexts) */
+.app-main h1,
+.app-main h2,
+.app-main h3,
+.app-main h4,
+.app-main h5,
+.app-main h6,
+.dashboard h1,
+.dashboard h2,
+.dashboard h3,
+.dashboard h4,
+.dashboard h5,
+.dashboard h6 {
+  color: var(--text-primary);
+}
+
+/* Override for headers in dark background contexts */
+.quarter-header h1,
+.quarter-header h2,
+.quarter-header h3,
+.quarter-header h4,
+.quarter-header h5,
+.quarter-header h6,
+.month-header h1,
+.month-header h2,
+.month-header h3,
+.month-header h4,
+.month-header h5,
+.month-header h6,
+.month-header-summary h1,
+.month-header-summary h2,
+.month-header-summary h3,
+.month-header-summary h4,
+.month-header-summary h5,
+.month-header-summary h6,
+.budget-input-header h1,
+.budget-input-header h2,
+.budget-input-header h3,
+.budget-input-header h4,
+.budget-input-header h5,
+.budget-input-header h6,
+.file-manager-header h1,
+.file-manager-header h2,
+.file-manager-header h3,
+.file-manager-header h4,
+.file-manager-header h5,
+.file-manager-header h6 {
+  color: inherit; /* Inherit white color from parent */
+}
+
+.App {
+  min-height: 100vh;
+}
+
+/* Base typography - only apply defaults, don't override specific contexts */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 600;
+  /* Don't set color here - let components define their own header colors */
+}
+/* 
+Base form elements input,
+select,
+textarea,
+button {
+  font-family: inherit;
+  font-size: inherit;
+} */
+
+button {
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  transition: var(--transition-fast);
+  /* Don't set border: none globally - let components define their own borders */
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Utility classes */
+.text-center {
+  text-align: center;
+}
+.text-left {
+  text-align: left;
+}
+.text-right {
+  text-align: right;
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+.font-system {
+  font-family: var(--font-system);
+}
+
+.color-success {
+  color: var(--success-color);
+}
+.color-danger {
+  color: var(--danger-color);
+}
+.color-warning {
+  color: var(--warning-color);
+}
+.color-info {
+  color: var(--info-color);
+}
+
+.bg-white {
+  background-color: var(--background-card);
+}
+.bg-grey {
+  background-color: var(--background-grey);
+}
+.bg-beige {
+  background-color: var(--background-beige);
+}

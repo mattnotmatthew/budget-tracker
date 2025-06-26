@@ -9,11 +9,11 @@ import {
 import MonthlyView from "./MonthlyView";
 import QuarterSelector from "./QuarterSelector";
 import BudgetInput from "./BudgetInput";
-import AlertPanel from "./AlertPanel";
+// import AlertPanel from "./AlertPanel";
 import FileManager from "./FileManager";
 import YearlyBudgetDashboard from "./YearlyBudgetDashboard";
 
-import "../styles/App.css";
+import "../styles/App-new.css";
 import { useNavigate } from "react-router-dom";
 import ExecutiveSummary from "./ExecutiveSummary/ExecutiveSummary";
 import VendorManagement from "./VendorManagement";
@@ -426,7 +426,6 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
       <br />
-      <AlertPanel />{" "}
       {showInput && currentView === "budget" && (
         <BudgetInput
           onClose={() => setShowInput(false)}

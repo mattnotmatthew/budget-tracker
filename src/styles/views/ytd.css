@@ -1,0 +1,400 @@
+/* YTD (Year-to-Date) View Styles */
+
+/* YTD Controls */
+.ytd-controls {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--spacing-lg);
+  padding-right: var(--spacing-md);
+}
+
+/* YTD Section Container */
+.ytd-section {
+  margin-top: var(--spacing-xl);
+  border-radius: var(--radius-xl);
+  background: var(--background-card);
+  overflow: hidden;
+  box-shadow: var(--shadow-xl);
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+  border: 1px solid var(--border-color);
+}
+
+.ytd-header {
+  background: var(--primary-blue);
+  color: var(--background-card);
+  padding: var(--spacing-sm);
+  text-align: center;
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* YTD Table Container */
+.ytd-table {
+  display: flex;
+  flex-direction: column;
+}
+
+/* YTD Headers */
+.ytd-table .ytd-headers {
+  display: grid;
+  grid-template-columns: var(--grid-ytd);
+  font-size: large;
+  gap: var(--spacing-sm);
+  padding: 0.75rem var(--spacing-md);
+  background: var(--background-beige);
+  border-bottom: 1px solid var(--border-color);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* YTD Group Titles */
+.ytd-table .category-group .group-title,
+.ytd-table .ytd-group-title {
+  cursor: pointer;
+  user-select: none;
+  display: grid;
+  grid-template-columns: var(--grid-ytd);
+  font-size: large;
+  gap: var(--spacing-sm);
+  transition: background-color var(--transition-fast);
+  background-color: var(--background-card);
+  padding: 0.75rem var(--spacing-md);
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.ytd-table .ytd-collapsible:hover {
+  background: var(--background-grey);
+}
+
+.ytd-table .ytd-group-header-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.ytd-table .ytd-group-header-cell .ytd-group-name {
+  flex: 1;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.ytd-table .ytd-group-header-cell .ytd-collapse-icon {
+  font-size: 0.8rem;
+  transition: transform var(--transition-fast);
+  flex-shrink: 0;
+}
+
+/* YTD Category Rows */
+.ytd-table .category-row,
+.ytd-table .ytd-category-row {
+  display: grid;
+  grid-template-columns: var(--grid-ytd);
+  font-size: large;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  border-bottom: 1px solid var(--border-beige);
+  align-items: center;
+}
+
+.ytd-table .ytd-category-row {
+  font-size: 0.85rem;
+}
+
+.ytd-table .ytd-category-row:hover {
+  background: var(--background-light);
+}
+
+.ytd-table .ytd-category-name {
+  font-weight: 500;
+  color: var(--text-primary);
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+/* YTD Amount Styling */
+.ytd-table .ytd-budget-amount,
+.ytd-table .ytd-actual-amount,
+.ytd-table .ytd-variance-amount {
+  font-family: var(--font-mono);
+  text-align: right;
+  font-weight: 600;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+/* Top-level group inline classes */
+.ytd-table .ytd-top-inline-budget,
+.ytd-table .ytd-top-inline-actual,
+.ytd-table .ytd-top-inline-variance {
+  font-family: var(--font-mono);
+  text-align: right;
+  white-space: nowrap;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.ytd-table .ytd-top-budget-amount,
+.ytd-table .ytd-top-actual-amount,
+.ytd-table .ytd-top-variance-amount {
+  font-family: var(--font-mono);
+  text-align: right;
+  font-weight: 600;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+/* YTD Group Totals */
+.ytd-table .group-total,
+.ytd-table .sub-group-total,
+.ytd-table .net-total,
+.ytd-table .ytd-group-total,
+.ytd-table .ytd-sub-group-total,
+.ytd-table .ytd-net-total {
+  display: grid;
+  grid-template-columns: var(--grid-ytd);
+  font-size: large;
+  padding: 0.45rem;
+  background: #dddddd;
+  font-weight: 600;
+  align-items: center;
+}
+
+.ytd-table .ytd-group-total {
+  background: var(--background-beige);
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.9rem;
+  padding: 0.6rem 0.8rem;
+}
+
+.ytd-table .ytd-sub-group-total {
+  background: var(--background-light);
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.85rem;
+  padding: 0.6rem 0.8rem;
+}
+
+.ytd-table .ytd-net-total {
+  border-bottom: 1.5px solid #000;
+}
+
+.ytd-table .ytd-total-label {
+  font-weight: 600;
+  text-align: left;
+}
+
+/* YTD Sub-groups */
+.ytd-table .category-group {
+  border-bottom: 1px solid var(--border-beige);
+}
+
+.ytd-table .ytd-sub-group {
+  margin-left: 0.8rem;
+  border-left: 3px solid var(--border-color);
+  background: var(--background-grey);
+}
+
+/* Hierarchical Classes - Comp Benefits */
+.ytd-table .ytd-comp-benefits {
+  background: #dbeafe;
+  border-left-color: var(--info-light);
+}
+
+.ytd-table .ytd-comp-inline-budget,
+.ytd-table .ytd-comp-inline-actual,
+.ytd-table .ytd-comp-inline-variance {
+  font-family: var(--font-mono);
+  text-align: right;
+  white-space: nowrap;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #1e40af;
+}
+
+.ytd-table .ytd-comp-budget-amount,
+.ytd-table .ytd-comp-actual-amount,
+.ytd-table .ytd-comp-variance-amount {
+  font-family: var(--font-mono);
+  text-align: right;
+  font-weight: 600;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  color: #1e40af;
+}
+
+/* Hierarchical Classes - Other */
+.ytd-table .ytd-other {
+  background: #dcfce7;
+  border-left-color: #22c55e;
+}
+
+.ytd-table .ytd-other-inline-budget,
+.ytd-table .ytd-other-inline-actual,
+.ytd-table .ytd-other-inline-variance {
+  font-family: var(--font-mono);
+  text-align: right;
+  white-space: nowrap;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--success-light);
+}
+
+.ytd-table .ytd-other-budget-amount,
+.ytd-table .ytd-other-actual-amount,
+.ytd-table .ytd-other-variance-amount {
+  font-family: var(--font-mono);
+  text-align: right;
+  font-weight: 600;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  color: var(--success-light);
+}
+
+/* Generic Sub-groups */
+.ytd-table .ytd-sub-inline-budget,
+.ytd-table .ytd-sub-inline-actual,
+.ytd-table .ytd-sub-inline-variance {
+  font-family: var(--font-mono);
+  text-align: right;
+  white-space: nowrap;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.ytd-table .ytd-sub-budget-amount,
+.ytd-table .ytd-sub-actual-amount,
+.ytd-table .ytd-sub-variance-amount {
+  font-family: var(--font-mono);
+  text-align: right;
+  font-weight: 600;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+/* YTD Variance Colors */
+.ytd-table .ytd-variance-amount.positive,
+.ytd-table .ytd-inline-variance.positive,
+.ytd-table .ytd-top-variance-amount.positive,
+.ytd-table .ytd-comp-variance-amount.positive,
+.ytd-table .ytd-other-variance-amount.positive,
+.ytd-table .ytd-sub-variance-amount.positive,
+.ytd-table .ytd-top-inline-variance.positive,
+.ytd-table .ytd-comp-inline-variance.positive,
+.ytd-table .ytd-other-inline-variance.positive,
+.ytd-table .ytd-sub-inline-variance.positive {
+  color: var(--success-color);
+}
+
+.ytd-table .ytd-variance-amount.negative,
+.ytd-table .ytd-inline-variance.negative,
+.ytd-table .ytd-top-variance-amount.negative,
+.ytd-table .ytd-comp-variance-amount.negative,
+.ytd-table .ytd-other-variance-amount.negative,
+.ytd-table .ytd-sub-variance-amount.negative,
+.ytd-table .ytd-top-inline-variance.negative,
+.ytd-table .ytd-comp-inline-variance.negative,
+.ytd-table .ytd-other-inline-variance.negative,
+.ytd-table .ytd-sub-inline-variance.negative {
+  color: var(--danger-color);
+}
+
+.ytd-table .ytd-variance-amount.danger,
+.ytd-table .ytd-inline-variance.danger,
+.ytd-table .ytd-top-variance-amount.danger,
+.ytd-table .ytd-comp-variance-amount.danger,
+.ytd-table .ytd-other-variance-amount.danger,
+.ytd-table .ytd-sub-variance-amount.danger,
+.ytd-table .ytd-top-inline-variance.danger,
+.ytd-table .ytd-comp-inline-variance.danger,
+.ytd-table .ytd-other-inline-variance.danger,
+.ytd-table .ytd-sub-inline-variance.danger {
+  color: var(--danger-color);
+  font-weight: 700;
+}
+
+.ytd-table .ytd-variance-amount.neutral,
+.ytd-table .ytd-inline-variance.neutral,
+.ytd-table .ytd-top-variance-amount.neutral,
+.ytd-table .ytd-comp-variance-amount.neutral,
+.ytd-table .ytd-other-variance-amount.neutral,
+.ytd-table .ytd-sub-variance-amount.neutral,
+.ytd-table .ytd-top-inline-variance.neutral,
+.ytd-table .ytd-comp-inline-variance.neutral,
+.ytd-table .ytd-other-inline-variance.neutral,
+.ytd-table .ytd-sub-inline-variance.neutral {
+  color: var(--text-primary);
+}
+
+/* YTD Adjustments */
+.ytd-table .ytd-adjustments {
+  display: grid;
+  grid-template-columns: var(--grid-ytd);
+  font-size: large;
+  padding: 0.45rem;
+  background: var(--adjustments-bg);
+  font-weight: 600;
+  align-items: center;
+  margin-top: 0.6rem;
+  border-top: 1px solid #000;
+}
+
+/* YTD Adj EBITDA */
+.ytd-table .ytd-adj-ebitda {
+  display: grid;
+  grid-template-columns: var(--grid-ytd);
+  font-size: large;
+  padding: 0.45rem;
+  background: var(--adj-ebitda-bg);
+  font-weight: 600;
+  align-items: center;
+  margin-top: 0.6rem;
+  border-top: 1px solid #000;
+}
+
+/* YTD Budget Tracking */
+.ytd-table .ytd-budget-tracking {
+  display: grid;
+  grid-template-columns: var(--grid-ytd);
+  font-size: large;
+  padding: 0.45rem;
+  background: var(--background-card);
+  font-weight: 600;
+  align-items: center;
+  margin-top: 0.6rem;
+  border-top: 1px solid #000;
+}
+
+/* YTD Mobile Responsive */
+@media (max-width: 768px) {
+  .ytd-table .ytd-headers,
+  .ytd-table .ytd-collapsible,
+  .ytd-table .ytd-category-row,
+  .ytd-table .ytd-group-total,
+  .ytd-table .ytd-sub-group-total,
+  .ytd-table .ytd-net-total {
+    grid-template-columns: var(--grid-ytd);
+    font-size: 0.8rem;
+    gap: 0.3rem;
+    padding: 0.3rem var(--spacing-sm);
+  }
+
+  .ytd-table {
+    max-width: 100%;
+  }
+
+  .ytd-header h3 {
+    font-size: 1.2rem;
+  }
+
+  .ytd-controls {
+    justify-content: center;
+    padding-right: 0;
+  }
+}

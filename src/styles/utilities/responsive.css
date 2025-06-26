@@ -1,0 +1,224 @@
+/* Responsive Design Utilities */
+
+/* Mobile First Approach */
+@media (max-width: 768px) {
+  /* Quarter Selector Responsive */
+  .quarterly-view .adj-ebitda,
+  .ytd-table .ytd-adj-ebitda,
+  .quarterly-view .budget-tracking,
+  .ytd-table .ytd-budget-tracking {
+    font-size: 0.8rem;
+  }
+
+  .quarter-selector {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .quarter-toggles {
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+
+  .quarter-toggle-button {
+    min-width: 45px;
+    min-height: 40px;
+    padding: 0.3rem var(--spacing-sm);
+  }
+
+  .quarter-label {
+    font-size: 0.8rem;
+  }
+
+  .quarter-months {
+    font-size: 0.65rem;
+  }
+
+  /* Dashboard Mobile */
+  .app-main {
+    padding: var(--spacing-md);
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+  }
+
+  .view-controls {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .view-btn {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Vendor Management Mobile */
+  .vendor-management-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-md);
+  }
+
+  .budget-totals-container {
+    margin-left: 0;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .vendor-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .vendor-table {
+    min-width: 800px;
+  }
+
+  .vendor-table th,
+  .vendor-table td {
+    padding: var(--spacing-sm);
+  }
+
+  /* Modal Mobile */
+  .budget-input-modal {
+    width: 98%;
+    max-height: 95vh;
+    margin: var(--spacing-sm);
+  }
+
+  .budget-input-header {
+    padding: var(--spacing-md);
+  }
+
+  .budget-input-header h2 {
+    font-size: 1.2rem;
+  }
+
+  /* Quarter Cards Mobile */
+  .quarter-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+
+  .quarter-card {
+    min-width: unset;
+  }
+
+  /* Monthly View Mobile */
+  .monthly-view .monthly-headers,
+  .monthly-view .group-title,
+  .monthly-view .category-row,
+  .monthly-view .group-total,
+  .monthly-view .sub-group-total,
+  .monthly-view .net-total {
+    font-size: 0.7rem;
+    padding: 0.3rem var(--spacing-sm);
+  }
+
+  /* Budget Dashboard Mobile */
+  .yearly-summary-line {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+
+  .yearly-content {
+    padding: var(--spacing-md);
+  }
+}
+
+/* Tablet Styles */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .quarter-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .app-main {
+    padding: var(--spacing-lg);
+  }
+
+  .vendor-table {
+    min-width: 1000px;
+  }
+}
+
+/* Large Screen Optimizations
+@media (min-width: 1400px) {
+  .app-main {
+    max-width: 2000px;
+  }
+
+  .quarter-grid {
+    gap: var(--spacing-xl);
+  }
+
+  .ytd-section {
+    max-width: 1000px;
+  }
+} */
+
+/* Print Styles */
+@media print {
+  .app-header,
+  .dashboard-header,
+  .view-controls,
+  .quarter-selector,
+  .ytd-controls,
+  .vendor-management-controls,
+  .edit-btn,
+  .remove-row-btn,
+  .add-row-btn,
+  .close-btn {
+    display: none !important;
+  }
+
+  .quarterly-view,
+  .monthly-view,
+  .ytd-section,
+  .vendor-table-container {
+    box-shadow: none !important;
+    border: 1px solid #000 !important;
+  }
+
+  .quarter-card {
+    break-inside: avoid;
+    margin-bottom: var(--spacing-md);
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  :root {
+    --border-color: #000000;
+    --border-light: #666666;
+    --text-primary: #000000;
+    --text-secondary: #000000;
+  }
+
+  .quarter-card,
+  .dashboard,
+  .vendor-table-container,
+  .ytd-section {
+    border: 2px solid #000000 !important;
+  }
+}

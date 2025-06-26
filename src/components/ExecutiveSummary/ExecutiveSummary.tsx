@@ -20,7 +20,7 @@ import {
 import html2canvas from "html2canvas";
 import { saveAs } from "file-saver";
 import ExportCustomizer from "../ExportCustomizer/ExportCustomizer";
-import "./ExecutiveSummary.css";
+// Removed local CSS import - now handled by main App CSS
 
 // Utility functions (stubs, since imports fail)
 const formatCurrencyFull = (amount: number) => {

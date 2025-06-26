@@ -4,6 +4,7 @@ import { PlanningData, HistoricalAnalysis } from "./planning";
 export interface VendorData {
   id: string;
   vendorName: string;
+  category: string; // Added for table Category column
   financeMappedCategory: string;
   billingType: string;
   budget: number;

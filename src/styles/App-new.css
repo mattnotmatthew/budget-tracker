@@ -1,0 +1,87 @@
+/* 
+   Budget Tracker - Modular CSS Architecture
+   
+   This file imports all CSS modules in the correct order.
+   Base styles first, then components, layouts, views, and utilities.
+*/
+
+/* Base Styles - Variables and reset */
+@import "./base/variables.css";
+@import "./base/reset.css";
+
+/* Layout Components */
+@import "./layout/dashboard.css";
+
+/* Form Components */
+@import "./components/forms.css";
+@import "./components/modals.css";
+@import "./components/budget.css";
+@import "./components/vendor-management.css";
+
+/* View-Specific Styles */
+@import "./views/quarterly.css";
+@import "./views/monthly.css";
+@import "./views/ytd.css";
+
+/* Utilities */
+@import "./utilities/responsive.css";
+
+/* Component-Specific Styles */
+@import "../components/ExecutiveSummary/ExecutiveSummary.css";
+
+/* Legacy styles that still need to be organized */
+/* TODO: Move these to appropriate module files */
+
+/* Table cell alignments that may need refinement */
+.data-cell {
+  padding: var(--spacing-sm) var(--spacing-xs);
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.category-cell {
+  padding: var(--spacing-sm) var(--spacing-xs);
+  text-align: left;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* Additional utility classes that might be used across components */
+.currency-display {
+  font-family: var(--font-mono);
+  text-align: right;
+  font-weight: 600;
+}
+
+.positive {
+  color: var(--success-color);
+}
+.negative {
+  color: var(--danger-color);
+}
+.neutral {
+  color: var(--text-primary);
+}
+.danger {
+  color: var(--danger-color);
+  font-weight: 700;
+}
+
+/* Loading and state indicators */
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Focus indicators for accessibility */
+.focus-visible {
+  outline: 2px solid var(--info-light);
+  outline-offset: 2px;
+}

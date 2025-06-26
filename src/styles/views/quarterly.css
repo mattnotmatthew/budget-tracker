@@ -1,0 +1,317 @@
+/* Quarterly View Styles */
+.quarterly-view {
+  margin-top: var(--spacing-md);
+}
+
+/* Quarter Layout */
+.quarters-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-md);
+}
+
+.quarter-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-lg);
+}
+
+.quarter-spacer {
+  visibility: hidden;
+}
+
+.quarter-card {
+  background: var(--background-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  min-width: 380px;
+}
+
+.quarter-header,
+.month-header {
+  background: var(--primary-blue);
+  color: var(--background-card);
+  padding: var(--spacing-sm);
+  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 40px;
+}
+
+.month-header-summary {
+  background-color: var(--info-color);
+  color: var(--background-card);
+  padding: var(--spacing-sm);
+  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 40px;
+}
+
+.month-toggle-container {
+  margin-left: auto;
+}
+
+.quarter-header h3,
+.month-header h4 {
+  margin: 0;
+  flex: 1;
+  text-align: left;
+}
+
+.quarter-header h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.month-header h4 {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Data Grid Headers */
+.data-headers {
+  display: grid;
+  grid-template-columns: var(--grid-quarterly);
+  gap: var(--spacing-sm);
+  padding: 0.5rem;
+  background: var(--background-beige);
+  border-bottom: 1px solid var(--border-color);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.2;
+}
+.header-category {
+  text-align: left;
+}
+/* Group Styles */
+.quarterly-view .category-group {
+  border-bottom: 1px solid var(--border-beige);
+}
+
+.quarterly-view .group-title {
+  cursor: pointer;
+  user-select: none;
+  display: grid;
+  grid-template-columns: var(--grid-quarterly);
+  gap: var(--spacing-sm);
+  align-items: center;
+  transition: background-color var(--transition-fast);
+  background-color: var(--background-card);
+  padding: 0.75rem var(--spacing-md);
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.quarterly-view .group-title.collapsible:hover {
+  background: var(--background-grey);
+}
+
+.quarterly-view .group-title.collapsible:focus {
+  outline: 2px solid var(--info-light);
+  outline-offset: -2px;
+}
+
+.quarterly-view .group-header-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.quarterly-view .group-header-cell .group-name {
+  flex: 1;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.quarterly-view .group-header-cell .collapse-icon {
+  font-size: 0.8rem;
+  transition: transform var(--transition-fast);
+  flex-shrink: 0;
+}
+
+/* Category Rows */
+.quarterly-view .category-row {
+  display: grid;
+  grid-template-columns: var(--grid-quarterly);
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  border-bottom: 1px solid var(--border-lighter);
+  align-items: center;
+}
+
+.quarterly-view .category-row:hover {
+  background: var(--background-light);
+}
+
+.quarterly-view .category-name,
+.quarterly-view .total-label {
+  font-weight: 500;
+  color: var(--text-primary);
+  text-align: left;
+}
+
+/* Amount Cell Styling */
+.quarterly-view .inline-budget,
+.quarterly-view .inline-actual,
+.quarterly-view .inline-reforecast,
+.quarterly-view .inline-variance {
+  font-family: var(--font-mono);
+  text-align: right;
+  white-space: nowrap;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.quarterly-view .budget-amount,
+.quarterly-view .actual-amount,
+.quarterly-view .reforecast-amount,
+.quarterly-view .variance-amount {
+  font-family: var(--font-mono);
+  text-align: right;
+  font-weight: 600;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+/* Variance Colors */
+.quarterly-view .variance-amount.positive,
+.quarterly-view .inline-variance.positive {
+  color: var(--success-color);
+}
+
+.quarterly-view .variance-amount.negative,
+.quarterly-view .inline-variance.negative {
+  color: var(--danger-color);
+}
+
+.quarterly-view .variance-amount.danger,
+.quarterly-view .inline-variance.danger {
+  color: var(--danger-color);
+  font-weight: 700;
+}
+
+.quarterly-view .variance-amount.neutral,
+.quarterly-view .inline-variance.neutral {
+  color: var(--text-primary);
+}
+
+/* Group Totals */
+.quarterly-view .group-total {
+  display: grid;
+  grid-template-columns: var(--grid-quarterly);
+  gap: 0.4rem;
+  padding: 0.6rem 0.8rem;
+  background: var(--background-beige);
+  border-bottom: 1px solid var(--border-color);
+  font-weight: 600;
+  font-size: 0.9rem;
+  align-items: center;
+}
+
+.quarterly-view .sub-group-total {
+  display: grid;
+  grid-template-columns: var(--grid-quarterly);
+  gap: 0.4rem;
+  padding: 0.6rem 0.8rem;
+  background: var(--background-light);
+  border-bottom: 1px solid var(--border-color);
+  font-weight: 600;
+  font-size: 0.85rem;
+  align-items: center;
+}
+
+.quarterly-view .net-total {
+  display: grid;
+  grid-template-columns: var(--grid-quarterly);
+  gap: 0.4rem;
+  padding: 0.6rem 0.8rem;
+  background: #dddddd;
+  border-bottom: 1.5px solid #000;
+  font-weight: 600;
+  font-size: 0.9rem;
+  align-items: center;
+}
+
+/* Sub-groups */
+.quarterly-view .sub-group {
+  margin-left: 0.8rem;
+  border-left: 3px solid var(--border-color);
+  background: var(--background-grey);
+}
+
+.quarterly-view .sub-group .group-title {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.85rem;
+  background: var(--background-beige);
+}
+
+.quarterly-view .sub-group .group-title.collapsible {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.75rem;
+  background: var(--background-beige);
+}
+
+.quarterly-view .sub-group .group-title.collapsible:hover {
+  background: var(--background-light);
+}
+
+.quarterly-view .sub-group .category-row {
+  padding-left: var(--spacing-md);
+  font-size: 0.7rem;
+}
+
+.quarterly-view .sub-group .group-total {
+  background: var(--background-light);
+  padding-left: var(--spacing-md);
+  font-size: 0.75rem;
+}
+
+/* Adjustments and Tracking */
+.quarterly-view .adj-ebitda {
+  display: grid;
+  grid-template-columns: var(--grid-quarterly);
+  padding: 0.35rem;
+  background: var(--adj-ebitda-bg);
+  font-weight: 600;
+  font-size: 0.9rem;
+  align-items: center;
+  margin-top: var(--spacing-sm);
+  border-top: 1px solid #000;
+  z-index: 99;
+}
+
+.quarterly-view .adjustments {
+  display: grid;
+  grid-template-columns: var(--grid-quarterly);
+  padding: 0.35rem;
+  background: var(--adjustments-bg);
+  font-weight: 600;
+  font-size: 0.9rem;
+  align-items: center;
+  margin-top: var(--spacing-sm);
+  border-top: 1px solid #000;
+  z-index: 99;
+}
+
+.quarterly-view .budget-tracking {
+  display: grid;
+  grid-template-columns: var(--grid-quarterly);
+  padding: 0.35rem;
+  background: var(--budget-tracking-bg);
+  font-weight: 600;
+  font-size: 0.9rem;
+  align-items: center;
+  margin-top: var(--spacing-sm);
+  border-top: 1px solid #000;
+  z-index: 99;
+  max-height: 40px;
+}
