@@ -1735,3 +1735,405 @@ body.printing .total-comp-capitalization-section .resource-summary-cards {
   margin-top: 0.5rem;
   text-transform: none !important;
 }
+
+/* Layout utility classes */
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.flex-gap {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.mb-2 {
+  margin-bottom: 2rem;
+}
+
+.mb-1 {
+  margin-bottom: 1rem;
+}
+
+.pb-1 {
+  padding-bottom: 1rem;
+}
+
+/* Header specific styles */
+.executive-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e1e8ed;
+}
+
+.executive-title {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #2d3a4a;
+  margin: 0;
+}
+
+.executive-subtitle {
+  color: #6b7a8f;
+  margin: 0.5rem 0 0 0;
+  font-size: 1rem;
+}
+
+.header-buttons {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.btn-primary {
+  padding: 0.75rem 1.5rem;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.btn-success {
+  padding: 0.75rem 1.5rem;
+  background-color: #2ecc71;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.btn-purple {
+  padding: 0.75rem 1.5rem;
+  background-color: #9b59b6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Section headers with collapsible functionality */
+.collapsible-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  cursor: pointer;
+}
+
+.section-heading {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2d3a4a;
+  margin: 0;
+}
+
+.expand-toggle {
+  font-size: 1.25rem;
+  color: #6b7a8f;
+}
+
+/* Commentary specific styles */
+.commentary-section-wrapper {
+  margin-bottom: 2rem;
+}
+
+/* Compact summary styles for collapsed sections */
+.compact-section-summary {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: #6b7a8f;
+}
+
+.compact-section-summary strong {
+  color: #2d3a4a;
+}
+
+/* Vendor Spend by Category Table Styles */
+.vendor-spend-table-container {
+  margin-bottom: 2rem;
+}
+
+.vendor-spend-table-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2d3a4a;
+  margin-bottom: 1rem;
+}
+
+.vendor-spend-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid #e1e8ed;
+  border-radius: 8px;
+  background-color: #ffffff;
+}
+
+.vendor-spend-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.vendor-spend-table thead tr {
+  background-color: #f8f9fa;
+}
+
+.vendor-spend-table th {
+  padding: 0.75rem;
+  text-align: right;
+  border-bottom: 2px solid #dee2e6;
+  font-weight: 600;
+  color: #2d3a4a;
+}
+
+.vendor-spend-table th:first-child {
+  text-align: left;
+  min-width: 200px;
+}
+
+.vendor-spend-table tbody tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+.vendor-spend-table tbody tr:nth-child(odd) {
+  background-color: #fff;
+}
+
+.vendor-spend-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.vendor-spend-table td:first-child {
+  font-weight: 500;
+}
+
+.vendor-spend-table td:not(:first-child) {
+  text-align: right;
+}
+
+.vendor-spend-table .no-data-row {
+  text-align: center;
+  color: #6b7a8f;
+  font-style: italic;
+  padding: 2rem;
+}
+
+/* Vendor Variance Section Styles */
+.vendor-variance-title {
+  font-size: 0.875rem;
+  color: #6b7a8f;
+  margin-bottom: 0.5rem;
+}
+
+.vendor-variance-amount {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.vendor-variance-amount.positive {
+  color: #28a745;
+}
+
+.vendor-variance-amount.negative {
+  color: #dc3545;
+}
+
+.vendor-variance-amount.warning {
+  color: #ffc107;
+}
+
+.vendor-variance-label {
+  font-size: 0.75rem;
+  color: #8a92a5;
+  text-transform: uppercase;
+}
+
+.vendor-variance-description {
+  font-size: 0.8rem;
+  color: #6b7a8f;
+  margin-top: 0.25rem;
+}
+
+/* Vendor Tracking Section */
+.vendor-tracking-section {
+  margin-bottom: 2rem;
+}
+
+.vendor-tracking-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2d3a4a;
+  margin-bottom: 1rem;
+}
+
+.vendor-tracking-subtitle {
+  font-size: 0.875rem;
+  color: #6b7a8f;
+  font-style: italic;
+  margin-bottom: 1rem;
+}
+
+/* Vendor KPI Cards */
+.vendor-kpi-card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 1rem;
+  border: 2px solid #e1e8ed;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+
+.vendor-kpi-card.variance-positive {
+  border-color: #28a745;
+}
+
+.vendor-kpi-card.variance-negative {
+  border-color: #dc3545;
+}
+
+.vendor-kpi-card.variance-warning {
+  border-color: #ffc107;
+}
+
+.vendor-kpi-title {
+  font-size: 0.875rem;
+  color: #6b7a8f;
+  margin-bottom: 0.5rem;
+}
+
+.vendor-kpi-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2d3a4a;
+  margin-bottom: 0.5rem;
+}
+
+.vendor-kpi-label {
+  font-size: 0.75rem;
+  color: #8a92a5;
+  text-transform: uppercase;
+}
+
+.vendor-kpi-description {
+  font-size: 0.8rem;
+  color: #6b7a8f;
+  margin-top: 0.25rem;
+}
+
+.vendor-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+/* Enhanced Vendor Spend Table Styles for Budget vs Actual */
+.vendor-spend-table th[rowspan] {
+  vertical-align: middle;
+  background-color: #f1f3f5;
+}
+
+.vendor-spend-table th[colspan] {
+  text-align: center;
+  background-color: #e8f0fe;
+  color: #1a73e8;
+  font-weight: 700;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.vendor-spend-table .category-cell {
+  font-weight: 600;
+  vertical-align: middle;
+  border-right: 2px solid #dee2e6;
+  background-color: #f8f9fa;
+  min-width: 180px;
+}
+
+.vendor-spend-table .category-cell.total {
+  background-color: #e3f2fd;
+  font-weight: 700;
+  color: #1565c0;
+}
+
+.vendor-spend-table .type-cell {
+  font-weight: 500;
+  text-align: center;
+  min-width: 60px;
+  border-right: 1px solid #dee2e6;
+}
+
+.vendor-spend-table .type-cell.budget {
+  background-color: #e8f5e8;
+  color: #2e7d32;
+}
+
+.vendor-spend-table .type-cell.actual {
+  background-color: #fff3e0;
+  color: #ef6c00;
+}
+
+.vendor-spend-table .amount-cell {
+  text-align: right;
+  font-family: "Monaco", "Menlo", monospace;
+  font-size: 0.85rem;
+  min-width: 80px;
+}
+
+.vendor-spend-table .amount-cell.total {
+  background-color: #f5f5f5;
+  font-weight: 700;
+  border-top: 2px solid #1565c0;
+}
+
+.vendor-spend-table .budget-row {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.vendor-spend-table .actual-row {
+  border-bottom: 2px solid #dee2e6;
+}
+
+.vendor-spend-table .summary-spacer {
+  height: 10px;
+  border: none;
+}
+
+.vendor-spend-table .summary-spacer td {
+  border: none;
+  background-color: transparent;
+}
+
+.vendor-spend-table .total-budget-row,
+.vendor-spend-table .total-actual-row {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+
+.vendor-spend-table .total-actual-row {
+  border-bottom: 3px solid #1565c0;
+}
+
+/* Responsive adjustments for executive summary */
+@media (max-width: 1200px) {
+  .vendor-spend-table {
+    font-size: 0.8rem;
+  }
+
+  .vendor-spend-table .amount-cell {
+    min-width: 70px;
+  }
+}
+
+/* Vendor Spend by Category Table Styles */
