@@ -53,6 +53,7 @@ const ExecutiveSummary = () => {
   const navigate = useNavigate();
 
   // State for UI toggles
+
   const [isStrategicContextExpanded, setIsStrategicContextExpanded] =
     useState(false);
   const [isYTDPerformanceExpanded, setIsYTDPerformanceExpanded] =
@@ -60,6 +61,8 @@ const ExecutiveSummary = () => {
   const [isForwardLookingExpanded, setIsForwardLookingExpanded] =
     useState(false);
   const [isRiskVelocityExpanded, setIsRiskVelocityExpanded] = useState(false);
+  const [isVendorSpendingExpanded, setIsVendorSpendingExpanded] =
+    useState(true);
   const [trendTableCollapsed, setTrendTableCollapsed] = useState(true);
   const [monthlyTrendTableCollapsed, setMonthlyTrendTableCollapsed] =
     useState(true);
@@ -284,6 +287,219 @@ const ExecutiveSummary = () => {
         remainingMonths: remainingMonths,
       },
     };
+  };
+
+  // Helper function to get vendor tracking data (Cost of Sales + Other for final months only)
+  const getVendorTrackingData = () => {
+    const monthsData = Array.from({ length: 12 }, (_, i) => i + 1).map(
+      (month) =>
+        calculateMonthlyData(
+          state.entries,
+          state.categories,
+          month,
+          state.selectedYear
+        )
+    );
+
+    let costOfSalesTotal = 0;
+    let otherTotal = 0;
+
+    monthsData.forEach((month) => {
+      // Check if this month is marked as "Final" via IOSToggle
+      const isFinal =
+        state.monthlyForecastModes[state.selectedYear]?.[month.month] ?? false;
+
+      if (isFinal) {
+        // Sum Cost of Sales actual for final months only
+        costOfSalesTotal += month.costOfSales.total.actual;
+
+        // Sum "Other" actual for final months only (Other is a subgroup under OpEx)
+        const otherSubGroup = month.opex.subGroups?.find(
+          (sg: any) => sg.name === "Other"
+        );
+        if (otherSubGroup) {
+          otherTotal += otherSubGroup.total.actual;
+        }
+      }
+    });
+
+    return {
+      costOfSales: costOfSalesTotal,
+      other: otherTotal,
+      total: costOfSalesTotal + otherTotal,
+    };
+  };
+
+  // Helper function to get total vendor spend from VendorTrackingTable data
+  const getTotalVendorSpend = () => {
+    const currentYearTrackingData =
+      state.vendorTrackingData?.filter(
+        (tracking) => tracking.year === state.selectedYear
+      ) || [];
+
+    let totalVendorSpend = 0;
+    const months = [
+      "jan",
+      "feb",
+      "mar",
+      "apr",
+      "may",
+      "jun",
+      "jul",
+      "aug",
+      "sep",
+      "oct",
+      "nov",
+      "dec",
+    ];
+
+    currentYearTrackingData.forEach((item) => {
+      months.forEach((month) => {
+        const monthValue =
+          parseFloat(item[month as keyof typeof item] as string) || 0;
+        // Values are already stored in thousands, so no need to multiply by 1000
+        totalVendorSpend += monthValue;
+      });
+    });
+
+    return totalVendorSpend;
+  };
+
+  // Helper function to generate tooltip content for vendor tracking metrics
+  const getVendorTooltipContent = (metricType: string) => {
+    const vendorData = getVendorTrackingData();
+    const finalMonths = Array.from({ length: 12 }, (_, i) => i + 1).filter(
+      (month) =>
+        state.monthlyForecastModes[state.selectedYear]?.[month] ?? false
+    );
+    const finalMonthNames = finalMonths
+      .map((month) =>
+        new Date(2025, month - 1, 1).toLocaleString("default", {
+          month: "short",
+        })
+      )
+      .join(", ");
+
+    switch (metricType) {
+      case "costOfSales":
+        return {
+          definition: "Total Cost of Sales spending for months marked as Final",
+          interpretation: `Your Cost of Sales spending for final months (${finalMonthNames}) totals ${formatCurrencyFull(
+            vendorData.costOfSales
+          )}`,
+          formula: "Sum of Cost of Sales actual amounts for Final months only",
+          calculation: `${finalMonths.length} Final months: ${finalMonthNames}`,
+        };
+
+      case "other":
+        return {
+          definition: "Total Other OpEx spending for months marked as Final",
+          interpretation: `Your Other OpEx spending for final months (${finalMonthNames}) totals ${formatCurrencyFull(
+            vendorData.other
+          )}`,
+          formula: "Sum of Other OpEx actual amounts for Final months only",
+          calculation: `${finalMonths.length} Final months: ${finalMonthNames}`,
+        };
+
+      case "total":
+        return {
+          definition:
+            "Combined Cost of Sales and Other OpEx spending for Final months",
+          interpretation: `Your total vendor-related spending for final months is ${formatCurrencyFull(
+            vendorData.total
+          )} (${formatCurrencyFull(
+            vendorData.costOfSales
+          )} Cost of Sales + ${formatCurrencyFull(vendorData.other)} Other)`,
+          formula: "Cost of Sales (Final) + Other OpEx (Final)",
+          calculation: `${formatCurrencyFull(
+            vendorData.costOfSales
+          )} + ${formatCurrencyFull(vendorData.other)} = ${formatCurrencyFull(
+            vendorData.total
+          )}`,
+        };
+
+      case "totalVendorSpend":
+        const totalVendorSpend = getTotalVendorSpend();
+        return {
+          definition:
+            "Total vendor spending from all entries in the Vendor Tracking table",
+          interpretation: `Your total vendor spending across all vendors and months is ${formatCurrencyFull(
+            totalVendorSpend
+          )}`,
+          formula: "Sum of all monthly vendor tracking amounts for all vendors",
+          calculation: `Sum of all Jan-Dec amounts from Vendor Tracking table = ${formatCurrencyFull(
+            totalVendorSpend
+          )}`,
+        };
+
+      case "vendorVariance":
+        const vendorTableTotal = getTotalVendorSpend();
+        const budgetVendorTotal = vendorData.total;
+        const variance = vendorTableTotal - budgetVendorTotal;
+        return {
+          definition:
+            "Difference between Vendor Tracking table total and budget vendor spending",
+          interpretation: `Your vendor tracking shows ${
+            variance >= 0 ? "more" : "less"
+          } spending than budget tracking by ${formatCurrencyFull(
+            Math.abs(variance)
+          )}. ${
+            variance >= 0
+              ? "This suggests additional vendor spending not captured in budget categories."
+              : "This suggests some budget vendor spending may not be tracked in vendor table."
+          }`,
+          formula:
+            "Total Vendor Spend (Table) - Total Vendor Spending (Budget)",
+          calculation: `${formatCurrencyFull(
+            vendorTableTotal
+          )} - ${formatCurrencyFull(budgetVendorTotal)} = ${formatCurrencyFull(
+            variance
+          )}`,
+        };
+
+      default:
+        return {
+          definition: "Vendor tracking metric",
+          interpretation: "This metric helps track vendor-related spending",
+          formula: "N/A",
+          calculation: "N/A",
+        };
+    }
+  };
+
+  // Vendor tracking tooltip event handlers
+  const handleVendorMouseEnter = (
+    event: React.MouseEvent,
+    metricType: string
+  ) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const content = getVendorTooltipContent(metricType);
+
+    const tooltipHeight = 320;
+    const minSpaceRequired = 350;
+
+    const spaceAbove = rect.top;
+    const shouldShowBelow = spaceAbove < minSpaceRequired;
+
+    const tooltipY = shouldShowBelow ? rect.bottom + 15 : rect.top - 15;
+
+    setTooltip({
+      visible: true,
+      content,
+      x: rect.left + rect.width / 2,
+      y: tooltipY,
+      showBelow: shouldShowBelow,
+    });
+  };
+
+  const handleVendorMouseLeave = () => {
+    setTooltip({
+      visible: false,
+      content: null,
+      x: 0,
+      y: 0,
+      showBelow: false,
+    });
   };
 
   // Generate intelligent summary and initialize userNotes with it
@@ -603,6 +819,7 @@ const ExecutiveSummary = () => {
       ytdPerformance: isYTDPerformanceExpanded,
       forwardLooking: isForwardLookingExpanded,
       riskVelocity: isRiskVelocityExpanded,
+      vendorSpending: isVendorSpendingExpanded,
       trendTable: trendTableCollapsed,
       totalCompCapitalization: totalCompCapitalizationCollapsed,
     };
@@ -612,6 +829,7 @@ const ExecutiveSummary = () => {
     setIsYTDPerformanceExpanded(true);
     setIsForwardLookingExpanded(true);
     setIsRiskVelocityExpanded(true);
+    setIsVendorSpendingExpanded(true);
     setTrendTableCollapsed(false);
     setTotalCompCapitalizationCollapsed(false);
 
@@ -648,6 +866,7 @@ const ExecutiveSummary = () => {
         setIsYTDPerformanceExpanded(originalStates.ytdPerformance);
         setIsForwardLookingExpanded(originalStates.forwardLooking);
         setIsRiskVelocityExpanded(originalStates.riskVelocity);
+        setIsVendorSpendingExpanded(originalStates.vendorSpending);
         setTrendTableCollapsed(originalStates.trendTable);
         setTotalCompCapitalizationCollapsed(
           originalStates.totalCompCapitalization
@@ -810,6 +1029,26 @@ const ExecutiveSummary = () => {
           color: #2d3a4a;
           line-height: 1.2;
           word-wrap: break-word;
+        }
+        
+        .kpi-card .ytd-label {
+          display: block;
+          font-size: 11px;
+          margin-top: 8px;
+          color: #8a92a5;
+          font-weight: 500;
+          letter-spacing: 0.5px;
+          text-transform: uppercase;
+        }
+        
+        .kpi-card .kpi-subheader {
+          display: block;
+          font-size: 11px;
+          margin-top: 8px;
+          color: #8a92a5;
+          font-weight: 500;
+          letter-spacing: 0.5px;
+          text-transform: uppercase;
         }
         
         /* Web-style Capacity Table - optimized for landscape */
@@ -1337,6 +1576,81 @@ const ExecutiveSummary = () => {
 
       // Resource Allocation & Hiring Capacity Section
       if (template.layout.includeResourceAllocation) {
+        // Vendor Tracking Section (before Resource Allocation)
+        const vendorData = getVendorTrackingData();
+        const finalMonths = Array.from({ length: 12 }, (_, i) => i + 1).filter(
+          (month) =>
+            state.monthlyForecastModes[state.selectedYear]?.[month] ?? false
+        );
+        const finalMonthNames = finalMonths
+          .map((month) =>
+            new Date(2025, month - 1, 1).toLocaleString("default", {
+              month: "short",
+            })
+          )
+          .join(", ");
+
+        htmlContent += `
+    <!-- Slide 4: Vendor Tracking -->
+    <div class="slide">
+        <h2>Vendor Tracking</h2>
+        <div class="vendor-tracking-summary">
+            <h3>Vendor Spend</h3>
+            <p style="color: #6b7a8f; margin-bottom: 2rem;">Analysis based on ${
+              finalMonths.length
+            } months marked as Final: ${finalMonthNames}</p>
+            
+            <div class="kpi-cards" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin: 2rem 0;">
+                <div class="kpi-card" style="background: #ffffff; border-radius: 12px; padding: 1.5rem; border: 2px solid #e1e8ed; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);">
+                    <h4 style="color: #2d3a4a; margin-bottom: 1rem; font-size: 1.1rem;">Cost of Sales (Final Months)</h4>
+                    <div class="kpi-value" style="font-size: 2rem; font-weight: 700; color: #0d7377; margin-bottom: 0.5rem;">
+                        ${formatCurrencyFull(vendorData.costOfSales)}
+                    </div>
+                    <div class="kpi-context" style="font-size: 0.9rem; color: #6b7a8f;">
+                        Total spending on Cost of Sales for months marked as Final
+                    </div>
+                </div>
+                
+                <div class="kpi-card" style="background: #ffffff; border-radius: 12px; padding: 1.5rem; border: 2px solid #e1e8ed; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);">
+                    <h4 style="color: #2d3a4a; margin-bottom: 1rem; font-size: 1.1rem;">Other OpEx (Final Months)</h4>
+                    <div class="kpi-value" style="font-size: 2rem; font-weight: 700; color: #0d7377; margin-bottom: 0.5rem;">
+                        ${formatCurrencyFull(vendorData.other)}
+                    </div>
+                    <div class="kpi-context" style="font-size: 0.9rem; color: #6b7a8f;">
+                        Total spending on Other OpEx for months marked as Final
+                    </div>
+                </div>
+                
+                <div class="kpi-card" style="background: #ffffff; border-radius: 12px; padding: 1.5rem; border: 2px solid #14a085; box-shadow: 0 4px 12px rgba(20, 160, 133, 0.15);">
+                    <h4 style="color: #2d3a4a; margin-bottom: 1rem; font-size: 1.1rem;">Total Vendor Spending</h4>
+                    <div class="kpi-value" style="font-size: 2.2rem; font-weight: 700; color: #14a085; margin-bottom: 0.5rem;">
+                        ${formatCurrencyFull(vendorData.total)}
+                    </div>
+                    <div class="kpi-context" style="font-size: 0.9rem; color: #6b7a8f;">
+                        Combined Cost of Sales and Other OpEx for Final months
+                    </div>
+                </div>
+            </div>
+            
+            <div class="vendor-insights" style="background: #f8f9fa; border-radius: 8px; padding: 1.5rem; margin-top: 2rem;">
+                <h4 style="color: #2d3a4a; margin-bottom: 1rem;">Key Insights</h4>
+                <ul style="color: #6b7a8f; line-height: 1.6;">
+                    <li>Vendor spending analysis focuses only on months marked as "Final" to ensure data accuracy</li>
+                    <li>Cost of Sales represents ${(
+                      (vendorData.costOfSales / vendorData.total) *
+                      100
+                    ).toFixed(1)}% of total vendor spending</li>
+                    <li>Other OpEx represents ${(
+                      (vendorData.other / vendorData.total) *
+                      100
+                    ).toFixed(1)}% of total vendor spending</li>
+                    <li>This analysis excludes forecast months to provide confirmed spending totals</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+`;
+
         const resourceData = getResourceData();
         const budgetNote =
           resourceData.hiringCapacity.budgetVsProjection < 0
@@ -1349,7 +1663,7 @@ const ExecutiveSummary = () => {
         const budgetSign =
           resourceData.hiringCapacity.budgetVsProjection >= 0 ? "+" : "";
         htmlContent += `
-    <!-- Slide 4: Resource Allocation & Hiring Capacity -->
+    <!-- Slide 5: Resource Allocation & Hiring Capacity -->
     <div class="slide">
         <h2>Resource Allocation & Hiring Capacity</h2>
         
@@ -1430,7 +1744,7 @@ const ExecutiveSummary = () => {
             const chartImage = canvas.toDataURL("image/png");
 
             htmlContent += `
-    <!-- Slide 5: Budget vs Actual Chart -->
+    <!-- Slide 6: Budget vs Actual Chart -->
     <div class="slide">
         <h2>Budget vs Actual Trend</h2>
         <div class="chart-container">
@@ -1443,7 +1757,7 @@ const ExecutiveSummary = () => {
           console.warn("Could not capture chart for export:", chartError);
 
           htmlContent += `
-    <!-- Slide 5: Budget vs Actual Chart -->
+    <!-- Slide 6: Budget vs Actual Chart -->
     <div class="slide">
         <h2>Budget vs Actual Trend</h2>
         <div class="chart-container">
@@ -1454,9 +1768,9 @@ const ExecutiveSummary = () => {
         }
       }
 
-      // Slide 6: Trend Chart Data Table
+      // Slide 7: Trend Chart Data Table
       htmlContent += `
-    <!-- Slide 6: Trend Chart Data -->
+    <!-- Slide 7: Trend Chart Data -->
     <div class="slide">
         <h2>Trend Chart Data</h2>
         <div class="trend-data-table">            <table class="trend-table" style="width: 100%; border-collapse: collapse; font-size: 14px;">
@@ -1532,10 +1846,10 @@ const ExecutiveSummary = () => {
     </div>
 `;
 
-      // Slide 7: Total Compensation & Capitalization
+      // Slide 8: Total Compensation & Capitalization
       const resourceData = getResourceData();
       htmlContent += `
-    <!-- Slide 7: Total Compensation & Capitalization -->
+    <!-- Slide 8: Total Compensation & Capitalization -->
     <div class="slide">
         <h2>Total Compensation & Capitalization</h2>
         <div class="resource-summary-cards" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 2rem 0;">
@@ -1692,6 +2006,12 @@ const ExecutiveSummary = () => {
         if (value > 6) return "performance-good"; // Plenty of runway
         if (value < 2) return "performance-danger"; // Low runway
         return "performance-warning";
+
+      case "vendorVariance":
+        if (value === 0) return "performance-good"; // Perfect match = green
+        if (value < 0) return "performance-warning"; // Negative variance = yellow
+        if (value > 0) return "performance-danger"; // Positive variance = red
+        return "";
 
       default:
         return "";
@@ -2163,7 +2483,7 @@ const ExecutiveSummary = () => {
               <span className="expand-icon">
                 {isStrategicContextExpanded ? "−" : "+"}
               </span>
-              Strategic Context
+              Overall Budget Context
             </h4>
             {!isStrategicContextExpanded && (
               <div className="compact-summary">
@@ -2937,7 +3257,175 @@ const ExecutiveSummary = () => {
           </div>
         )}{" "}
       </div>{" "}
-      {/* Divider between Trend Chart Data and Resource Allocation */}
+      {/* Divider between Trend Chart Data and Vendor Tracking */}
+      <div className="section-divider"></div>
+      {/* Vendor Tracking Section */}
+      <div className="vendor-tracking-section">
+        <h2>Vendor Tracking</h2>
+
+        <div className="kpi-grid">
+          {/* Vendor Spending - Collapsible */}
+          <div className="kpi-section vendor-spending">
+            <div
+              className="section-header"
+              onClick={() =>
+                setIsVendorSpendingExpanded(!isVendorSpendingExpanded)
+              }
+            >
+              <h4 className="section-title">
+                <span className="expand-icon">
+                  {isVendorSpendingExpanded ? "−" : "+"}
+                </span>
+                Vendor Spend
+              </h4>
+
+              {!isVendorSpendingExpanded && (
+                <div className="compact-summary">
+                  {/* <span className="compact-metric">
+                    Cost of Sales:{" "}
+                    <strong>
+                      {formatCurrencyFull(getVendorTrackingData().costOfSales)}
+                    </strong>
+                  </span>
+                  <span className="compact-metric">
+                    Other:{" "}
+                    <strong>
+                      {formatCurrencyFull(getVendorTrackingData().other)}
+                    </strong>
+                  </span> */}
+                  <span className="compact-metric">
+                    Total YTD:{" "}
+                    <strong>
+                      {formatCurrencyFull(getVendorTrackingData().total)}
+                    </strong>
+                  </span>
+                  <span className="compact-metric">
+                    Total YTD from Vendor Tracking:{" "}
+                    <strong>{formatCurrencyFull(getTotalVendorSpend())}</strong>
+                  </span>
+                  <span className="compact-metric">
+                    Variance:{" "}
+                    <strong>
+                      {(() => {
+                        const variance =
+                          getTotalVendorSpend() - getVendorTrackingData().total;
+                        return (
+                          <>
+                            {variance >= 0 ? "+" : ""}
+                            {formatCurrencyFull(variance)}
+                          </>
+                        );
+                      })()}
+                    </strong>
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {isVendorSpendingExpanded && (
+              <>
+                <div className="kpi-row">
+                  <div className="kpi-notes">
+                    <span className="kpi-row-notes">
+                      Total vendor spend from budget monthly tracking report.
+                    </span>
+                  </div>
+                  <div className="kpi-cards">
+                    {/* <div
+                      className="kpi-card"
+                      onMouseEnter={(e) =>
+                        handleVendorMouseEnter(e, "costOfSales")
+                      }
+                      onMouseLeave={handleVendorMouseLeave}
+                    >
+                      <span>Cost of Sales</span>
+                      <strong>
+                        {formatCurrencyFull(
+                          getVendorTrackingData().costOfSales
+                        )}
+                      </strong>
+                      <span className="kpi-subheader">YTD</span>
+                    </div> */}
+                    {/* <div
+                      className="kpi-card"
+                      onMouseEnter={(e) => handleVendorMouseEnter(e, "other")}
+                      onMouseLeave={handleVendorMouseLeave}
+                    >
+                      <span>Other</span>
+                      <strong>
+                        {formatCurrencyFull(getVendorTrackingData().other)}
+                      </strong>
+                      <span className="kpi-subheader">YTD</span>
+                    </div> */}
+                    <div
+                      className="kpi-card"
+                      onMouseEnter={(e) => handleVendorMouseEnter(e, "total")}
+                      onMouseLeave={handleVendorMouseLeave}
+                    >
+                      <span>Total Vendor Spend</span>
+                      <strong>
+                        {formatCurrencyFull(getVendorTrackingData().total)}
+                      </strong>
+                      <span className="kpi-subheader">YTD</span>
+                      <span className="kpi-context">
+                        YTD from monthly budget vs actual report.
+                      </span>
+                    </div>
+                    <div
+                      className="kpi-card"
+                      onMouseEnter={(e) =>
+                        handleVendorMouseEnter(e, "totalVendorSpend")
+                      }
+                      onMouseLeave={handleVendorMouseLeave}
+                    >
+                      <span>Total Vendor Spend</span>
+                      <strong>
+                        {formatCurrencyFull(getTotalVendorSpend())}
+                      </strong>
+                      <span className="kpi-subheader">YTD</span>
+                      <span className="kpi-context">
+                        Total vendor spend from vendor tracking sheet.{" "}
+                      </span>
+                    </div>
+                    <div
+                      className={`kpi-card ${(() => {
+                        const variance =
+                          getTotalVendorSpend() - getVendorTrackingData().total;
+                        return getPerformanceClass("vendorVariance", variance);
+                      })()}`}
+                      onMouseEnter={(e) =>
+                        handleVendorMouseEnter(e, "vendorVariance")
+                      }
+                      onMouseLeave={handleVendorMouseLeave}
+                    >
+                      <span>Vendor Variance</span>
+                      <strong>
+                        {(() => {
+                          const variance =
+                            getTotalVendorSpend() -
+                            getVendorTrackingData().total;
+                          return (
+                            <>
+                              {variance >= 0 ? "+" : ""}
+                              {formatCurrencyFull(variance)}
+                            </>
+                          );
+                        })()}
+                      </strong>
+                      <span className="kpi-subheader">Difference</span>
+                      <span className="kpi-context">
+                        Delta on Monthly Budget vs Actual and Vendor Tracking
+                        sheet.
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+      {/* Divider between Vendor Tracking and Resource Allocation */}
       <div className="section-divider"></div>
       <div className="resource-allocation-section">
         <h2>Resource Allocation & Hiring Capacity</h2>{" "}

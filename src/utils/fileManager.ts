@@ -1,4 +1,4 @@
-import { BudgetEntry, BudgetState, VendorData } from "../types";
+import { BudgetEntry, BudgetState, VendorData, VendorTracking } from "../types";
 
 // Cache key for storing file information
 const CACHE_KEY = "budget-tracker-file-info";
@@ -19,6 +19,7 @@ export interface BudgetDataFile {
   yearlyBudgetTargets?: { [year: number]: number };
   monthlyForecastModes?: { [year: number]: { [month: number]: boolean } };
   vendorData?: VendorData[]; // NEW: Vendor data
+  vendorTrackingData?: VendorTracking[]; // NEW: Vendor tracking data
   metadata: {
     totalEntries: number;
     dateRange: {
@@ -68,7 +69,7 @@ export const saveBudgetData = (
     | "persistence"
   >
 ) => {
-  const { entries, selectedYear, vendorData } = state;
+  const { entries, selectedYear, vendorData, vendorTrackingData } = state;
 
   // Filter entries for the selected year
   const yearEntries = entries.filter(
@@ -79,6 +80,12 @@ export const saveBudgetData = (
   const yearVendorData =
     vendorData?.filter((vendor: VendorData) => vendor.year === selectedYear) ||
     [];
+
+  // Filter vendor tracking data for the selected year
+  const yearVendorTrackingData =
+    vendorTrackingData?.filter(
+      (tracking: VendorTracking) => tracking.year === selectedYear
+    ) || [];
 
   // Create metadata
   const dates = yearEntries.map((entry: BudgetEntry) => entry.createdAt);
@@ -95,6 +102,7 @@ export const saveBudgetData = (
     yearlyBudgetTargets: state.yearlyBudgetTargets || {},
     monthlyForecastModes: state.monthlyForecastModes || {},
     vendorData: yearVendorData,
+    vendorTrackingData: yearVendorTrackingData,
     metadata: {
       totalEntries: yearEntries.length,
       dateRange: {
@@ -162,6 +170,26 @@ export const loadBudgetData = (): Promise<BudgetDataFile> => {
             createdAt: new Date(entry.createdAt),
             updatedAt: new Date(entry.updatedAt),
           }));
+
+          // Convert date strings in vendor data
+          if (data.vendorData) {
+            data.vendorData = data.vendorData.map((vendor) => ({
+              ...vendor,
+              createdAt: new Date(vendor.createdAt),
+              updatedAt: new Date(vendor.updatedAt),
+            }));
+          }
+
+          // Convert date strings in vendor tracking data
+          if (data.vendorTrackingData) {
+            data.vendorTrackingData = data.vendorTrackingData.map(
+              (tracking) => ({
+                ...tracking,
+                createdAt: new Date(tracking.createdAt),
+                updatedAt: new Date(tracking.updatedAt),
+              })
+            );
+          }
 
           resolve(data);
         } catch (error) {
@@ -264,7 +292,7 @@ export const saveToFileHandle = async (
         fileName: `budget-data-${state.selectedYear}.json`,
       };
     }
-    const { entries, selectedYear, vendorData } = state;
+    const { entries, selectedYear, vendorData, vendorTrackingData } = state;
     const yearEntries = entries.filter(
       (entry: BudgetEntry) => entry.year === selectedYear
     );
@@ -273,6 +301,12 @@ export const saveToFileHandle = async (
     const yearVendorData =
       vendorData?.filter(
         (vendor: VendorData) => vendor.year === selectedYear
+      ) || [];
+
+    // Filter vendor tracking data for the selected year
+    const yearVendorTrackingData =
+      vendorTrackingData?.filter(
+        (tracking: VendorTracking) => tracking.year === selectedYear
       ) || [];
 
     const dates = yearEntries.map((entry: BudgetEntry) => entry.createdAt);
@@ -288,6 +322,7 @@ export const saveToFileHandle = async (
       yearlyBudgetTargets: state.yearlyBudgetTargets || {},
       monthlyForecastModes: state.monthlyForecastModes || {},
       vendorData: yearVendorData,
+      vendorTrackingData: yearVendorTrackingData,
       metadata: {
         totalEntries: yearEntries.length,
         dateRange: {
@@ -703,6 +738,26 @@ export const attemptRestoreCachedFile = async (): Promise<{
       createdAt: new Date(entry.createdAt),
       updatedAt: new Date(entry.updatedAt),
     }));
+
+    // Convert date strings in vendor data
+    if (data.vendorData) {
+      data.vendorData = data.vendorData.map((vendor: any) => ({
+        ...vendor,
+        createdAt: new Date(vendor.createdAt),
+        updatedAt: new Date(vendor.updatedAt),
+      }));
+    }
+
+    // Convert date strings in vendor tracking data
+    if (data.vendorTrackingData) {
+      data.vendorTrackingData = data.vendorTrackingData.map(
+        (tracking: any) => ({
+          ...tracking,
+          createdAt: new Date(tracking.createdAt),
+          updatedAt: new Date(tracking.updatedAt),
+        })
+      );
+    }
 
     return {
       success: true,

@@ -1741,7 +1741,7 @@ button small {
   font-size: 0.8rem;
   transition: transform 0.2s ease;
   flex-shrink: 0;
-  color: black;
+    color: #5d6a5c;
 }
 
 .monthly-view .inline-budget,

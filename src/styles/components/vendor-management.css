@@ -3,6 +3,10 @@
   max-width: 100%;
   margin: 0 auto;
   padding: var(--spacing-md);
+  background: var(--background-grey);
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
 }
 
 .vendor-management-header {
@@ -39,6 +43,7 @@
   font-weight: 500;
   cursor: pointer;
   transition: var(--transition-fast);
+  margin-bottom: var(--spacing-md);
 }
 
 .add-row-btn:hover {
@@ -56,14 +61,13 @@
 .budget-total-display {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  font-size: 1rem;
-  font-weight: 500;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
 .budget-total-label {
-  color: var(--primary-green);
   font-weight: 600;
+  color: var(--text-primary);
 }
 
 .budget-total-amount {
@@ -76,7 +80,7 @@
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--radius-md);
   font-weight: 600;
-  font-size: 1.1rem;
+  font-size: 1.5rem;
   min-width: 120px;
   text-align: center;
   box-shadow: 0 2px 4px rgba(51, 73, 21, 0.2);
@@ -92,7 +96,7 @@
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--radius-md);
   font-weight: 600;
-  font-size: 1.1rem;
+  font-size: 1.5rem;
   min-width: 120px;
   text-align: center;
   box-shadow: 0 2px 4px rgba(51, 73, 21, 0.2);

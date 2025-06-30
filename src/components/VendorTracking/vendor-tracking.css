@@ -1,0 +1,436 @@
+/* styles for Vendor Tracking Table */
+.vendor-tracking-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1400px;
+  table-layout: fixed;
+}
+
+.vendor-tracking-table th:first-child {
+  border-top-left-radius: var(--radius-xl);
+}
+
+.vendor-tracking-table th {
+  background: linear-gradient(
+    135deg,
+    var(--primary-green) 0%,
+    var(--primary-green-light) 100%
+  );
+  color: white;
+  padding: var(--spacing-md) 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  border: none;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.vendor-tracking-table th:first-child {
+  border-top-left-radius: var(--radius-xl);
+  max-width: 300px;
+  min-width: 300px;
+  width: 300px;
+}
+
+.vendor-tracking-table th:last-child {
+  border-top-right-radius: var(--radius-xl);
+}
+
+.vendor-tracking-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border-light);
+  vertical-align: top;
+}
+
+.vendor-tracking-table tbody tr:hover {
+  background-color: var(--background-grey);
+}
+
+.vendor-tracking-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Vendor Tracking Table Column Styles */
+.vendor-tracking-table .vendor-col-vendor-name {
+  width: fit-content;
+  min-width: 120px;
+  max-width: 300px;
+}
+
+.vendor-tracking-table .vendor-col-finance-category {
+  width: fit-content;
+  min-width: 100px;
+  max-width: 250px;
+}
+
+.vendor-tracking-table .vendor-col-category {
+  width: fit-content;
+  min-width: 100px;
+  max-width: 250px;
+}
+
+.vendor-tracking-table .vendor-col-description {
+  width: auto;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vendor-tracking-table .vendor-col-notes {
+  width: auto;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Monthly columns styling for vendor tracking table */
+.vendor-tracking-table .vendor-col-month {
+  width: 85px;
+  min-width: 85px;
+  max-width: 85px;
+  padding: var(--spacing-xs) 4px;
+  text-align: center;
+  font-size: 0.75rem;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.vendor-tracking-table .vendor-col-month .vendor-input {
+  width: 100%;
+  text-align: center;
+  font-size: 0.75rem;
+  padding: 0.25rem 2px;
+  box-sizing: border-box;
+}
+
+.vendor-tracking-table .vendor-col-month .monthly-amount {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  display: block;
+  width: 100%;
+}
+
+/* Monthly header styling */
+.vendor-tracking-table th:nth-child(4),  /* Jan */
+.vendor-tracking-table th:nth-child(5),  /* Feb */
+.vendor-tracking-table th:nth-child(6),  /* Mar */
+.vendor-tracking-table th:nth-child(7),  /* Apr */
+.vendor-tracking-table th:nth-child(8),  /* May */
+.vendor-tracking-table th:nth-child(9),  /* Jun */
+.vendor-tracking-table th:nth-child(10), /* Jul */
+.vendor-tracking-table th:nth-child(11), /* Aug */
+.vendor-tracking-table th:nth-child(12), /* Sep */
+.vendor-tracking-table th:nth-child(13), /* Oct */
+.vendor-tracking-table th:nth-child(14), /* Nov */
+.vendor-tracking-table th:nth-child(15)  /* Dec */ {
+  text-align: center;
+  font-size: 0.85rem;
+  padding: var(--spacing-sm) 0.25rem;
+  min-width: 85px;
+  max-width: 85px;
+  width: 85px;
+}
+
+/* Form Elements for VendorTracking */
+.vendor-tracking-table .vendor-input,
+.vendor-tracking-table .vendor-select,
+.vendor-tracking-table .vendor-textarea {
+  width: 100%;
+  padding: var(--spacing-sm);
+  border: 1px solid #ced4da;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  transition: border-color var(--transition-fast);
+}
+
+.vendor-tracking-table .vendor-input:focus,
+.vendor-tracking-table .vendor-select:focus,
+.vendor-tracking-table .vendor-textarea:focus {
+  outline: none;
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 2px rgba(51, 73, 21, 0.1);
+}
+
+/* Row State Styles for VendorTracking */
+.vendor-tracking-table .vendor-row-complete {
+  background-color: #f8fffe;
+  border-left: 3px solid var(--success-color);
+}
+
+.vendor-tracking-table .vendor-row-complete:hover {
+  background-color: #e8f7e6;
+}
+
+.vendor-tracking-table .vendor-row-editing {
+  background-color: #fffef8;
+  border-left: 3px solid var(--warning-color);
+}
+
+.vendor-tracking-table .vendor-row-editing:hover {
+  background-color: var(--background-grey);
+}
+
+/* Row Spacing for VendorTracking */
+.vendor-tracking-table .vendor-row-complete td {
+  padding: 0.4rem 0.75rem;
+  vertical-align: middle;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vendor-tracking-table .vendor-row-editing td {
+  padding: 0.75rem;
+  vertical-align: top;
+}
+
+/* Read-only Label Styles for VendorTracking */
+.vendor-tracking-table .vendor-label {
+  display: inline-block;
+
+  padding: 0.3rem 0.5rem;
+  font-size: 0.9rem;
+  color: #495057;
+  background-color: transparent;
+  border-radius: 4px;
+
+  overflow: visible !important;
+  text-overflow: ellipsis !important;
+  min-height: 1.2rem;
+  line-height: 1.2;
+}
+
+/* Actions Column for VendorTracking */
+.vendor-tracking-table .vendor-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.vendor-tracking-table .edit-row-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.25rem;
+  border-radius: var(--radius-sm);
+  transition: var(--transition-fast);
+}
+
+.vendor-tracking-table .edit-row-btn:hover {
+  background-color: var(--background-grey);
+  transform: scale(1.1);
+}
+
+.vendor-tracking-table .remove-row-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.25rem;
+  border-radius: var(--radius-sm);
+  transition: var(--transition-fast);
+  color: var(--error-color);
+}
+
+.vendor-tracking-table .remove-row-btn:hover:not(:disabled) {
+  background-color: rgba(220, 53, 69, 0.1);
+  transform: scale(1.1);
+}
+
+.vendor-tracking-table .remove-row-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Currency input styling for monthly fields */
+.vendor-tracking-table .currency-input {
+  text-align: center;
+  font-family: var(--font-mono);
+}
+
+/* Make the table container horizontally scrollable for wide tables */
+.vendor-table-container {
+  overflow-x: auto;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  background: var(--background-card);
+  margin-bottom: var(--spacing-xl);
+}
+
+/* Update table layout for better handling of many columns */
+.vendor-tracking-table {
+  min-width: 1700px; /* Ensure minimum width for all columns */
+  table-layout: fixed;
+}
+
+/* Sort Header Styles for vendor tracking table */
+.vendor-tracking-table .sort-header {
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: var(--transition-fast);
+}
+
+.vendor-tracking-table .sort-header:hover {
+  color: var(--primary-green);
+}
+
+.vendor-tracking-table .sort-indicator {
+  font-size: 0.8rem;
+  margin-left: var(--spacing-xs);
+  color: var(--primary-green);
+  font-weight: bold;
+}
+
+/* Center alignment for monthly column sort headers */
+.vendor-tracking-table th:nth-child(4) .sort-header,  /* Jan */
+.vendor-tracking-table th:nth-child(5) .sort-header,  /* Feb */
+.vendor-tracking-table th:nth-child(6) .sort-header,  /* Mar */
+.vendor-tracking-table th:nth-child(7) .sort-header,  /* Apr */
+.vendor-tracking-table th:nth-child(8) .sort-header,  /* May */
+.vendor-tracking-table th:nth-child(9) .sort-header,  /* Jun */
+.vendor-tracking-table th:nth-child(10) .sort-header, /* Jul */
+.vendor-tracking-table th:nth-child(11) .sort-header, /* Aug */
+.vendor-tracking-table th:nth-child(12) .sort-header, /* Sep */
+.vendor-tracking-table th:nth-child(13) .sort-header, /* Oct */
+.vendor-tracking-table th:nth-child(14) .sort-header, /* Nov */
+.vendor-tracking-table th:nth-child(15) .sort-header  /* Dec */ {
+  justify-content: center;
+  text-align: center;
+}
+
+/* Paste message notification */
+.paste-message {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  animation: slideIn 0.3s ease-out;
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+/* Warning messages */
+.paste-message[data-type="warning"] {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Additional input focus styles for navigation */
+.vendor-input:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 1px;
+}
+
+/* Improved table navigation */
+.vendor-tracking-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.vendor-row-editing {
+  background-color: #e3f2fd !important;
+}
+
+.vendor-row-editing:hover {
+  background-color: #e3f2fd !important;
+}
+
+/* Keyboard navigation hints */
+.vendor-input[data-tracking-id][data-field] {
+  transition: all 0.2s ease;
+}
+
+.vendor-input[data-tracking-id][data-field]:focus {
+  transform: scale(1.02);
+  z-index: 10;
+  position: relative;
+}
+
+/* Footer styles */
+.vendor-tracking-footer {
+  margin-top: 16px;
+  padding: 12px 0;
+  border-top: 1px solid #e0e6ed;
+}
+
+.vendor-tracking-footer .keyboard-shortcuts {
+  margin: 0;
+  color: #6c757d;
+  font-style: italic;
+  text-align: center;
+}
+
+.vendor-tracking-footer .keyboard-shortcuts small {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+/* Totals row styles */
+.vendor-totals-row {
+  background-color: var(--background-light, #f8f9fa) !important;
+  border-top: 2px solid var(--primary-green, #0d7377) !important;
+  font-weight: 600;
+}
+
+.vendor-totals-row:hover {
+  background-color: var(--background-light, #f8f9fa) !important;
+}
+
+.vendor-totals-row td {
+  border-bottom: 2px solid var(--primary-green, #0d7377) !important;
+  padding: 0.875rem 0.75rem;
+  font-weight: 600;
+}
+
+.vendor-totals-row strong {
+  color: var(--text-dark, #2c3e50);
+  font-weight: 700;
+}
+
+.vendor-totals-row .monthly-amount {
+  color: var(--primary-green, #0d7377);
+  font-weight: 700;
+}
+
+/* Ensure totals row stands out visually */
+.vendor-totals-row td:first-child {
+  color: var(--primary-green, #0d7377);
+  font-size: 1.05em;
+  letter-spacing: 0.5px;
+}

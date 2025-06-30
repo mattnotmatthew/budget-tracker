@@ -1,4 +1,4 @@
-import { BudgetState, BudgetEntry, VendorData } from "../types";
+import { BudgetState, BudgetEntry, VendorData, VendorTracking } from "../types";
 
 // Cache keys
 const CACHE_KEY = "budget-tracker-data";
@@ -28,6 +28,7 @@ export interface FileInfo {
 export interface CachedBudgetData {
   entries: BudgetEntry[];
   vendorData: VendorData[];
+  vendorTrackingData: VendorTracking[];
   selectedYear: number;
   yearlyBudgetTargets: { [year: number]: number };
   monthlyForecastModes: { [year: number]: { [month: number]: boolean } };
@@ -85,6 +86,7 @@ export class PersistenceManager {
       const cacheData: CachedBudgetData = {
         entries: budgetState.entries,
         vendorData: budgetState.vendorData || [],
+        vendorTrackingData: budgetState.vendorTrackingData || [],
         selectedYear: budgetState.selectedYear,
         yearlyBudgetTargets: budgetState.yearlyBudgetTargets,
         monthlyForecastModes: budgetState.monthlyForecastModes,
@@ -94,6 +96,7 @@ export class PersistenceManager {
       console.log("PersistenceManager.saveToCache called with:", {
         entriesCount: cacheData.entries.length,
         vendorDataCount: cacheData.vendorData.length,
+        vendorTrackingDataCount: cacheData.vendorTrackingData.length,
         yearlyTargetsCount: Object.keys(cacheData.yearlyBudgetTargets).length,
         monthlyModesCount: Object.keys(cacheData.monthlyForecastModes).length,
         timestamp: cacheData.lastUpdated,
@@ -101,6 +104,8 @@ export class PersistenceManager {
 
       if (
         cacheData.entries.length === 0 &&
+        cacheData.vendorData.length === 0 &&
+        cacheData.vendorTrackingData.length === 0 &&
         Object.keys(cacheData.yearlyBudgetTargets).length === 0 &&
         Object.keys(cacheData.monthlyForecastModes).length === 0
       ) {
@@ -146,6 +151,24 @@ export class PersistenceManager {
             createdAt: new Date(entry.createdAt),
             updatedAt: new Date(entry.updatedAt),
           }));
+        }
+        // Convert date strings back to Date objects for vendor data
+        if (data.vendorData) {
+          data.vendorData = data.vendorData.map((vendor: any) => ({
+            ...vendor,
+            createdAt: new Date(vendor.createdAt),
+            updatedAt: new Date(vendor.updatedAt),
+          }));
+        }
+        // Convert date strings back to Date objects for vendor tracking data
+        if (data.vendorTrackingData) {
+          data.vendorTrackingData = data.vendorTrackingData.map(
+            (tracking: any) => ({
+              ...tracking,
+              createdAt: new Date(tracking.createdAt),
+              updatedAt: new Date(tracking.updatedAt),
+            })
+          );
         }
         return data;
       }

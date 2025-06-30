@@ -62,9 +62,8 @@
 .kpi-card span {
   display: block;
   font-size: 0.9rem;
-  margin-bottom: 0.8rem;
+
   color: #6b7a8f;
-  font-weight: 500;
   letter-spacing: 0.5px;
   text-transform: uppercase;
 }
@@ -1696,4 +1695,43 @@ body.printing .trend-data-table-section .trend-data-table {
 
 body.printing .total-comp-capitalization-section .resource-summary-cards {
   display: grid !important;
+}
+
+/* Vendor Spending KPI for formatting */
+.vendor-spending .kpi-row {
+  margin-bottom: 1rem;
+  padding: 0 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.vendor-spending .kpi-row:first-child {
+  margin-top: 1.5rem;
+}
+
+.vendor-spending .kpi-row:last-child {
+  margin-bottom: 1.5rem;
+}
+
+.kpi-row-notes {
+  font-size: var(--font-size-md);
+  color: #666;
+
+  margin-left: 0.1rem;
+}
+
+.kpi-notes {
+  margin-bottom: var(--spacing-md);
+}
+
+.kpi-subheader {
+  font-size: 0.8rem !important;
+  color: rgb(107, 122, 143);
+  margin-top: 0.5rem;
+}
+
+.kpi-context {
+  font-size: 0.8rem !important;
+  color: rgb(139, 148, 158) !important;
+  margin-top: 0.5rem;
+  text-transform: none !important;
 }

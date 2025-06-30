@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useBudget } from "../context/BudgetContext";
 import { VendorData } from "../types";
 import { formatCurrencyExcelStyle } from "../utils/currencyFormatter";
+import { VendorTrackingTable } from "./VendorTracking";
 import "../styles/App-new.css";
 
 const VendorManagement: React.FC = () => {
@@ -14,7 +15,9 @@ const VendorManagement: React.FC = () => {
   const [pasteMessage, setPasteMessage] = useState<string | null>(null);
 
   // Active tab state
-  const [activeTab, setActiveTab] = useState<"budget" | "monthly">("budget");
+  const [activeTab, setActiveTab] = useState<"budget" | "monthly" | "tracking">(
+    "budget"
+  );
 
   // Sort and filter state for budget table
   const [budgetSortConfig, setBudgetSortConfig] = useState<{
@@ -996,7 +999,13 @@ const VendorManagement: React.FC = () => {
           className={`vendor-tab ${activeTab === "monthly" ? "active" : ""}`}
           onClick={() => setActiveTab("monthly")}
         >
-          Monthly Budget
+          Vendor Budget
+        </button>
+        <button
+          className={`vendor-tab ${activeTab === "tracking" ? "active" : ""}`}
+          onClick={() => setActiveTab("tracking")}
+        >
+          Vendor Actuals
         </button>
       </div>
 
@@ -2327,6 +2336,12 @@ const VendorManagement: React.FC = () => {
               </tbody>
             </table>
           </div>
+        </>
+      )}
+
+      {activeTab === "tracking" && (
+        <>
+          <VendorTrackingTable />
         </>
       )}
     </div>

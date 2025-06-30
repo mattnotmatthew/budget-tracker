@@ -144,6 +144,32 @@ export interface BudgetState {
 
   // NEW: Vendor management data
   vendorData?: VendorData[]; // Default: [] - vendor management data
+
+  // NEW: Vendor tracking data
+  vendorTrackingData?: VendorTracking[]; // Default: [] - vendor tracking data
+}
+
+export interface VendorTracking {
+  id: string;
+  year: number;
+  financeMappedCategory: string;
+  vendorName: string;
+  inBudget: boolean;
+  notes: string;
+  jan: string;
+  feb: string;
+  mar: string;
+  apr: string;
+  may: string;
+  jun: string;
+  jul: string;
+  aug: string;
+  sep: string;
+  oct: string;
+  nov: string;
+  dec: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // Re-export planning types for convenience

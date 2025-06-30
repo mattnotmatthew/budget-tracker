@@ -13,6 +13,7 @@ import {
   PlanningData,
   HistoricalAnalysis,
   VendorData,
+  VendorTracking,
 } from "../types";
 import { attemptRestoreCachedFile } from "../utils/fileManager";
 import { PersistenceManager } from "../services/persistenceManager";
@@ -71,7 +72,12 @@ type BudgetAction =
   | { type: "ADD_VENDOR_DATA"; payload: VendorData }
   | { type: "UPDATE_VENDOR_DATA"; payload: VendorData }
   | { type: "DELETE_VENDOR_DATA"; payload: string }
-  | { type: "LOAD_VENDOR_DATA"; payload: VendorData[] };
+  | { type: "LOAD_VENDOR_DATA"; payload: VendorData[] }
+  // NEW: Vendor tracking actions
+  | { type: "ADD_VENDOR_TRACKING"; payload: VendorTracking }
+  | { type: "UPDATE_VENDOR_TRACKING"; payload: VendorTracking }
+  | { type: "DELETE_VENDOR_TRACKING"; payload: string }
+  | { type: "LOAD_VENDOR_TRACKING"; payload: VendorTracking[] };
 
 const initialCategories: BudgetCategory[] = [
   // Cost of Sales
@@ -240,6 +246,9 @@ const getInitialState = (): BudgetState => {
 
     // NEW: Vendor management data
     vendorData: [], // Empty vendor data by default
+
+    // NEW: Vendor tracking data
+    vendorTrackingData: [], // Empty vendor tracking data by default
   };
 };
 
@@ -374,6 +383,7 @@ const budgetReducer = (
         ...state,
         entries: action.payload.entries || [],
         vendorData: action.payload.vendorData || [],
+        vendorTrackingData: action.payload.vendorTrackingData || [],
         selectedYear: action.payload.selectedYear || state.selectedYear,
         yearlyBudgetTargets: action.payload.yearlyBudgetTargets || {},
         monthlyForecastModes: action.payload.monthlyForecastModes || {},
@@ -539,6 +549,51 @@ const budgetReducer = (
         },
       };
 
+    // NEW: Vendor tracking action handlers
+    case "ADD_VENDOR_TRACKING":
+      return {
+        ...state,
+        vendorTrackingData: [
+          ...(state.vendorTrackingData || []),
+          action.payload,
+        ],
+        persistence: {
+          ...state.persistence,
+          hasUnsavedChanges: true,
+        },
+      };
+    case "UPDATE_VENDOR_TRACKING":
+      return {
+        ...state,
+        vendorTrackingData: (state.vendorTrackingData || []).map((tracking) =>
+          tracking.id === action.payload.id ? action.payload : tracking
+        ),
+        persistence: {
+          ...state.persistence,
+          hasUnsavedChanges: true,
+        },
+      };
+    case "DELETE_VENDOR_TRACKING":
+      return {
+        ...state,
+        vendorTrackingData: (state.vendorTrackingData || []).filter(
+          (tracking) => tracking.id !== action.payload
+        ),
+        persistence: {
+          ...state.persistence,
+          hasUnsavedChanges: true,
+        },
+      };
+    case "LOAD_VENDOR_TRACKING":
+      return {
+        ...state,
+        vendorTrackingData: action.payload,
+        persistence: {
+          ...state.persistence,
+          hasUnsavedChanges: false,
+        },
+      };
+
     default:
       return state;
   }
@@ -666,6 +721,7 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
     state.yearlyBudgetTargets,
     state.monthlyForecastModes,
     state.vendorData,
+    state.vendorTrackingData,
   ]);
 
   // Persistence functions
@@ -679,6 +735,7 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
           yearlyBudgetTargets: state.yearlyBudgetTargets,
           monthlyForecastModes: state.monthlyForecastModes,
           vendorData: state.vendorData,
+          vendorTrackingData: state.vendorTrackingData,
         },
         state.currentFile
       );
@@ -861,6 +918,21 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
           });
         }
 
+        // Load vendor tracking data
+        if (loadedData.vendorTrackingData) {
+          const vendorTrackingWithDates = loadedData.vendorTrackingData.map(
+            (tracking: any) => ({
+              ...tracking,
+              createdAt: new Date(tracking.createdAt),
+              updatedAt: new Date(tracking.updatedAt),
+            })
+          );
+          dispatch({
+            type: "LOAD_VENDOR_TRACKING",
+            payload: vendorTrackingWithDates,
+          });
+        }
+
         // Update selected year
         dispatch({
           type: "SET_SELECTED_PERIOD",
@@ -950,6 +1022,7 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
           yearlyBudgetTargets: state.yearlyBudgetTargets || {},
           monthlyForecastModes: state.monthlyForecastModes || {},
           vendorData: state.vendorData || [],
+          vendorTrackingData: state.vendorTrackingData || [],
           metadata: {
             totalEntries: 0,
             dateRange: { earliest: "", latest: "" },
