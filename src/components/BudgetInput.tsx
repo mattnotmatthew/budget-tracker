@@ -393,9 +393,12 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
       const result = await smartAutoSave(
         {
           entries: state.entries,
+          allocations: state.allocations,
           selectedYear: state.selectedYear,
           yearlyBudgetTargets: state.yearlyBudgetTargets,
           monthlyForecastModes: state.monthlyForecastModes,
+          vendorData: state.vendorData,
+          vendorTrackingData: state.vendorTrackingData,
         },
         state.currentFile
       ); // Update the current file if a new one was created or reconnected
@@ -542,12 +545,15 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
       if (state.currentFile) {
         const updatedState = {
           entries: state.entries,
+          allocations: state.allocations,
           selectedYear: state.selectedYear,
           yearlyBudgetTargets: {
             ...state.yearlyBudgetTargets,
             [state.selectedYear]: amount,
           },
           monthlyForecastModes: state.monthlyForecastModes,
+          vendorData: state.vendorData,
+          vendorTrackingData: state.vendorTrackingData,
         };
 
         await smartAutoSave(updatedState, state.currentFile);

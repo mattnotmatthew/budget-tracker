@@ -226,3 +226,107 @@
   font-size: 0.85rem;
   align-items: center;
 }
+
+/* Budget Allocation Tooltip Styles */
+.kpi-tooltip {
+  background: rgba(45, 58, 74, 0.95);
+  color: #ffffff;
+  border-radius: 12px;
+  padding: 0;
+  max-width: 400px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: "Segoe UI", Arial, sans-serif;
+  animation: tooltipFadeIn 0.2s ease-out;
+  position: relative;
+}
+
+/* Arrow for tooltip when above element */
+.kpi-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 8px solid transparent;
+  border-top-color: rgba(45, 58, 74, 0.95);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+/* Arrow for tooltip when below element */
+.kpi-tooltip.show-below::after {
+  top: -16px;
+  border-top-color: transparent;
+  border-bottom-color: rgba(45, 58, 74, 0.95);
+}
+
+.tooltip-content {
+  padding: 1.5rem;
+}
+
+.tooltip-content h4 {
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #ffffff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding-bottom: 0.75rem;
+}
+
+.tooltip-content .interpretation {
+  margin: 0 0 1.25rem 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #e1e8ed;
+}
+
+.tooltip-content .formula-section,
+.tooltip-content .calculation-section {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  border-left: 3px solid #3498db;
+}
+
+.tooltip-content .formula-section:last-child,
+.tooltip-content .calculation-section:last-child {
+  margin-bottom: 0;
+}
+
+.tooltip-content .formula-section strong,
+.tooltip-content .calculation-section strong {
+  color: #3498db;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.tooltip-content .formula-section,
+.tooltip-content .calculation-section {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: #ffffff;
+  font-family: "Segoe UI", "Roboto Mono", monospace;
+}
+
+.tooltip-content .calculation-section pre {
+  margin: 0;
+  white-space: pre-line;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

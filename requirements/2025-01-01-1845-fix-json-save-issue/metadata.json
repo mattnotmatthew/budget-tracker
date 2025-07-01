@@ -1,0 +1,17 @@
+{
+  "id": "fix-json-save-issue",
+  "started": "2025-01-01T18:45:00Z",
+  "lastUpdated": "2025-01-01T18:45:00Z",
+  "status": "active",
+  "phase": "complete",
+  "progress": {
+    "discovery": { "answered": 5, "total": 5 },
+    "detail": { "answered": 5, "total": 5 }
+  },
+  "contextFiles": [
+    "/src/utils/fileManager.ts",
+    "/src/context/BudgetContext.tsx", 
+    "/src/components/FileManager.tsx"
+  ],
+  "relatedFeatures": []
+}

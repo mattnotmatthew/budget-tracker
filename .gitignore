@@ -1,5 +1,6 @@
 # Dependencies
 node_modules/
+requirements/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -177,9 +178,10 @@ common/autoinstallers/*/.npmrc
 
 # Nuxt.js (if you add Nuxt.js later)
 .nuxt
-
+ß
 # Gatsby (if you add Gatsby later)
 public
+
 
 # Serverless directories
 .serverless/
@@ -205,3 +207,4 @@ jest_0
 
 # Note: .env.example, .env.development, and .env.production are committed
 # Only .env.local and .env.*.local files are ignored for local customization
+

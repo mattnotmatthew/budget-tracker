@@ -40,6 +40,17 @@ export interface BudgetEntry {
   updatedAt: Date;
 }
 
+export interface CategoryAllocation {
+  id: string;
+  categoryId: string;
+  year: number;
+  month: number;
+  supportAmount: number;
+  rdAmount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface CategoryGroup {
   id: string;
   name: string;
@@ -90,6 +101,10 @@ export interface CategorySummary {
   variance: number;
   variancePercent: number;
   isNegative?: boolean;
+  // Percentage allocation fields for tooltip display
+  budgetPercent?: number;
+  actualPercent?: number;
+  reforecastPercent?: number;
 }
 
 export interface BudgetAlert {
@@ -105,6 +120,7 @@ export type DataType = "budget" | "actual" | "reforecast";
 
 export interface BudgetState {
   entries: BudgetEntry[];
+  allocations: CategoryAllocation[];
   categories: BudgetCategory[];
   viewMode: ViewMode;
   selectedYear: number;

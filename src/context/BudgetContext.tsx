@@ -161,6 +161,7 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
       const result = await fileManager.smartAutoSave(
         {
           entries: state.entries,
+          allocations: state.allocations,
           selectedYear: state.selectedYear,
           yearlyBudgetTargets: state.yearlyBudgetTargets,
           monthlyForecastModes: state.monthlyForecastModes,
@@ -464,7 +465,7 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
         console.log("❌ File System Access API not supported, trying fallback");
         // Fallback to traditional file input
         const fileManager = await import("../utils/fileManager");
-        const loadedData = await fileManager.loadBudgetData();
+        const { data: loadedData, fileName } = await fileManager.loadBudgetData();
         
         // Process the loaded data similar to the File System Access API path
         dispatch({ type: "LOAD_ENTRIES", payload: loadedData.entries });
@@ -552,7 +553,7 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
         dispatch({
           type: "SET_CURRENT_FILE",
           payload: {
-            name: "loaded-file.json",
+            name: fileName,
             lastSaved: new Date(),
             userLastSaved: undefined,
           },
@@ -564,7 +565,7 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
         const updatedState = {
           ...state,
           currentFile: {
-            name: "loaded-file.json",
+            name: fileName,
             lastSaved: new Date(),
             userLastSaved: undefined,
           },

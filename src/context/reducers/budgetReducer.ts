@@ -1,8 +1,9 @@
-import { BudgetEntry, BudgetCategory, ViewMode } from "../../types";
+import { BudgetEntry, BudgetCategory, ViewMode, CategoryAllocation } from "../../types";
 
 export interface BudgetState {
   entries: BudgetEntry[];
   categories: BudgetCategory[];
+  allocations: CategoryAllocation[];
   viewMode: ViewMode;
   selectedYear: number;
   selectedQuarter?: number;
@@ -15,6 +16,9 @@ export type BudgetAction =
   | { type: "ADD_ENTRY"; payload: BudgetEntry }
   | { type: "UPDATE_ENTRY"; payload: BudgetEntry }
   | { type: "DELETE_ENTRY"; payload: string }
+  | { type: "ADD_ALLOCATION"; payload: CategoryAllocation }
+  | { type: "UPDATE_ALLOCATION"; payload: CategoryAllocation }
+  | { type: "DELETE_ALLOCATION"; payload: string }
   | { type: "SET_VIEW_MODE"; payload: ViewMode }
   | {
       type: "SET_SELECTED_PERIOD";
@@ -105,6 +109,7 @@ const initialCategories: BudgetCategory[] = [
 export const initialBudgetState: BudgetState = {
   entries: [],
   categories: initialCategories,
+  allocations: [],
   viewMode: "monthly",
   selectedYear: 2025,
   yearlyBudgetTargets: {},
@@ -136,6 +141,26 @@ export const budgetReducer = (
         entries: state.entries.filter((entry) => entry.id !== action.payload),
       };
 
+    case "ADD_ALLOCATION":
+      return {
+        ...state,
+        allocations: [...state.allocations, action.payload],
+      };
+
+    case "UPDATE_ALLOCATION":
+      return {
+        ...state,
+        allocations: state.allocations.map((allocation) =>
+          allocation.id === action.payload.id ? action.payload : allocation
+        ),
+      };
+
+    case "DELETE_ALLOCATION":
+      return {
+        ...state,
+        allocations: state.allocations.filter((allocation) => allocation.id !== action.payload),
+      };
+
     case "SET_VIEW_MODE":
       return { ...state, viewMode: action.payload };
 
@@ -157,6 +182,7 @@ export const budgetReducer = (
       return {
         ...state,
         entries: [],
+        allocations: [],
         selectedQuarter: undefined,
         selectedMonth: undefined,
         yearlyBudgetTargets: {},

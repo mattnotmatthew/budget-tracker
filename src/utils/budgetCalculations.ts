@@ -1381,3 +1381,32 @@ export const calculateBudgetTracking = (
     variance: (varianceBase - budgetTrackingBudget) * -1,
   };
 };
+
+// Calculate category percentages for tooltip display
+export const calculateCategoryPercentages = (
+  categories: CategorySummary[],
+  parentGroupTotal: {
+    budget: number;
+    actual: number;
+    reforecast: number;
+    adjustments: number;
+  }
+): CategorySummary[] => {
+  return categories.map(category => {
+    // Calculate total amounts including adjustments
+    const categoryBudgetTotal = category.budget + category.adjustments;
+    const categoryActualTotal = category.actual + category.adjustments;
+    const categoryReforecastTotal = category.reforecast + category.adjustments;
+    
+    const parentBudgetTotal = parentGroupTotal.budget + parentGroupTotal.adjustments;
+    const parentActualTotal = parentGroupTotal.actual + parentGroupTotal.adjustments;
+    const parentReforecastTotal = parentGroupTotal.reforecast + parentGroupTotal.adjustments;
+
+    return {
+      ...category,
+      budgetPercent: parentBudgetTotal !== 0 ? (categoryBudgetTotal / parentBudgetTotal) * 100 : 0,
+      actualPercent: parentActualTotal !== 0 ? (categoryActualTotal / parentActualTotal) * 100 : 0,
+      reforecastPercent: parentReforecastTotal !== 0 ? (categoryReforecastTotal / parentReforecastTotal) * 100 : 0,
+    };
+  });
+};

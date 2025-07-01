@@ -89,7 +89,9 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
         }
       } else {
         // Fallback to traditional file loading
-        loadedData = await loadBudgetData();
+        const { data, fileName: selectedFileName } = await loadBudgetData();
+        loadedData = data;
+        fileName = selectedFileName;
       }
 
       // Replace all data with loaded data (no merging)

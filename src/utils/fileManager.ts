@@ -1,4 +1,4 @@
-import { BudgetEntry, BudgetState, VendorData, VendorTracking } from "../types";
+import { BudgetEntry, BudgetState, VendorData, VendorTracking, CategoryAllocation } from "../types";
 
 // Cache key for storing file information
 const CACHE_KEY = "budget-tracker-file-info";
@@ -16,6 +16,7 @@ export interface BudgetDataFile {
   exportDate: string;
   year: number;
   entries: BudgetEntry[];
+  allocations?: CategoryAllocation[]; // NEW: Category allocations
   yearlyBudgetTargets?: { [year: number]: number };
   monthlyForecastModes?: { [year: number]: { [month: number]: boolean } };
   vendorData?: VendorData[]; // NEW: Vendor data
@@ -33,7 +34,7 @@ export interface BudgetDataFile {
 // Enhanced SaveResult interface with new properties
 export interface SaveResult {
   saved: boolean;
-  method: "file" | "newFile" | "download";
+  method: "file" | "newFile" | "download" | "cancelled";
   fileHandle?: FileSystemFileHandle;
   fileName?: string;
   userCancelled?: boolean;
@@ -67,14 +68,20 @@ export const saveBudgetData = (
     | "selectedQuarter"
     | "selectedMonth"
     | "persistence"
-  >
+  >,
+  customFileName?: string
 ) => {
-  const { entries, selectedYear, vendorData, vendorTrackingData } = state;
+  const { entries, allocations, selectedYear, vendorData, vendorTrackingData } = state;
 
   // Filter entries for the selected year
   const yearEntries = entries.filter(
     (entry: BudgetEntry) => entry.year === selectedYear
   );
+
+  // Filter allocations for the selected year
+  const yearAllocations =
+    allocations?.filter((allocation: CategoryAllocation) => allocation.year === selectedYear) ||
+    [];
 
   // Filter vendor data for the selected year
   const yearVendorData =
@@ -99,6 +106,7 @@ export const saveBudgetData = (
     exportDate: new Date().toISOString(),
     year: selectedYear,
     entries: yearEntries,
+    allocations: yearAllocations,
     yearlyBudgetTargets: state.yearlyBudgetTargets || {},
     monthlyForecastModes: state.monthlyForecastModes || {},
     vendorData: yearVendorData,
@@ -130,7 +138,7 @@ export const saveBudgetData = (
 
   const link = document.createElement("a");
   link.href = url;
-  link.download = `budget-data-${selectedYear}.json`;
+  link.download = customFileName || `budget-data-${selectedYear}.json`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -140,7 +148,7 @@ export const saveBudgetData = (
 };
 
 // Load budget data from JSON file
-export const loadBudgetData = (): Promise<BudgetDataFile> => {
+export const loadBudgetData = (): Promise<{ data: BudgetDataFile; fileName: string }> => {
   return new Promise((resolve, reject) => {
     const input = document.createElement("input");
     input.type = "file";
@@ -171,6 +179,15 @@ export const loadBudgetData = (): Promise<BudgetDataFile> => {
             updatedAt: new Date(entry.updatedAt),
           }));
 
+          // Convert date strings in allocations
+          if (data.allocations) {
+            data.allocations = data.allocations.map((allocation) => ({
+              ...allocation,
+              createdAt: new Date(allocation.createdAt),
+              updatedAt: new Date(allocation.updatedAt),
+            }));
+          }
+
           // Convert date strings in vendor data
           if (data.vendorData) {
             data.vendorData = data.vendorData.map((vendor) => ({
@@ -191,7 +208,7 @@ export const loadBudgetData = (): Promise<BudgetDataFile> => {
             );
           }
 
-          resolve(data);
+          resolve({ data, fileName: file.name });
         } catch (error) {
           reject(
             new Error("Failed to parse JSON file: " + (error as Error).message)
@@ -292,10 +309,16 @@ export const saveToFileHandle = async (
         fileName: `budget-data-${state.selectedYear}.json`,
       };
     }
-    const { entries, selectedYear, vendorData, vendorTrackingData } = state;
+    const { entries, allocations, selectedYear, vendorData, vendorTrackingData } = state;
     const yearEntries = entries.filter(
       (entry: BudgetEntry) => entry.year === selectedYear
     );
+
+    // Filter allocations for the selected year
+    const yearAllocations =
+      allocations?.filter(
+        (allocation: CategoryAllocation) => allocation.year === selectedYear
+      ) || [];
 
     // Filter vendor data for the selected year
     const yearVendorData =
@@ -319,6 +342,7 @@ export const saveToFileHandle = async (
       exportDate: new Date().toISOString(),
       year: selectedYear,
       entries: yearEntries,
+      allocations: yearAllocations,
       yearlyBudgetTargets: state.yearlyBudgetTargets || {},
       monthlyForecastModes: state.monthlyForecastModes || {},
       vendorData: yearVendorData,
@@ -503,7 +527,89 @@ export const smartAutoSave = async (
 
   // Check if we had a file before (handle expired scenario vs truly no file)
   if (currentFile?.name && !currentFile?.handle) {
-    console.log("🔄 Had file before but handle is missing - likely expired");
+    console.log("🔄 Had file before but handle is missing");
+
+    // If File System Access API is not supported, show Save As dialog for Safari users
+    if (!supportsFileSystemAccess()) {
+      console.log("📥 File System Access API not supported, showing Save As dialog");
+      
+      // Get the suggested filename (preserve original name or create default)
+      const suggestedFileName = currentFile.name || `budget-data-${state.selectedYear}.json`;
+      
+      // Remember last save location from sessionStorage
+      const lastSaveLocation = sessionStorage.getItem('lastSaveLocation');
+      const dialogMessage = lastSaveLocation 
+        ? `Choose where to save "${suggestedFileName}"\n\nLast saved to: ${lastSaveLocation}`
+        : `Choose where to save "${suggestedFileName}"`;
+      
+      // Show confirmation dialog explaining the Save As behavior
+      const userConfirmed = window.confirm(
+        `${dialogMessage}\n\n` +
+        `Click OK to choose save location, or Cancel to abort.`
+      );
+      
+      if (!userConfirmed) {
+        return {
+          saved: false,
+          method: "cancelled",
+          message: "Save cancelled by user"
+        };
+      }
+      
+      // Prepare the data to save
+      const { entries, allocations, selectedYear, vendorData, vendorTrackingData } = state;
+      const yearEntries = entries.filter((entry) => entry.year === selectedYear);
+      const yearAllocations = allocations?.filter((allocation) => allocation.year === selectedYear) || [];
+      const yearVendorData = vendorData?.filter((vendor) => vendor.year === selectedYear) || [];
+      const yearVendorTrackingData = vendorTrackingData?.filter((tracking) => tracking.year === selectedYear) || [];
+
+      const dates = yearEntries.map((entry) => entry.createdAt);
+      const categorySet = new Set(yearEntries.map((entry) => entry.categoryId));
+      const categories = Array.from(categorySet);
+
+      const dataToSave = {
+        version: "1.0.0",
+        exportDate: new Date().toISOString(),
+        year: selectedYear,
+        entries: yearEntries,
+        allocations: yearAllocations,
+        yearlyBudgetTargets: state.yearlyBudgetTargets || {},
+        monthlyForecastModes: state.monthlyForecastModes || {},
+        vendorData: yearVendorData,
+        vendorTrackingData: yearVendorTrackingData,
+        metadata: {
+          totalEntries: yearEntries.length,
+          dateRange: {
+            earliest: dates.length > 0 ? new Date(Math.min(...dates.map((d) => d.getTime()))).toISOString() : "",
+            latest: dates.length > 0 ? new Date(Math.max(...dates.map((d) => d.getTime()))).toISOString() : "",
+          },
+          categories,
+        },
+      };
+
+      const jsonString = JSON.stringify(dataToSave, null, 2);
+      const blob = new Blob([jsonString], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+
+      // Create download link with suggested filename
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = suggestedFileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      // Store the filename in sessionStorage for next time
+      sessionStorage.setItem('lastSaveLocation', suggestedFileName);
+
+      return {
+        saved: true,
+        method: "download",
+        fileName: suggestedFileName,
+        message: `Saved as ${suggestedFileName}. Choose the same file next time to overwrite.`
+      };
+    }
 
     const shouldReconnect = window.confirm(
       `Connection to "${currentFile.name}" has been lost.\n\n` +
@@ -526,6 +632,7 @@ export const smartAutoSave = async (
         });
 
         if (!fileHandles || fileHandles.length === 0) {
+          console.log("❌ User cancelled file selection or no files selected");
           // Fall through to create new file prompt
         } else {
           const newFileHandle = fileHandles[0];
@@ -550,25 +657,56 @@ export const smartAutoSave = async (
   // Truly no file attached - show regular prompt
   console.log("📄 No file attached - prompting user to create new file");
 
-  const shouldSave = window.confirm(
-    "No file attached. Would you like to save your budget data to a file?\n\n" +
-      "Click OK to create a file, or Cancel to abort saving."
-  );
+  // If File System Access API is not supported, show Save As dialog
+  if (!supportsFileSystemAccess()) {
+    console.log("📥 File System Access API not supported, showing Save As dialog");
+    
+    // Get suggested filename and remember last save location
+    const suggestedFileName = `budget-data-${state.selectedYear}.json`;
+    const lastSaveLocation = sessionStorage.getItem('lastSaveLocation');
+    const dialogMessage = lastSaveLocation 
+      ? `Choose where to save "${suggestedFileName}"\n\nLast saved to: ${lastSaveLocation}`
+      : `Choose where to save "${suggestedFileName}"`;
+    
+    const shouldSave = window.confirm(
+      `No file attached. ${dialogMessage}\n\n` +
+        "Click OK to choose save location, or Cancel to abort saving."
+    );
 
-  if (shouldSave) {
-    try {
-      const result = await saveToFileHandle(state);
-      if (result.saved) {
-        return {
-          saved: true,
-          method: "newFile",
-          fileHandle: result.fileHandle,
-          fileName: result.fileName,
-        };
+    if (shouldSave) {
+      saveBudgetData(state, suggestedFileName);
+      
+      // Store the filename in sessionStorage for next time
+      sessionStorage.setItem('lastSaveLocation', suggestedFileName);
+      
+      return {
+        saved: true,
+        method: "download",
+        fileName: suggestedFileName,
+        message: `Saved as ${suggestedFileName}. Choose the same file next time to overwrite.`
+      };
+    }
+  } else {
+    const shouldSave = window.confirm(
+      "No file attached. Would you like to save your budget data to a file?\n\n" +
+        "Click OK to create a file, or Cancel to abort saving."
+    );
+
+    if (shouldSave) {
+      try {
+        const result = await saveToFileHandle(state);
+        if (result.saved) {
+          return {
+            saved: true,
+            method: "newFile",
+            fileHandle: result.fileHandle,
+            fileName: result.fileName,
+          };
+        }
+      } catch (error) {
+        console.error("Failed to create new file:", error);
+        throw error;
       }
-    } catch (error) {
-      console.error("Failed to create new file:", error);
-      throw error;
     }
   }
 
@@ -738,6 +876,15 @@ export const attemptRestoreCachedFile = async (): Promise<{
       createdAt: new Date(entry.createdAt),
       updatedAt: new Date(entry.updatedAt),
     }));
+
+    // Convert date strings in allocations
+    if (data.allocations) {
+      data.allocations = data.allocations.map((allocation: any) => ({
+        ...allocation,
+        createdAt: new Date(allocation.createdAt),
+        updatedAt: new Date(allocation.updatedAt),
+      }));
+    }
 
     // Convert date strings in vendor data
     if (data.vendorData) {

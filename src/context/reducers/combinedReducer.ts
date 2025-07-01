@@ -116,6 +116,7 @@ export const combinedReducer = (
       ...state,
       // Budget data
       entries: action.payload.entries || [],
+      allocations: action.payload.allocations || [],
       selectedYear: action.payload.selectedYear || state.selectedYear,
       yearlyBudgetTargets: action.payload.yearlyBudgetTargets || {},
       monthlyForecastModes: action.payload.monthlyForecastModes || {},
@@ -143,6 +144,7 @@ export const combinedReducer = (
       ...state,
       // Reset budget state
       entries: [],
+      allocations: [],
       selectedQuarter: undefined,
       selectedMonth: undefined,
       yearlyBudgetTargets: {},
@@ -159,7 +161,8 @@ export const combinedReducer = (
   const budgetActions = [
     "ADD_ENTRY", "UPDATE_ENTRY", "DELETE_ENTRY", "SET_VIEW_MODE",
     "SET_SELECTED_PERIOD", "ADD_CATEGORY", "LOAD_ENTRIES", "CLEAR_ALL_DATA",
-    "SET_YEARLY_BUDGET_TARGET", "SET_MONTHLY_FORECAST_MODE"
+    "SET_YEARLY_BUDGET_TARGET", "SET_MONTHLY_FORECAST_MODE",
+    "ADD_ALLOCATION", "UPDATE_ALLOCATION", "DELETE_ALLOCATION"
   ];
 
   const vendorActions = [
@@ -183,6 +186,7 @@ export const combinedReducer = (
       {
         entries: state.entries,
         categories: state.categories,
+        allocations: state.allocations,
         viewMode: state.viewMode,
         selectedYear: state.selectedYear,
         selectedQuarter: state.selectedQuarter,

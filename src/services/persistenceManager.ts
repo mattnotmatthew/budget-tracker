@@ -1,4 +1,4 @@
-import { BudgetState, BudgetEntry, VendorData, VendorTracking } from "../types";
+import { BudgetState, BudgetEntry, VendorData, VendorTracking, CategoryAllocation } from "../types";
 
 // Cache keys
 const CACHE_KEY = "budget-tracker-data";
@@ -27,6 +27,7 @@ export interface FileInfo {
 
 export interface CachedBudgetData {
   entries: BudgetEntry[];
+  allocations: CategoryAllocation[];
   vendorData: VendorData[];
   vendorTrackingData: VendorTracking[];
   selectedYear: number;
@@ -85,6 +86,7 @@ export class PersistenceManager {
     try {
       const cacheData: CachedBudgetData = {
         entries: budgetState.entries,
+        allocations: budgetState.allocations || [],
         vendorData: budgetState.vendorData || [],
         vendorTrackingData: budgetState.vendorTrackingData || [],
         selectedYear: budgetState.selectedYear,
@@ -95,6 +97,7 @@ export class PersistenceManager {
       }; // Debug logging to track empty data saves
       console.log("PersistenceManager.saveToCache called with:", {
         entriesCount: cacheData.entries.length,
+        allocationsCount: cacheData.allocations.length,
         vendorDataCount: cacheData.vendorData.length,
         vendorTrackingDataCount: cacheData.vendorTrackingData.length,
         yearlyTargetsCount: Object.keys(cacheData.yearlyBudgetTargets).length,
@@ -104,6 +107,7 @@ export class PersistenceManager {
 
       if (
         cacheData.entries.length === 0 &&
+        cacheData.allocations.length === 0 &&
         cacheData.vendorData.length === 0 &&
         cacheData.vendorTrackingData.length === 0 &&
         Object.keys(cacheData.yearlyBudgetTargets).length === 0 &&
@@ -150,6 +154,14 @@ export class PersistenceManager {
             ...entry,
             createdAt: new Date(entry.createdAt),
             updatedAt: new Date(entry.updatedAt),
+          }));
+        }
+        // Convert date strings back to Date objects for allocations
+        if (data.allocations) {
+          data.allocations = data.allocations.map((allocation: any) => ({
+            ...allocation,
+            createdAt: new Date(allocation.createdAt),
+            updatedAt: new Date(allocation.updatedAt),
           }));
         }
         // Convert date strings back to Date objects for vendor data

@@ -6,6 +6,9 @@ import {
   calculateBudgetTracking,
 } from "../utils/budgetCalculations";
 import { formatCurrencyExcelStyle } from "../utils/currencyFormatter";
+import { getBudgetAllocationTooltipContent } from "../utils/allocationTooltipUtils";
+import { Tooltip } from "./shared";
+import AllocationModal from "./AllocationModal";
 import IOSToggle from "./IOSToggle";
 
 // Utility function to get months for a specific quarter
@@ -31,7 +34,33 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({
   const { state, dispatch } = useBudget();
   const [collapsedSections, setCollapsedSections] = useState<{
     [key: string]: boolean;
-  }>({}); // Effect to handle collapse all functionality
+  }>({});
+  
+  // Tooltip state management
+  const [tooltipState, setTooltipState] = useState<{
+    visible: boolean;
+    content: any;
+    x: number;
+    y: number;
+  }>({
+    visible: false,
+    content: null,
+    x: 0,
+    y: 0,
+  });
+
+  // Allocation modal state management
+  const [allocationModalState, setAllocationModalState] = useState<{
+    isOpen: boolean;
+    month: number;
+    year: number;
+    categoryId?: string;
+    categoryName?: string;
+  }>({
+    isOpen: false,
+    month: 1,
+    year: state.selectedYear,
+  }); // Effect to handle collapse all functionality
   useEffect(() => {
     if (collapseAll !== undefined) {
       const newCollapsedState: { [key: string]: boolean } = {};
@@ -90,6 +119,74 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({
     return new Date(2025, month - 1, 1).toLocaleString("default", {
       month: "long",
     });
+  };
+
+  // Tooltip event handlers
+  const handleMouseEnter = (
+    event: React.MouseEvent,
+    category: CategorySummary,
+    month: number,
+    parentGroupName: string,
+    parentGroupTotal: any
+  ) => {
+    const content = getBudgetAllocationTooltipContent(
+      category,
+      month,
+      parentGroupName,
+      parentGroupTotal,
+      state.allocations
+    );
+    
+    setTooltipState({
+      visible: true,
+      content,
+      x: event.clientX,
+      y: event.clientY,
+    });
+  };
+
+  const handleMouseMove = (event: React.MouseEvent) => {
+    if (tooltipState.visible) {
+      setTooltipState((prev) => ({
+        ...prev,
+        x: event.clientX,
+        y: event.clientY,
+      }));
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setTooltipState({
+      visible: false,
+      content: null,
+      x: 0,
+      y: 0,
+    });
+  };
+
+  // Allocation modal event handlers
+  const handleCategoryClick = (
+    category: CategorySummary,
+    month: number
+  ) => {
+    // Open modal for any category that has budget/actual/reforecast amounts
+    const hasAmounts = category.budget !== 0 || category.actual !== 0 || category.reforecast !== 0;
+    if (hasAmounts) {
+      setAllocationModalState({
+        isOpen: true,
+        month,
+        year: state.selectedYear,
+        categoryId: category.categoryId,
+        categoryName: category.categoryName,
+      });
+    }
+  };
+
+  const handleModalClose = () => {
+    setAllocationModalState((prev) => ({
+      ...prev,
+      isOpen: false,
+    }));
   };
 
   const renderCategoryGroup = (
@@ -153,7 +250,17 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({
             {" "}
             <div className="category-list">
               {categories.map((cat) => (
-                <div key={cat.categoryId} className="category-row">
+                <div 
+                  key={cat.categoryId} 
+                  className="category-row"
+                  onMouseEnter={(e) => handleMouseEnter(e, cat, monthNumber, groupName, total)}
+                  onMouseMove={handleMouseMove}
+                  onMouseLeave={handleMouseLeave}
+                  onClick={() => handleCategoryClick(cat, monthNumber)}
+                  style={{ 
+                    cursor: (cat.budget !== 0 || cat.actual !== 0 || cat.reforecast !== 0) ? 'pointer' : 'help' 
+                  }}
+                >
                   <span className="category-name">{cat.categoryName}</span>
                   <span className="actual-amount">
                     {formatCurrency(cat.actual)}
@@ -199,7 +306,7 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({
     );
   };
 
-  const renderSubGroup = (subGroup: any, monthNumber: number) => {
+  const renderSubGroup = (subGroup: any, monthNumber: number, parentGroupTotal: any) => {
     const sectionKey = `${monthNumber}-${subGroup.name}`;
     const isCollapsed = collapsedSections[sectionKey];
 
@@ -255,7 +362,17 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({
             {" "}
             <div className="category-list">
               {subGroup.categories.map((cat: any) => (
-                <div key={cat.categoryId} className="category-row">
+                <div 
+                  key={cat.categoryId} 
+                  className="category-row"
+                  onMouseEnter={(e) => handleMouseEnter(e, cat, monthNumber, "OpEx", parentGroupTotal)}
+                  onMouseMove={handleMouseMove}
+                  onMouseLeave={handleMouseLeave}
+                  onClick={() => handleCategoryClick(cat, monthNumber)}
+                  style={{ 
+                    cursor: (cat.budget !== 0 || cat.actual !== 0 || cat.reforecast !== 0) ? 'pointer' : 'help' 
+                  }}
+                >
                   <span className="category-name">{cat.categoryName}</span>
                   <span className="actual-amount">
                     {formatCurrency(cat.actual)}
@@ -602,11 +719,21 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({
                       {/* Render subgroups first (Comp and Benefits) */}
                       {month.opex.subGroups &&
                         month.opex.subGroups.map((subGroup) =>
-                          renderSubGroup(subGroup, month.month)
+                          renderSubGroup(subGroup, month.month, month.opex.total)
                         )}
                       {/* Render remaining OpEx categories */}
                       {month.opex.categories.map((cat) => (
-                        <div key={cat.categoryId} className="category-row">
+                        <div 
+                          key={cat.categoryId} 
+                          className="category-row"
+                          onMouseEnter={(e) => handleMouseEnter(e, cat, month.month, "OpEx", month.opex.total)}
+                          onMouseMove={handleMouseMove}
+                          onMouseLeave={handleMouseLeave}
+                          onClick={() => handleCategoryClick(cat, month.month)}
+                          style={{ 
+                            cursor: (cat.categoryId === "opex-support" || cat.categoryId === "opex-research-development") ? 'pointer' : 'help' 
+                          }}
+                        >
                           {" "}
                           <span className="category-name">
                             {cat.categoryName}
@@ -745,6 +872,20 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({
           </React.Fragment>
         ))}
       </div>
+      <Tooltip
+        visible={tooltipState.visible}
+        content={tooltipState.content}
+        x={tooltipState.x}
+        y={tooltipState.y}
+      />
+      <AllocationModal
+        isOpen={allocationModalState.isOpen}
+        onClose={handleModalClose}
+        month={allocationModalState.month}
+        year={allocationModalState.year}
+        categoryId={allocationModalState.categoryId}
+        categoryName={allocationModalState.categoryName}
+      />
     </div>
   );
 };
