@@ -777,35 +777,37 @@ const ExecutiveSummary = () => {
       </div>
 
       {/* Forward Looking - Collapsible */}
-      <div className="mb-2">
+      <div className="kpi-section forward-looking">
         <div
-          className="collapsible-section-header"
+          className="section-header"
           onClick={() => setIsForwardLookingExpanded(!isForwardLookingExpanded)}
         >
-          <h2 className="section-heading">Forward Looking</h2>
-          <span className="expand-toggle">
-            {isForwardLookingExpanded ? "−" : "+"}
-          </span>
+          {" "}
+          <h4 className="section-title">
+            <span className="expand-icon">
+              {isForwardLookingExpanded ? "−" : "+"}
+            </span>
+            Forward Looking
+          </h4>
+          {!isForwardLookingExpanded && (
+            <div className="compact-summary">
+              <span className="compact-metric">
+                Forecast: <strong>{formatCurrencyFull(kpis.fullYearForecast)}</strong>
+              </span>
+              <span className="compact-metric">
+                vs Target:{" "}
+                <strong>
+                  {kpis.forecastVsTargetVariance >= 0 ? "+" : ""}
+                  {formatCurrencyFull(kpis.forecastVsTargetVariance)}
+                </strong>
+              </span>
+            </div>
+          )}
         </div>
 
-        {!isForwardLookingExpanded && (
-          <div className="compact-section-summary">
-            <span>
-              Forecast:{" "}
-              <strong>{formatCurrencyFull(kpis.fullYearForecast)}</strong>
-            </span>
-            <span>
-              vs Target:{" "}
-              <strong>
-                {kpis.forecastVsTargetVariance >= 0 ? "+" : ""}
-                {formatCurrencyFull(kpis.forecastVsTargetVariance)}
-              </strong>
-            </span>
-          </div>
-        )}
-
         {isForwardLookingExpanded && (
-          <div className="kpi-cards">
+          <div className="kpi-row">
+            <div className="kpi-cards">
             <KPICard
               title="Full-Year Forecast"
               value={kpis.fullYearForecast}
@@ -827,41 +829,49 @@ const ExecutiveSummary = () => {
               onMouseMove={(e) => handleMouseMove(e, "forecastVsTarget")}
               onMouseLeave={handleMouseLeave}
             />
+            </div>
           </div>
         )}
       </div>
 
       {/* Risk & Velocity - Collapsible */}
-      <div className="mb-2">
+      <div className="kpi-section risk-velocity">
         <div
-          className="collapsible-section-header"
+          className="section-header"
           onClick={() => setIsRiskVelocityExpanded(!isRiskVelocityExpanded)}
         >
-          <h2 className="section-heading">Risk & Velocity</h2>
-          <span className="expand-toggle">
-            {isRiskVelocityExpanded ? "−" : "+"}
-          </span>
+          {" "}
+          <h4 className="section-title">
+            <span className="expand-icon">
+              {isRiskVelocityExpanded ? "−" : "+"}
+            </span>
+            Risk & Velocity
+          </h4>
+
+          {!isRiskVelocityExpanded && (
+            <div className="compact-summary">
+              <span className="compact-metric">
+                Burn Rate: <strong>{formatCurrencyFull(kpis.burnRate)}</strong>
+              </span>
+              <span className="compact-metric">
+                Months Left:{" "}
+                <strong>
+                  {kpis.monthsRemaining > 0
+                    ? kpis.monthsRemaining.toFixed(1)
+                    : "∞"}{" "}
+                  months
+                </strong>
+              </span>
+              <span className="compact-metric">
+                Trend: <strong>{kpis.varianceTrend}</strong>
+              </span>
+            </div>
+          )}
         </div>
 
-        {!isRiskVelocityExpanded && (
-          <div className="compact-section-summary">
-            <span>
-              Burn Rate: <strong>{formatCurrencyFull(kpis.burnRate)}</strong>
-            </span>
-            <span>
-              Months Left:{" "}
-              <strong>
-                {kpis.monthsRemaining > 0
-                  ? kpis.monthsRemaining.toFixed(1)
-                  : "∞"}{" "}
-                months
-              </strong>
-            </span>
-          </div>
-        )}
-
         {isRiskVelocityExpanded && (
-          <div className="kpi-cards">
+          <div className="kpi-row">
+            <div className="kpi-cards">
             <KPICard
               title="Monthly Burn Rate"
               value={kpis.burnRate}
@@ -892,6 +902,7 @@ const ExecutiveSummary = () => {
               onMouseMove={(e) => handleMouseMove(e, "varianceTrend")}
               onMouseLeave={handleMouseLeave}
             />
+            </div>
           </div>
         )}
       </div>
