@@ -4,604 +4,29 @@ import React, {
   useReducer,
   useEffect,
   ReactNode,
+  useCallback,
 } from "react";
 import {
-  BudgetEntry,
-  BudgetCategory,
-  ViewMode,
   BudgetState,
   PlanningData,
   HistoricalAnalysis,
-  VendorData,
-  VendorTracking,
 } from "../types";
-import { attemptRestoreCachedFile } from "../utils/fileManager";
 import { PersistenceManager } from "../services/persistenceManager";
 import { isFeatureEnabled } from "../utils/featureFlags";
+import { 
+  combinedReducer, 
+  CombinedAction, 
+  CombinedState, 
+  getInitialCombinedState 
+} from "./reducers/combinedReducer";
+import { useDebouncedAutoSave } from "../hooks/useDebouncedAutoSave";
 
-type BudgetAction =
-  | { type: "ADD_ENTRY"; payload: BudgetEntry }
-  | { type: "UPDATE_ENTRY"; payload: BudgetEntry }
-  | { type: "DELETE_ENTRY"; payload: string }
-  | { type: "SET_VIEW_MODE"; payload: ViewMode }
-  | {
-      type: "SET_SELECTED_PERIOD";
-      payload: { year?: number; quarter?: number; month?: number };
-    }
-  | { type: "ADD_CATEGORY"; payload: BudgetCategory }
-  | { type: "LOAD_ENTRIES"; payload: BudgetEntry[] }
-  | {
-      type: "SET_CURRENT_FILE";
-      payload:
-        | {
-            name: string;
-            handle?: FileSystemFileHandle;
-            lastSaved?: Date;
-            userLastSaved?: Date;
-          }
-        | undefined;
-    }
-  | { type: "CLEAR_ALL_DATA" }
-  | {
-      type: "SET_YEARLY_BUDGET_TARGET";
-      payload: { year: number; amount: number };
-    }
-  | {
-      type: "SET_MONTHLY_FORECAST_MODE";
-      payload: { year: number; month: number; isFinal: boolean };
-    }
-  | { type: "MARK_UNSAVED_CHANGES" }
-  | { type: "MARK_SAVED_TO_FILE" }
-  | { type: "UPDATE_CACHE_TIMESTAMP" }
-  | { type: "LOAD_FROM_CACHE"; payload: any }
-  | { type: "SET_FIRST_TIME_USER"; payload: boolean }
-  // NEW: Planning feature actions (optional - only available when feature enabled)
-  | { type: "SET_PLANNING_MODE"; payload: boolean }
-  | { type: "SET_PLANNING_DATA"; payload: { year: number; data: PlanningData } }
-  | {
-      type: "UPDATE_PLANNING_DATA";
-      payload: { year: number; data: Partial<PlanningData> };
-    }
-  | { type: "DELETE_PLANNING_DATA"; payload: number }
-  | { type: "SET_SELECTED_SCENARIO"; payload: string }
-  | {
-      type: "SET_HISTORICAL_ANALYSIS";
-      payload: { year: number; analysis: HistoricalAnalysis };
-    }
-  // NEW: Vendor management actions
-  | { type: "ADD_VENDOR_DATA"; payload: VendorData }
-  | { type: "UPDATE_VENDOR_DATA"; payload: VendorData }
-  | { type: "DELETE_VENDOR_DATA"; payload: string }
-  | { type: "LOAD_VENDOR_DATA"; payload: VendorData[] }
-  // NEW: Vendor tracking actions
-  | { type: "ADD_VENDOR_TRACKING"; payload: VendorTracking }
-  | { type: "UPDATE_VENDOR_TRACKING"; payload: VendorTracking }
-  | { type: "DELETE_VENDOR_TRACKING"; payload: string }
-  | { type: "LOAD_VENDOR_TRACKING"; payload: VendorTracking[] };
+const initialState: CombinedState = getInitialCombinedState();
 
-const initialCategories: BudgetCategory[] = [
-  // Cost of Sales
-  {
-    id: "cos-recurring-software",
-    name: "Recurring Software",
-    parentCategory: "cost-of-sales",
-  },
-  {
-    id: "cos-onetime-software",
-    name: "One-Time Software",
-    parentCategory: "cost-of-sales",
-  },
-  {
-    id: "cos-recurring-service",
-    name: "Recurring Service",
-    parentCategory: "cost-of-sales",
-  },
-  {
-    id: "cos-onetime-service",
-    name: "One-time Service",
-    parentCategory: "cost-of-sales",
-  },
-  {
-    id: "cos-reclass-opex",
-    name: "Reclass from Opex",
-    parentCategory: "cost-of-sales",
-  },
-  { id: "cos-other", name: "Other", parentCategory: "cost-of-sales" },
-  // OpEx
-  { id: "opex-base-pay", name: "Base Pay", parentCategory: "opex" },
-  {
-    id: "opex-capitalized-salaries",
-    name: "Capitalized Salaries",
-    parentCategory: "opex",
-  },
-  { id: "opex-commissions", name: "Commissions", parentCategory: "opex" },
-  { id: "opex-reclass-cogs", name: "Reclass to COGS", parentCategory: "opex" },
-  { id: "opex-bonus", name: "Bonus", parentCategory: "opex" },
-  { id: "opex-benefits", name: "Benefits", parentCategory: "opex" },
-  { id: "opex-payroll-taxes", name: "Payroll Taxes", parentCategory: "opex" },
-  {
-    id: "opex-other-compensation",
-    name: "Other Compensation",
-    parentCategory: "opex",
-  },
-  {
-    id: "opex-travel-entertainment",
-    name: "Travel & Entertainment",
-    parentCategory: "opex",
-  },
-  {
-    id: "opex-employee-related",
-    name: "Employee Related",
-    parentCategory: "opex",
-  },
-  { id: "opex-facilities", name: "Facilities", parentCategory: "opex" },
-  {
-    id: "opex-information-technology",
-    name: "Information Technology",
-    parentCategory: "opex",
-  },
-  {
-    id: "opex-professional-services",
-    name: "Professional Services",
-    parentCategory: "opex",
-  },
-  { id: "opex-corporate", name: "Corporate", parentCategory: "opex" },
-  { id: "opex-marketing", name: "Marketing", parentCategory: "opex" },
-];
-
-// Cache key for storing file information
-const CACHE_KEY = "budget-tracker-file-info";
-
-// Helper function to save file info to cache
-const saveFileInfoToCache = (fileInfo: {
-  name: string;
-  path?: string;
-  lastSaved?: Date;
-  size?: number;
-  lastModified?: Date;
-  contentHash?: string;
-}) => {
-  try {
-    const cacheData = {
-      ...fileInfo,
-      lastSaved: fileInfo.lastSaved?.toISOString(),
-      lastModified: fileInfo.lastModified?.toISOString(),
-      timestamp: new Date().toISOString(),
-    };
-    localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-  } catch (error) {
-    console.warn("Failed to save file info to cache:", error);
-  }
-};
-
-// Helper function to load file info from cache
-const loadFileInfoFromCache = (): {
-  name: string;
-  path?: string;
-  lastSaved?: Date;
-  size?: number;
-  lastModified?: Date;
-  contentHash?: string;
-  timestamp?: Date;
-} | null => {
-  try {
-    const cached = localStorage.getItem(CACHE_KEY);
-    if (cached) {
-      const parsed = JSON.parse(cached);
-      return {
-        ...parsed,
-        lastSaved: parsed.lastSaved ? new Date(parsed.lastSaved) : undefined,
-        lastModified: parsed.lastModified
-          ? new Date(parsed.lastModified)
-          : undefined,
-        timestamp: parsed.timestamp ? new Date(parsed.timestamp) : undefined,
-      };
-    }
-  } catch (error) {
-    console.warn("Failed to load file info from cache:", error);
-  }
-  return null;
-};
-
-// Helper function to clear file info from cache
-const clearFileInfoFromCache = () => {
-  try {
-    localStorage.removeItem(CACHE_KEY);
-  } catch (error) {
-    console.warn("Failed to clear file info from cache:", error);
-  }
-};
-
-// Initialize state with cached file info if available
-const getInitialState = (): BudgetState => {
-  const cachedFileInfo = loadFileInfoFromCache();
-  const persistenceManager = PersistenceManager.getInstance();
-
-  return {
-    entries: [],
-    categories: initialCategories,
-    viewMode: "monthly",
-    selectedYear: 2025,
-    yearlyBudgetTargets: {},
-    monthlyForecastModes: {},
-    currentFile: cachedFileInfo
-      ? {
-          name: cachedFileInfo.name,
-          lastSaved: cachedFileInfo.lastSaved,
-          // Note: FileSystemFileHandle cannot be serialized, so it's not cached
-          // The app will need to prompt user to re-select the file for new file system access
-        }
-      : undefined,
-    persistence: {
-      hasUnsavedChanges: false,
-      lastCacheUpdate: null,
-      lastFileSave: null,
-      isFirstTimeUser: persistenceManager.isFirstTimeUser(),
-      cacheAutoSaveInterval: 5 * 60 * 1000, // 5 minutes
-    }, // NEW: Planning feature properties (optional, only initialized if feature enabled)
-    planningMode: false, // Always start in tracking mode
-    planningData: {}, // Empty planning data by default
-    selectedScenario: undefined, // No scenario selected initially
-    historicalAnalysis: {}, // Empty historical analysis by default
-
-    // NEW: Vendor management data
-    vendorData: [], // Empty vendor data by default
-
-    // NEW: Vendor tracking data
-    vendorTrackingData: [], // Empty vendor tracking data by default
-  };
-};
-
-const initialState: BudgetState = getInitialState();
-
-const budgetReducer = (
-  state: BudgetState,
-  action: BudgetAction
-): BudgetState => {
-  switch (action.type) {
-    case "ADD_ENTRY":
-      return {
-        ...state,
-        entries: [...state.entries, action.payload],
-        persistence: {
-          ...state.persistence,
-          hasUnsavedChanges: true,
-        },
-      };
-    case "UPDATE_ENTRY":
-      return {
-        ...state,
-        entries: state.entries.map((entry) =>
-          entry.id === action.payload.id ? action.payload : entry
-        ),
-        persistence: {
-          ...state.persistence,
-          hasUnsavedChanges: true,
-        },
-      };
-    case "DELETE_ENTRY":
-      return {
-        ...state,
-        entries: state.entries.filter((entry) => entry.id !== action.payload),
-        persistence: {
-          ...state.persistence,
-          hasUnsavedChanges: true,
-        },
-      };
-    case "SET_VIEW_MODE":
-      return { ...state, viewMode: action.payload };
-    case "SET_SELECTED_PERIOD":
-      return {
-        ...state,
-        selectedYear: action.payload.year ?? state.selectedYear,
-        selectedQuarter: action.payload.quarter,
-        selectedMonth: action.payload.month,
-      };
-    case "ADD_CATEGORY":
-      return { ...state, categories: [...state.categories, action.payload] };
-    case "LOAD_ENTRIES":
-      return { ...state, entries: action.payload };
-    case "SET_CURRENT_FILE":
-      // Save file info to cache when setting current file
-      if (action.payload) {
-        saveFileInfoToCache({
-          name: action.payload.name,
-          lastSaved: action.payload.lastSaved,
-        });
-      } else {
-        // Clear cache when unsetting current file
-        clearFileInfoFromCache();
-      }
-      return { ...state, currentFile: action.payload };
-    case "CLEAR_ALL_DATA":
-      // Clear file info from cache when clearing all data
-      clearFileInfoFromCache();
-      return {
-        ...state,
-        entries: [],
-        selectedQuarter: undefined,
-        selectedMonth: undefined,
-        currentFile: undefined,
-        yearlyBudgetTargets: {},
-        monthlyForecastModes: {},
-      };
-    case "SET_YEARLY_BUDGET_TARGET":
-      return {
-        ...state,
-        yearlyBudgetTargets: {
-          ...state.yearlyBudgetTargets,
-          [action.payload.year]: action.payload.amount,
-        },
-        persistence: {
-          ...state.persistence,
-          hasUnsavedChanges: true,
-        },
-      };
-    case "SET_MONTHLY_FORECAST_MODE":
-      const { year, month, isFinal } = action.payload;
-      return {
-        ...state,
-        monthlyForecastModes: {
-          ...state.monthlyForecastModes,
-          [year]: {
-            ...state.monthlyForecastModes[year],
-            [month]: isFinal,
-          },
-        },
-        persistence: {
-          ...state.persistence,
-          hasUnsavedChanges: true,
-        },
-      };
-    case "MARK_UNSAVED_CHANGES":
-      return {
-        ...state,
-        persistence: {
-          ...state.persistence,
-          hasUnsavedChanges: true,
-        },
-      };
-    case "MARK_SAVED_TO_FILE":
-      return {
-        ...state,
-        persistence: {
-          ...state.persistence,
-          hasUnsavedChanges: false,
-          lastFileSave: new Date(),
-        },
-      };
-    case "UPDATE_CACHE_TIMESTAMP":
-      return {
-        ...state,
-        persistence: {
-          ...state.persistence,
-          lastCacheUpdate: new Date(),
-        },
-      };
-    case "LOAD_FROM_CACHE":
-      return {
-        ...state,
-        entries: action.payload.entries || [],
-        vendorData: action.payload.vendorData || [],
-        vendorTrackingData: action.payload.vendorTrackingData || [],
-        selectedYear: action.payload.selectedYear || state.selectedYear,
-        yearlyBudgetTargets: action.payload.yearlyBudgetTargets || {},
-        monthlyForecastModes: action.payload.monthlyForecastModes || {},
-        persistence: {
-          ...state.persistence,
-          hasUnsavedChanges: false,
-        },
-      };
-    case "SET_FIRST_TIME_USER":
-      return {
-        ...state,
-        persistence: {
-          ...state.persistence,
-          isFirstTimeUser: action.payload,
-        },
-      }; // NEW: Planning feature action handlers (only process if feature enabled)
-    case "SET_PLANNING_MODE":
-      if (!isFeatureEnabled("BUDGET_PLANNING")) {
-        console.warn("Planning feature is disabled");
-        return state;
-      }
-      return {
-        ...state,
-        planningMode: action.payload,
-        persistence: {
-          ...state.persistence,
-          hasUnsavedChanges: true,
-        },
-      };
-    case "SET_PLANNING_DATA":
-      if (!isFeatureEnabled("BUDGET_PLANNING")) {
-        console.warn("Planning feature is disabled");
-        return state;
-      }
-      return {
-        ...state,
-        planningData: {
-          ...state.planningData,
-          [action.payload.year]: action.payload.data,
-        },
-        persistence: {
-          ...state.persistence,
-          hasUnsavedChanges: true,
-        },
-      };
-    case "UPDATE_PLANNING_DATA":
-      if (!isFeatureEnabled("BUDGET_PLANNING")) {
-        console.warn("Planning feature is disabled");
-        return state;
-      }
-      const existingData = state.planningData?.[action.payload.year];
-      if (!existingData) {
-        console.warn(`No planning data found for year ${action.payload.year}`);
-        return state;
-      }
-      return {
-        ...state,
-        planningData: {
-          ...state.planningData,
-          [action.payload.year]: {
-            ...existingData,
-            ...action.payload.data,
-            metadata: {
-              ...existingData.metadata,
-              lastModified: new Date(),
-            },
-          },
-        },
-        persistence: {
-          ...state.persistence,
-          hasUnsavedChanges: true,
-        },
-      };
-    case "DELETE_PLANNING_DATA":
-      if (!isFeatureEnabled("BUDGET_PLANNING")) {
-        console.warn("Planning feature is disabled");
-        return state;
-      }
-      const { [action.payload]: deletedData, ...remainingData } =
-        state.planningData || {};
-      return {
-        ...state,
-        planningData: remainingData,
-        selectedScenario:
-          state.selectedScenario &&
-          deletedData?.scenarios.some((s) => s.id === state.selectedScenario)
-            ? undefined
-            : state.selectedScenario,
-        persistence: {
-          ...state.persistence,
-          hasUnsavedChanges: true,
-        },
-      };
-    case "SET_SELECTED_SCENARIO":
-      if (!isFeatureEnabled("BUDGET_PLANNING")) {
-        console.warn("Planning feature is disabled");
-        return state;
-      }
-      return {
-        ...state,
-        selectedScenario: action.payload,
-        persistence: {
-          ...state.persistence,
-          hasUnsavedChanges: true,
-        },
-      };
-    case "SET_HISTORICAL_ANALYSIS":
-      if (!isFeatureEnabled("BUDGET_PLANNING")) {
-        console.warn("Planning feature is disabled");
-        return state;
-      }
-      return {
-        ...state,
-        historicalAnalysis: {
-          ...state.historicalAnalysis,
-          [action.payload.year]: action.payload.analysis,
-        },
-        persistence: {
-          ...state.persistence,
-          hasUnsavedChanges: true,
-        },
-      };
-
-    // NEW: Vendor management action handlers
-    case "ADD_VENDOR_DATA":
-      return {
-        ...state,
-        vendorData: [...(state.vendorData || []), action.payload],
-        persistence: {
-          ...state.persistence,
-          hasUnsavedChanges: true,
-        },
-      };
-    case "UPDATE_VENDOR_DATA":
-      return {
-        ...state,
-        vendorData: (state.vendorData || []).map((vendor) =>
-          vendor.id === action.payload.id ? action.payload : vendor
-        ),
-        persistence: {
-          ...state.persistence,
-          hasUnsavedChanges: true,
-        },
-      };
-    case "DELETE_VENDOR_DATA":
-      return {
-        ...state,
-        vendorData: (state.vendorData || []).filter(
-          (vendor) => vendor.id !== action.payload
-        ),
-        persistence: {
-          ...state.persistence,
-          hasUnsavedChanges: true,
-        },
-      };
-    case "LOAD_VENDOR_DATA":
-      return {
-        ...state,
-        vendorData: action.payload,
-        persistence: {
-          ...state.persistence,
-          hasUnsavedChanges: false,
-        },
-      };
-
-    // NEW: Vendor tracking action handlers
-    case "ADD_VENDOR_TRACKING":
-      return {
-        ...state,
-        vendorTrackingData: [
-          ...(state.vendorTrackingData || []),
-          action.payload,
-        ],
-        persistence: {
-          ...state.persistence,
-          hasUnsavedChanges: true,
-        },
-      };
-    case "UPDATE_VENDOR_TRACKING":
-      return {
-        ...state,
-        vendorTrackingData: (state.vendorTrackingData || []).map((tracking) =>
-          tracking.id === action.payload.id ? action.payload : tracking
-        ),
-        persistence: {
-          ...state.persistence,
-          hasUnsavedChanges: true,
-        },
-      };
-    case "DELETE_VENDOR_TRACKING":
-      return {
-        ...state,
-        vendorTrackingData: (state.vendorTrackingData || []).filter(
-          (tracking) => tracking.id !== action.payload
-        ),
-        persistence: {
-          ...state.persistence,
-          hasUnsavedChanges: true,
-        },
-      };
-    case "LOAD_VENDOR_TRACKING":
-      return {
-        ...state,
-        vendorTrackingData: action.payload,
-        persistence: {
-          ...state.persistence,
-          hasUnsavedChanges: false,
-        },
-      };
-
-    default:
-      return state;
-  }
-};
 
 const BudgetContext = createContext<{
-  state: BudgetState;
-  dispatch: React.Dispatch<BudgetAction>;
+  state: CombinedState;
+  dispatch: React.Dispatch<CombinedAction>;
   // Persistence functions
   saveToFile: () => Promise<boolean>;
   loadFromFile: () => Promise<boolean>;
@@ -629,7 +54,7 @@ const BudgetContext = createContext<{
 export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const [state, dispatch] = useReducer(budgetReducer, initialState);
+  const [state, dispatch] = useReducer(combinedReducer, initialState);
   const persistenceManager = PersistenceManager.getInstance();
 
   // Initialize persistence manager and load cached data on startup
@@ -680,49 +105,54 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
   //   return () => {
   //     persistenceManager.stopAutoSave();
   //   };
-  // }, [state.persistence.cacheAutoSaveInterval]);  // Auto-save to cache whenever important data changes (immediate)
-  useEffect(() => {
-    // Skip on very first render with empty state
-    if (state === initialState) {
-      console.log("Skipping cache save - still on initial state");
-      return;
-    }
-    console.log("Data changed, immediately saving to cache:", {
-      entriesCount: state.entries.length,
-      vendorDataCount: (state.vendorData || []).length,
-      yearlyTargetsCount: Object.keys(state.yearlyBudgetTargets).length,
-      monthlyModesCount: Object.keys(state.monthlyForecastModes).length,
-      currentFile: state.currentFile?.name,
-      hasUnsavedChanges: state.persistence.hasUnsavedChanges,
-      stackTrace: new Error().stack?.split("\n").slice(0, 5).join("\n"),
+  // }, [state.persistence.cacheAutoSaveInterval]);  // Debounced auto-save to cache to prevent excessive writes
+  const debouncedCacheSave = useCallback((stateToSave: CombinedState) => {
+    console.log("Executing debounced cache save:", {
+      entriesCount: stateToSave.entries.length,
+      vendorDataCount: (stateToSave.vendorData || []).length,
+      yearlyTargetsCount: Object.keys(stateToSave.yearlyBudgetTargets).length,
+      monthlyModesCount: Object.keys(stateToSave.monthlyForecastModes).length,
+      currentFile: stateToSave.currentFile?.name,
+      hasUnsavedChanges: stateToSave.persistence.hasUnsavedChanges,
     });
 
-    // Don't save empty data to cache
-    if (
-      state.entries.length === 0 &&
-      (state.vendorData || []).length === 0 &&
-      Object.keys(state.yearlyBudgetTargets).length === 0 &&
-      Object.keys(state.monthlyForecastModes).length === 0
-    ) {
-      console.warn("PREVENTED saving empty data to cache!");
-      return;
-    }
-
-    persistenceManager.saveToCache(state);
+    persistenceManager.saveToCache(stateToSave);
 
     // Only mark as unsaved if this is not triggered by loading from cache
-    // Check if hasUnsavedChanges is already true (meaning actual changes occurred)
-    if (state.persistence.hasUnsavedChanges) {
+    if (stateToSave.persistence.hasUnsavedChanges) {
       persistenceManager.markDataChanged();
     }
     dispatch({ type: "UPDATE_CACHE_TIMESTAMP" });
-  }, [
-    state.entries,
-    state.yearlyBudgetTargets,
-    state.monthlyForecastModes,
-    state.vendorData,
-    state.vendorTrackingData,
-  ]);
+  }, [persistenceManager]);
+
+  const shouldSkipCacheSave = useCallback((stateToCheck: CombinedState) => {
+    // Skip if it's the initial state
+    if (stateToCheck === initialState) {
+      console.log("Skipping cache save - still on initial state");
+      return true;
+    }
+
+    // Don't save empty data to cache
+    if (
+      stateToCheck.entries.length === 0 &&
+      (stateToCheck.vendorData || []).length === 0 &&
+      Object.keys(stateToCheck.yearlyBudgetTargets).length === 0 &&
+      Object.keys(stateToCheck.monthlyForecastModes).length === 0
+    ) {
+      console.warn("PREVENTED saving empty data to cache!");
+      return true;
+    }
+
+    return false;
+  }, []);
+
+  // Use debounced auto-save with 2 second delay
+  const { forceSave: forceCacheSave } = useDebouncedAutoSave(
+    state,
+    debouncedCacheSave,
+    2000, // 2 second delay
+    shouldSkipCacheSave
+  );
 
   // Persistence functions
   const saveToFile = async (): Promise<boolean> => {
@@ -804,10 +234,18 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const loadFromFile = async (): Promise<boolean> => {
+    console.log("🔄 BudgetContext: loadFromFile called");
     try {
       const fileManager = await import("../utils/fileManager");
+      console.log("📦 File manager imported");
 
+      console.log("🔍 Checking File System Access API support:");
+      console.log("- showSaveFilePicker available:", "showSaveFilePicker" in window);
+      console.log("- showOpenFilePicker available:", "showOpenFilePicker" in window);
+      console.log("- supportsFileSystemAccess():", fileManager.supportsFileSystemAccess());
+      
       if (fileManager.supportsFileSystemAccess()) {
+        console.log("✅ File System Access API supported, opening file picker");
         const fileHandles = await window.showOpenFilePicker?.({
           types: [
             {
@@ -819,7 +257,9 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
           ],
         });
 
+        console.log("📁 File picker result:", fileHandles);
         if (!fileHandles || fileHandles.length === 0) {
+          console.log("❌ No files selected or picker cancelled");
           return false;
         }
 
@@ -962,15 +402,197 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
         persistenceManager.markUserAsReturning();
         dispatch({ type: "SET_FIRST_TIME_USER", payload: false });
 
-        // Save to cache
-        persistenceManager.saveToCache(state);
+        // Save to cache with updated state (including new file info)
+        // Note: We need to create the updated state since dispatch is async
+        const updatedState = {
+          ...state,
+          currentFile: {
+            name: file.name,
+            handle: selectedFileHandle,
+            lastSaved: new Date(),
+            userLastSaved: undefined,
+          },
+          persistence: {
+            ...state.persistence,
+            isFirstTimeUser: false,
+          },
+          entries: loadedData.entries,
+          selectedYear: loadedData.year as number,
+          yearlyBudgetTargets: {
+            ...state.yearlyBudgetTargets,
+            ...loadedData.yearlyBudgetTargets,
+          },
+          monthlyForecastModes: {
+            ...state.monthlyForecastModes,
+            ...loadedData.monthlyForecastModes,
+          },
+          vendorData: loadedData.vendorData ? loadedData.vendorData.map(
+            (vendor: any) => ({
+              id: vendor.id,
+              vendorName: vendor.vendorName || "",
+              category: vendor.category || "",
+              financeMappedCategory:
+                vendor.financeMappedCategory || vendor.mapsTo || "",
+              billingType: vendor.billingType || "",
+              budget: vendor.budget || 0,
+              description: vendor.description || "",
+              month: vendor.month || "N/A",
+              inBudget:
+                vendor.inBudget !== undefined
+                  ? vendor.inBudget
+                  : !vendor.notInBudget,
+              notes: vendor.notes || "",
+              year: vendor.year,
+              createdAt: new Date(vendor.createdAt),
+              updatedAt: new Date(vendor.updatedAt),
+            })
+          ) : state.vendorData,
+          vendorTrackingData: loadedData.vendorTrackingData ? loadedData.vendorTrackingData.map(
+            (tracking: any) => ({
+              ...tracking,
+              createdAt: new Date(tracking.createdAt),
+              updatedAt: new Date(tracking.updatedAt),
+            })
+          ) : state.vendorTrackingData,
+        };
+        
+        persistenceManager.saveToCache(updatedState);
         dispatch({ type: "MARK_SAVED_TO_FILE" });
 
         return true;
+      } else {
+        console.log("❌ File System Access API not supported, trying fallback");
+        // Fallback to traditional file input
+        const fileManager = await import("../utils/fileManager");
+        const loadedData = await fileManager.loadBudgetData();
+        
+        // Process the loaded data similar to the File System Access API path
+        dispatch({ type: "LOAD_ENTRIES", payload: loadedData.entries });
+        
+        if (loadedData.yearlyBudgetTargets) {
+          Object.entries(loadedData.yearlyBudgetTargets).forEach(
+            ([year, amount]) => {
+              dispatch({
+                type: "SET_YEARLY_BUDGET_TARGET",
+                payload: { year: parseInt(year), amount: amount as number },
+              });
+            }
+          );
+        }
+        
+        if (loadedData.monthlyForecastModes) {
+          Object.entries(loadedData.monthlyForecastModes).forEach(
+            ([year, monthModes]) => {
+              if (monthModes && typeof monthModes === "object") {
+                Object.entries(
+                  monthModes as { [month: number]: boolean }
+                ).forEach(([month, isFinal]) => {
+                  dispatch({
+                    type: "SET_MONTHLY_FORECAST_MODE",
+                    payload: {
+                      year: parseInt(year),
+                      month: parseInt(month),
+                      isFinal: isFinal as boolean,
+                    },
+                  });
+                });
+              }
+            }
+          );
+        }
+        
+        if (loadedData.vendorData) {
+          const vendorDataWithDates = loadedData.vendorData.map(
+            (vendor: any) => ({
+              id: vendor.id,
+              vendorName: vendor.vendorName || "",
+              category: vendor.category || "",
+              financeMappedCategory:
+                vendor.financeMappedCategory || vendor.mapsTo || "",
+              billingType: vendor.billingType || "",
+              budget: vendor.budget || 0,
+              description: vendor.description || "",
+              month: vendor.month || "N/A",
+              inBudget:
+                vendor.inBudget !== undefined
+                  ? vendor.inBudget
+                  : !vendor.notInBudget,
+              notes: vendor.notes || "",
+              year: vendor.year,
+              createdAt: new Date(vendor.createdAt),
+              updatedAt: new Date(vendor.updatedAt),
+            })
+          );
+          dispatch({
+            type: "LOAD_VENDOR_DATA",
+            payload: vendorDataWithDates,
+          });
+        }
+        
+        if (loadedData.vendorTrackingData) {
+          const vendorTrackingWithDates = loadedData.vendorTrackingData.map(
+            (tracking: any) => ({
+              ...tracking,
+              createdAt: new Date(tracking.createdAt),
+              updatedAt: new Date(tracking.updatedAt),
+            })
+          );
+          dispatch({
+            type: "LOAD_VENDOR_TRACKING",
+            payload: vendorTrackingWithDates,
+          });
+        }
+        
+        dispatch({
+          type: "SET_SELECTED_PERIOD",
+          payload: { year: loadedData.year as number },
+        });
+        
+        // For fallback, we don't have a file handle
+        dispatch({
+          type: "SET_CURRENT_FILE",
+          payload: {
+            name: "loaded-file.json",
+            lastSaved: new Date(),
+            userLastSaved: undefined,
+          },
+        });
+        
+        persistenceManager.markUserAsReturning();
+        dispatch({ type: "SET_FIRST_TIME_USER", payload: false });
+        
+        const updatedState = {
+          ...state,
+          currentFile: {
+            name: "loaded-file.json",
+            lastSaved: new Date(),
+            userLastSaved: undefined,
+          },
+          persistence: {
+            ...state.persistence,
+            isFirstTimeUser: false,
+          },
+          entries: loadedData.entries,
+          selectedYear: loadedData.year as number,
+          yearlyBudgetTargets: {
+            ...state.yearlyBudgetTargets,
+            ...loadedData.yearlyBudgetTargets,
+          },
+          monthlyForecastModes: {
+            ...state.monthlyForecastModes,
+            ...loadedData.monthlyForecastModes,
+          },
+          vendorData: loadedData.vendorData || state.vendorData,
+          vendorTrackingData: loadedData.vendorTrackingData || state.vendorTrackingData,
+        };
+        
+        persistenceManager.saveToCache(updatedState);
+        dispatch({ type: "MARK_SAVED_TO_FILE" });
+        
+        return true;
       }
-      return false;
     } catch (error) {
-      console.error("Failed to load file:", error);
+      console.error("❌ Failed to load file:", error);
       return false;
     }
   };
@@ -1052,8 +674,8 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
       entriesCount: state.entries.length,
       hasUnsavedChanges: state.persistence.hasUnsavedChanges,
     });
-    persistenceManager.saveToCache(state);
-    dispatch({ type: "UPDATE_CACHE_TIMESTAMP" });
+    // Use force save for manual saves (immediate)
+    forceCacheSave();
   };
 
   const loadFromCache = (): boolean => {

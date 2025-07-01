@@ -15,7 +15,17 @@ const AppContent: React.FC = () => {
   const { state, loadFromFile, createNewFile, dispatch } = useBudget();
 
   const handleLoadFromFile = async (): Promise<void> => {
-    await loadFromFile();
+    console.log("🔄 First-time setup: Load from file clicked");
+    try {
+      const success = await loadFromFile();
+      console.log("📁 Load from file result:", success);
+      if (!success) {
+        // File loading was cancelled or failed - stay on first-time setup
+        console.log("File loading cancelled or failed");
+      }
+    } catch (error) {
+      console.error("❌ Error in handleLoadFromFile:", error);
+    }
   };
   const handleCreateNewFile = async (): Promise<void> => {
     // Simply transition to main dashboard - let user create file via File Manager

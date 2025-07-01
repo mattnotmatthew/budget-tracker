@@ -16,13 +16,17 @@ const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
   const [loadingAction, setLoadingAction] = useState<string>("");
 
   const handleLoadFromFile = async () => {
+    console.log("🎯 FirstTimeSetup: Load from file button clicked");
     setIsLoading(true);
     setLoadingAction("Loading file...");
     try {
+      console.log("🔄 FirstTimeSetup: Calling onLoadFromFile");
       await onLoadFromFile();
+      console.log("✅ FirstTimeSetup: onLoadFromFile completed");
     } catch (error) {
-      console.error("Error loading file:", error);
+      console.error("❌ FirstTimeSetup: Error loading file:", error);
     } finally {
+      console.log("🏁 FirstTimeSetup: Cleanup - setting loading to false");
       setIsLoading(false);
       setLoadingAction("");
     }

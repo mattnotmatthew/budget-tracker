@@ -170,6 +170,17 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
         const contentHash = btoa(content.substring(0, 1000))
           .replace(/[^a-zA-Z0-9]/g, "")
           .substring(0, 20);
+        
+        const fileInfo = {
+          name: fileName,
+          handle: fileHandle,
+          lastSaved: new Date(),
+          size: fileObj.size,
+          lastModified: new Date(fileObj.lastModified),
+          contentHash,
+        };
+
+        // Update context state
         dispatch({
           type: "SET_CURRENT_FILE",
           payload: {
@@ -180,6 +191,14 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
             userLastSaved: state.currentFile?.userLastSaved,
           },
         });
+
+        // Also update persistence manager
+        const persistenceManager = PersistenceManager.getInstance();
+        persistenceManager.saveFileInfo(fileInfo);
+        
+        // Mark user as no longer first-time user
+        persistenceManager.markUserAsReturning();
+        dispatch({ type: "SET_FIRST_TIME_USER", payload: false });
       }
 
       const entriesCount = loadedData.entries.length;

@@ -3,6 +3,10 @@ import {
   calculateBudgetTracking,
   calculateMonthlyData,
 } from "../../../utils/budgetCalculations";
+import { formatCurrencyFull } from "../../../utils/currencyFormatter";
+
+// Re-export for backward compatibility
+export { formatCurrencyFull };
 
 export interface KPIData {
   // Row 1 - Strategic Context (Row 1)
@@ -38,13 +42,6 @@ export interface VarianceCategory {
   variance: number;
 }
 
-export const formatCurrencyFull = (amount: number) => {
-  return amount?.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  });
-};
 
 export const getKPIData = (state: any): KPIData => {
   // Use proper YTD calculation that matches the rest of the application

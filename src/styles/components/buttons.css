@@ -1,0 +1,443 @@
+/* ==================================================
+   CONSOLIDATED BUTTON STYLES
+   ================================================== */
+
+/* Base Button Styles */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  margin: 0.25rem;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  min-width: 2rem;
+  min-height: 2rem;
+}
+
+.btn:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Button Variants */
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+  border-color: #6c757d;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #545b62;
+  border-color: #545b62;
+}
+
+.btn-success {
+  background-color: #28a745;
+  color: white;
+  border-color: #28a745;
+}
+
+.btn-success:hover:not(:disabled) {
+  background-color: #1e7e34;
+  border-color: #1e7e34;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  color: white;
+  border-color: #dc3545;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: #bd2130;
+  border-color: #bd2130;
+}
+
+.btn-warning {
+  background-color: #ffc107;
+  color: #212529;
+  border-color: #ffc107;
+}
+
+.btn-warning:hover:not(:disabled) {
+  background-color: #e0a800;
+  border-color: #e0a800;
+}
+
+.btn-info {
+  background-color: #17a2b8;
+  color: white;
+  border-color: #17a2b8;
+}
+
+.btn-info:hover:not(:disabled) {
+  background-color: #117a8b;
+  border-color: #117a8b;
+}
+
+.btn-light {
+  background-color: #f8f9fa;
+  color: #212529;
+  border-color: #f8f9fa;
+}
+
+.btn-light:hover:not(:disabled) {
+  background-color: #e2e6ea;
+  border-color: #e2e6ea;
+}
+
+.btn-dark {
+  background-color: #343a40;
+  color: white;
+  border-color: #343a40;
+}
+
+.btn-dark:hover:not(:disabled) {
+  background-color: #1d2124;
+  border-color: #1d2124;
+}
+
+/* Button Sizes */
+.btn-small {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  min-width: 1.5rem;
+  min-height: 1.5rem;
+}
+
+.btn-large {
+  padding: 0.75rem 1.5rem;
+  font-size: 1.1rem;
+}
+
+/* Icon Buttons */
+.btn-icon {
+  padding: 0.5rem;
+  min-width: 2rem;
+  min-height: 2rem;
+  border-radius: 50%;
+}
+
+.btn-icon.btn-small {
+  padding: 0.25rem;
+  min-width: 1.5rem;
+  min-height: 1.5rem;
+  font-size: 0.75rem;
+}
+
+/* Specialized Button Types */
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #666;
+  padding: 0.25rem;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background-color: #e9ecef;
+  color: #333;
+}
+
+.edit-btn {
+  background: #007bff;
+  color: white;
+  border: 1px solid #007bff;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.edit-btn:hover {
+  background: #0056b3;
+  border-color: #0056b3;
+}
+
+.save-btn-small {
+  background: #28a745;
+  color: white;
+  border: 1px solid #28a745;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.75rem;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.save-btn-small:hover {
+  background: #1e7e34;
+  border-color: #1e7e34;
+}
+
+.cancel-btn-small {
+  background: #6c757d;
+  color: white;
+  border: 1px solid #6c757d;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.75rem;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancel-btn-small:hover {
+  background: #545b62;
+  border-color: #545b62;
+}
+
+/* Action Buttons */
+.add-row-btn {
+  background: #28a745;
+  color: white;
+  border: 1px solid #28a745;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-row-btn:hover {
+  background: #1e7e34;
+  border-color: #1e7e34;
+}
+
+.edit-row-btn {
+  background: #007bff;
+  color: white;
+  border: 1px solid #007bff;
+  padding: 0.25rem;
+  font-size: 0.8rem;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 1.8rem;
+  min-height: 1.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.edit-row-btn:hover {
+  background: #0056b3;
+  border-color: #0056b3;
+}
+
+.remove-row-btn {
+  background: #dc3545;
+  color: white;
+  border: 1px solid #dc3545;
+  padding: 0.25rem;
+  font-size: 0.8rem;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 1.8rem;
+  min-height: 1.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.remove-row-btn:hover:not(:disabled) {
+  background: #bd2130;
+  border-color: #bd2130;
+}
+
+.remove-row-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Filter and Toggle Buttons */
+.reset-filters-btn {
+  background: #ffc107;
+  color: #212529;
+  border: 1px solid #ffc107;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reset-filters-btn:hover {
+  background: #e0a800;
+  border-color: #e0a800;
+}
+
+.group-by-btn {
+  background: #f8f9fa;
+  color: #333;
+  border: 1px solid #dee2e6;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.group-by-btn:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+}
+
+.group-by-btn.active {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.group-by-btn.active:hover {
+  background: #0056b3;
+  border-color: #0056b3;
+}
+
+/* File Manager Button */
+.file-manager-btn {
+  background: #17a2b8;
+  color: white;
+  border: 1px solid #17a2b8;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.file-manager-btn:hover {
+  background: #117a8b;
+  border-color: #117a8b;
+}
+
+/* Floating Save Button */
+.floating-save-btn {
+  position: sticky;
+  top: 1rem;
+  z-index: 100;
+  background: #28a745;
+  color: white;
+  border: 2px solid #28a745;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.floating-save-btn:hover {
+  background: #1e7e34;
+  border-color: #1e7e34;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Button Groups */
+.btn-group {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.btn-group .btn {
+  margin: 0;
+}
+
+.btn-group .btn:first-child {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.btn-group .btn:last-child {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.btn-group .btn:not(:first-child):not(:last-child) {
+  border-radius: 0;
+}
+
+/* Edit Buttons Container */
+.edit-buttons {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.yearly-budget-buttons {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+  }
+  
+  .btn-large {
+    padding: 0.6rem 1.2rem;
+    font-size: 1rem;
+  }
+  
+  .floating-save-btn {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .btn {
+    border-width: 2px;
+  }
+  
+  .btn:focus {
+    outline-width: 3px;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .btn {
+    transition: none;
+  }
+}

@@ -35,6 +35,7 @@ import {
   getKPITooltipContent,
   getHiringTooltipContent,
   getVendorTooltipContent,
+  getVendorPortfolioTooltipContent,
 } from "./utils/tooltipUtils";
 import { generateIntelligentSummary } from "./utils/summaryGenerator";
 import {
@@ -46,6 +47,10 @@ import {
 // Import components
 import Tooltip from "./components/Tooltip";
 import KPICard from "./components/KPICard";
+import VendorPortfolioSection from "./components/VendorPortfolioSection";
+
+// Import vendor portfolio CSS
+import "./components/VendorPortfolio.css";
 
 interface TooltipState {
   visible: boolean;
@@ -69,6 +74,8 @@ const ExecutiveSummary = () => {
   const [isRiskVelocityExpanded, setIsRiskVelocityExpanded] = useState(false);
   const [isVendorSpendingExpanded, setIsVendorSpendingExpanded] =
     useState(true);
+  const [isVendorPortfolioExpanded, setIsVendorPortfolioExpanded] =
+    useState(false);
   const [trendTableCollapsed, setTrendTableCollapsed] = useState(true);
   const [monthlyTrendTableCollapsed, setMonthlyTrendTableCollapsed] =
     useState(true);
@@ -481,7 +488,14 @@ const ExecutiveSummary = () => {
     event: React.MouseEvent,
     metricType: string
   ) => {
-    const content = getVendorTooltipContent(metricType, vendorData, state);
+    // Check if this is a vendor portfolio metric
+    const vendorPortfolioMetrics = [
+      'vendorConcentration', 'vendorRisk', 'spendVelocity', 'compliance',
+      'velocityTotalBudget', 'velocityActualSpend', 'velocityUtilizationRate', 'velocityBurnRate'
+    ];
+    const content = vendorPortfolioMetrics.includes(metricType) 
+      ? getVendorPortfolioTooltipContent(metricType, state)
+      : getVendorTooltipContent(metricType, vendorData, state);
 
     const tooltipHeight = 320;
     const minSpaceRequired = 350;
@@ -544,6 +558,7 @@ const ExecutiveSummary = () => {
     setIsForwardLookingExpanded(true);
     setIsRiskVelocityExpanded(true);
     setIsVendorSpendingExpanded(true);
+    setIsVendorPortfolioExpanded(true);
     setTrendTableCollapsed(false);
     setTotalCompCapitalizationCollapsed(false);
   };
@@ -554,6 +569,7 @@ const ExecutiveSummary = () => {
     setIsForwardLookingExpanded(false);
     setIsRiskVelocityExpanded(false);
     setIsVendorSpendingExpanded(true);
+    setIsVendorPortfolioExpanded(false);
     setTrendTableCollapsed(true);
     setTotalCompCapitalizationCollapsed(true);
   };
@@ -2251,6 +2267,16 @@ const ExecutiveSummary = () => {
           </div>
         </div>
       </div>
+
+      {/* Vendor Portfolio Management Section */}
+      <VendorPortfolioSection
+        state={state}
+        isExpanded={isVendorPortfolioExpanded}
+        onToggleExpanded={() => setIsVendorPortfolioExpanded(!isVendorPortfolioExpanded)}
+        onMouseEnter={handleVendorMouseEnter}
+        onMouseMove={handleVendorMouseMove}
+        onMouseLeave={handleVendorMouseLeave}
+      />
 
       {/* Floating Export Buttons */}
       <button

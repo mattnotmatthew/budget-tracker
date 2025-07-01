@@ -5,6 +5,18 @@ import {
 } from "./kpiCalculations";
 import { ResourceData } from "./resourceCalculations";
 import { VendorData } from "./vendorCalculations";
+import { 
+  VendorConcentrationData, 
+  VendorSpendVelocity, 
+  calculateVendorConcentration,
+  calculateVendorSpendVelocity 
+} from "./vendorPortfolioCalculations";
+import { 
+  VendorRiskScore, 
+  ComplianceMetrics, 
+  calculateVendorRiskScores,
+  calculateComplianceMetrics 
+} from "./vendorRiskAnalysis";
 
 export interface TooltipContent {
   definition: string;
@@ -372,6 +384,151 @@ export const getVendorTooltipContent = (
       return {
         definition: "Vendor tracking metric",
         interpretation: "This metric helps track vendor spending",
+        formula: "N/A",
+        calculation: "N/A",
+      };
+  }
+};
+
+/**
+ * Get tooltip content for vendor portfolio metrics
+ */
+export const getVendorPortfolioTooltipContent = (
+  metricType: string,
+  state: any
+): TooltipContent => {
+  const vendorData = state.vendorData || [];
+  const vendorTrackingData = state.vendorTrackingData || [];
+  const selectedYear = state.selectedYear;
+
+  switch (metricType) {
+    case "vendorConcentration":
+      const concentration = calculateVendorConcentration(vendorData, vendorTrackingData, selectedYear);
+      return {
+        definition: "Measure of how vendor spending is distributed across your vendor portfolio",
+        interpretation: `Your top 5 vendors account for ${concentration.concentrationRatio.top5Percentage.toFixed(1)}% of total spend. ${
+          concentration.concentrationRatio.top5Percentage > 70 
+            ? "High concentration suggests dependency risk" 
+            : concentration.concentrationRatio.top5Percentage > 50 
+            ? "Moderate concentration - consider diversification" 
+            : "Well-diversified vendor portfolio"
+        }`,
+        formula: "Top N vendors spend / Total vendor spend × 100",
+        calculation: `Top 5: ${concentration.concentrationRatio.top5Percentage.toFixed(1)}% | Top 10: ${concentration.concentrationRatio.top10Percentage.toFixed(1)}%`
+      };
+
+    case "vendorRisk":
+      const riskScores = calculateVendorRiskScores(vendorData, vendorTrackingData, selectedYear);
+      const highRiskCount = riskScores.filter(v => v.riskLevel === 'high' || v.riskLevel === 'critical').length;
+      return {
+        definition: "Assessment of potential risks from vendor relationships and dependencies",
+        interpretation: `${highRiskCount} vendors identified as high risk. ${
+          highRiskCount > 5 
+            ? "High number of risky vendors requires immediate attention" 
+            : highRiskCount > 2 
+            ? "Some vendor risks need mitigation planning" 
+            : "Low vendor risk profile"
+        }`,
+        formula: "Risk Score = Concentration + Variance + Contract + Volatility + Diversification risks",
+        calculation: `Critical: ${riskScores.filter(v => v.riskLevel === 'critical').length} | High: ${riskScores.filter(v => v.riskLevel === 'high').length} | Medium: ${riskScores.filter(v => v.riskLevel === 'medium').length}`
+      };
+
+    case "spendVelocity":
+      const velocity = calculateVendorSpendVelocity(vendorData, vendorTrackingData, selectedYear);
+      return {
+        definition: "Rate at which vendor budgets are being consumed throughout the year",
+        interpretation: `Current utilization rate is ${velocity.utilizationRate.toFixed(1)}%. ${
+          velocity.utilizationRate > 90 
+            ? "High burn rate - budget may be exhausted early" 
+            : velocity.utilizationRate < 50 
+            ? "Low utilization - budget may be underallocated" 
+            : "Healthy spend velocity"
+        }`,
+        formula: "Utilization Rate = Actual Spend / Budget Allocated × 100",
+        calculation: `${formatCurrencyFull(velocity.totalActualSpend)} / ${formatCurrencyFull(velocity.totalBudgetAllocated)} = ${velocity.utilizationRate.toFixed(1)}%`
+      };
+
+    case "compliance":
+      const compliance = calculateComplianceMetrics(vendorData, vendorTrackingData, selectedYear);
+      return {
+        definition: "Assessment of vendor data quality and process adherence",
+        interpretation: `Audit readiness score: ${compliance.auditReadiness.score.toFixed(0)}%. ${
+          compliance.auditReadiness.score >= 85 
+            ? "Strong compliance posture" 
+            : compliance.auditReadiness.score >= 70 
+            ? "Good compliance with some improvements needed" 
+            : "Compliance gaps require attention"
+        }`,
+        formula: "Composite score based on data completeness, process adherence, and audit findings",
+        calculation: `Data: ${compliance.dataCompleteness.vendorDataCompleteness.toFixed(0)}% | Budget: ${compliance.processAdherence.budgetComplianceRate.toFixed(0)}% | Audit: ${compliance.auditReadiness.score.toFixed(0)}%`
+      };
+
+    case "velocityTotalBudget":
+      const velocityBudget = calculateVendorSpendVelocity(vendorData, vendorTrackingData, selectedYear);
+      return {
+        definition: "Total budget allocated across all vendors for the fiscal year",
+        interpretation: `You have allocated ${formatCurrencyFull(velocityBudget.totalBudgetAllocated)} for vendor spending this year. ${
+          velocityBudget.totalBudgetAllocated > 0 
+            ? "This represents your full vendor commitment for the year" 
+            : "No vendor budgets have been allocated yet"
+        }`,
+        formula: "Sum of all individual vendor budgets",
+        calculation: `Total: ${formatCurrencyFull(velocityBudget.totalBudgetAllocated)} across ${vendorData.filter((v: any) => v.year === selectedYear).length} vendors`
+      };
+
+    case "velocityActualSpend":
+      const velocitySpend = calculateVendorSpendVelocity(vendorData, vendorTrackingData, selectedYear);
+      const currentMonth = new Date().getMonth() + 1;
+      const monthsElapsed = Math.min(currentMonth, 12);
+      return {
+        definition: "Total amount actually spent with vendors year-to-date",
+        interpretation: `You have spent ${formatCurrencyFull(velocitySpend.totalActualSpend)} with vendors so far this year (${monthsElapsed} months). ${
+          velocitySpend.totalActualSpend > velocitySpend.totalBudgetAllocated 
+            ? "You are over budget - review vendor spending immediately" 
+            : `You have ${formatCurrencyFull(velocitySpend.totalBudgetAllocated - velocitySpend.totalActualSpend)} remaining`
+        }`,
+        formula: "Sum of all vendor tracking data for the year",
+        calculation: `${formatCurrencyFull(velocitySpend.totalActualSpend)} spent through month ${monthsElapsed}`
+      };
+
+    case "velocityUtilizationRate":
+      const velocityUtil = calculateVendorSpendVelocity(vendorData, vendorTrackingData, selectedYear);
+      const currentMonthUtil = new Date().getMonth() + 1;
+      const expectedUtilization = (currentMonthUtil / 12) * 100;
+      return {
+        definition: "Percentage of vendor budget consumed year-to-date",
+        interpretation: `You have used ${velocityUtil.utilizationRate.toFixed(1)}% of your vendor budget. ${
+          velocityUtil.utilizationRate > expectedUtilization + 10 
+            ? "Spending pace is ahead of schedule - may exhaust budget early" 
+            : velocityUtil.utilizationRate < expectedUtilization - 10 
+            ? "Spending pace is behind schedule - budget may be underutilized" 
+            : "Spending is on track with time elapsed"
+        }`,
+        formula: "(Actual Spend ÷ Total Budget) × 100",
+        calculation: `(${formatCurrencyFull(velocityUtil.totalActualSpend)} ÷ ${formatCurrencyFull(velocityUtil.totalBudgetAllocated)}) × 100 = ${velocityUtil.utilizationRate.toFixed(1)}%`
+      };
+
+    case "velocityBurnRate":
+      const velocityBurn = calculateVendorSpendVelocity(vendorData, vendorTrackingData, selectedYear);
+      const currentMonthBurn = new Date().getMonth() + 1;
+      const monthsElapsedBurn = Math.min(currentMonthBurn, 12);
+      const remainingMonths = 12 - monthsElapsedBurn;
+      const remainingBudget = velocityBurn.totalBudgetAllocated - velocityBurn.totalActualSpend;
+      return {
+        definition: "Average monthly vendor spending rate based on year-to-date actuals",
+        interpretation: `You are spending an average of ${formatCurrencyFull(velocityBurn.burnRate)} per month on vendors. ${
+          velocityBurn.burnRate * remainingMonths > remainingBudget 
+            ? "At this rate, you will exceed your budget before year-end" 
+            : `At this rate, your remaining budget will last ${velocityBurn.projectedRunway.toFixed(1)} months`
+        }`,
+        formula: "Total Actual Spend ÷ Months Elapsed",
+        calculation: `${formatCurrencyFull(velocityBurn.totalActualSpend)} ÷ ${monthsElapsedBurn} months = ${formatCurrencyFull(velocityBurn.burnRate)}/month`
+      };
+
+    default:
+      return {
+        definition: "Vendor portfolio metric",
+        interpretation: "This metric helps analyze vendor portfolio performance and risk",
         formula: "N/A",
         calculation: "N/A",
       };

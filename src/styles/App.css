@@ -1,3 +1,6 @@
+/* Import consolidated button styles */
+@import './components/buttons.css';
+
 /* Reset and base styles */
 * {
   margin: 0;
