@@ -8,6 +8,14 @@ import { formatCurrencyFull } from "../../../utils/currencyFormatter";
 // Re-export for backward compatibility
 export { formatCurrencyFull };
 
+export interface SectionMetadata {
+  id: string;
+  name: string;
+  description: string;
+  enabled: boolean;
+  order: number;
+}
+
 export interface KPIData {
   // Row 1 - Strategic Context (Row 1)
   annualBudgetTarget: number;
@@ -33,6 +41,9 @@ export interface KPIData {
   burnRate: number;
   monthsRemaining: number;
   varianceTrend: string;
+
+  // Section metadata for summary generation
+  sectionMetadata?: SectionMetadata[];
 }
 
 export interface VarianceCategory {

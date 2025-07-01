@@ -755,6 +755,141 @@
   font-weight: 600;
 }
 
+/* Summary Toggle Controls */
+.summary-toggles {
+  padding: 1rem 1.5rem;
+  background: #f1f4f7;
+  border-bottom: 1px solid #e1e8ed;
+  margin-bottom: 0;
+}
+
+.toggles-header {
+  margin: 0 0 0.75rem 0;
+  font-size: 1rem;
+  color: #2d3a4a;
+  font-weight: 600;
+}
+
+.toggle-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+  background: #ffffff;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #d1dbe6;
+  transition: all 0.2s ease;
+}
+
+.toggle-label:hover {
+  background: #f8f9fa;
+  border-color: #2980b9;
+}
+
+.toggle-checkbox {
+  margin: 0;
+  cursor: pointer;
+}
+
+.toggle-text {
+  font-size: 0.9rem;
+  color: #2d3a4a;
+  font-weight: 500;
+}
+
+/* Tab Navigation Styling */
+.tab-navigation {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1.5rem 0;
+  flex-wrap: wrap;
+  padding: 0 1rem;
+}
+
+.tab-content {
+  min-height: 500px;
+  margin-top: 1rem;
+}
+
+/* Reuse existing .view-btn styles from Dashboard pattern */
+.view-btn {
+  padding: 0.75rem 1.5rem;
+  border: 1px solid #5d6a5c;
+  background: #ffffff;
+  color: #434947;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.view-btn:hover {
+  border-color: #334915;
+  color: #334915;
+  background: #f8f9fa;
+}
+
+.view-btn.active {
+  background: #334915;
+  border-color: #334915;
+  color: #ffffff;
+}
+
+.view-btn:focus {
+  outline: 2px solid #334915;
+  outline-offset: 2px;
+}
+
+/* Responsive tab navigation */
+@media (max-width: 768px) {
+  .tab-navigation {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .view-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+  }
+}
+
+/* Print styles for tabs */
+@media print {
+  /* Hide tab navigation when printing */
+  .tab-navigation {
+    display: none !important;
+  }
+  
+  /* Show all tab content when printing */
+  .tab-content > div {
+    display: block !important;
+  }
+  
+  /* Ensure tab content is visible */
+  .tab-content {
+    min-height: auto;
+  }
+  
+  /* Add page breaks between major sections */
+  .kpi-section,
+  .trend-chart-section,
+  .vendor-tracking-section {
+    page-break-inside: avoid;
+    margin-bottom: 2rem;
+  }
+}
+
 .trend-data-table {
   padding: 1.5rem;
   overflow-x: auto; /* Enable horizontal scrolling for the table container */

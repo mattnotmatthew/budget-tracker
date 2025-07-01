@@ -37,7 +37,12 @@ import {
   getVendorTooltipContent,
   getVendorPortfolioTooltipContent,
 } from "./utils/tooltipUtils";
-import { generateIntelligentSummary } from "./utils/summaryGenerator";
+import { 
+  generateIntelligentSummary, 
+  generateModularSummary, 
+  summaryRegistry,
+  SummaryToggles 
+} from "./utils/summaryGenerator";
 import {
   generateAlerts,
   handleBasicExport,
@@ -99,6 +104,46 @@ const ExecutiveSummary = () => {
   const [showExportCustomizer, setShowExportCustomizer] = useState(false);
   const [currentExportTemplate, setCurrentExportTemplate] = useState(null);
 
+  // Tab navigation state
+  const TAB_STORAGE_KEY = 'executiveSummary.activeTab';
+  
+  const tabs = [
+    { id: "executive-commentary", label: "Executive Commentary" },
+    { id: "overall-budget", label: "Overall Budget" },
+    { id: "budget-visuals", label: "Budget Visuals" },
+    { id: "resource-allocation", label: "Resource Allocation and Spend" },
+    { id: "vendor-info", label: "Vendor Info" }
+  ];
+
+  // Load active tab from localStorage
+  const loadActiveTab = (): string => {
+    try {
+      const saved = localStorage.getItem(TAB_STORAGE_KEY);
+      if (saved && tabs.some(tab => tab.id === saved)) {
+        return saved;
+      }
+    } catch (error) {
+      console.warn('Failed to load active tab from localStorage:', error);
+    }
+    return "executive-commentary"; // Default tab
+  };
+
+  const [activeTab, setActiveTab] = useState<string>(loadActiveTab);
+
+  // Save active tab to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(TAB_STORAGE_KEY, activeTab);
+    } catch (error) {
+      console.warn('Failed to save active tab to localStorage:', error);
+    }
+  }, [activeTab]);
+
+  // Tab change handler
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId);
+  };
+
   // Memoized calculations
   const kpis = useMemo(() => getKPIData(state), [state]);
   const topVariance = useMemo(
@@ -113,10 +158,35 @@ const ExecutiveSummary = () => {
     [state.entries, state.categories, state.selectedYear]
   );
 
-  // Generate intelligent summary
+  // Load summary toggles from localStorage
+  const loadSummaryToggles = (): SummaryToggles => {
+    try {
+      const saved = localStorage.getItem('executiveSummary.sectionToggles');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (error) {
+      console.warn('Failed to load summary toggles from localStorage:', error);
+    }
+    return summaryRegistry.getDefaultToggles();
+  };
+
+  // Summary toggles state
+  const [summaryToggles, setSummaryToggles] = useState<SummaryToggles>(loadSummaryToggles);
+
+  // Save toggles to localStorage whenever they change
+  useEffect(() => {
+    try {
+      localStorage.setItem('executiveSummary.sectionToggles', JSON.stringify(summaryToggles));
+    } catch (error) {
+      console.warn('Failed to save summary toggles to localStorage:', error);
+    }
+  }, [summaryToggles]);
+
+  // Generate intelligent summary with toggles
   const intelligentSummary = useMemo(() => {
-    return generateIntelligentSummary(state, kpis);
-  }, [state.entries, state.categories, state.selectedYear, kpis]);
+    return generateModularSummary(state, kpis, summaryToggles);
+  }, [state.entries, state.categories, state.selectedYear, kpis, summaryToggles]);
 
   // User notes state - initialize with intelligent summary
   const [userNotes, setUserNotes] = useState(intelligentSummary);
@@ -355,7 +425,13 @@ const ExecutiveSummary = () => {
   };
 
   const handlePrintExportClick = () => {
-    handlePrintExport(expandAllSections, restoreOriginalStates);
+    // For print functionality with tabs, we'll print the current tab only
+    // Users can use "Export All Sections" if they need everything
+    const currentTab = activeTab;
+    
+    handlePrintExport(expandAllSections, () => {
+      restoreOriginalStates();
+    });
   };
 
   const handleCustomizeExport = () => {
@@ -365,6 +441,28 @@ const ExecutiveSummary = () => {
   const handleApplyTemplateAndExport = (template: any) => {
     setCurrentExportTemplate(template);
     // handlePowerPointExport(template); // This would need to be implemented separately
+  };
+
+  const handleExportAllSections = () => {
+    const currentTab = activeTab; // Store current tab
+    
+    // Temporarily expand all sections
+    expandAllSections();
+    
+    // Export all sections (not just current tab)
+    handleBasicExport({
+      kpis,
+      topVariance,
+      trend,
+      alerts,
+      userNotes,
+    });
+    
+    // Restore original states after a short delay
+    setTimeout(() => {
+      restoreOriginalStates();
+      setActiveTab(currentTab); // Return to original tab
+    }, 100);
   };
 
   // Helper to get performance class for dynamic styling
@@ -424,10 +522,13 @@ const ExecutiveSummary = () => {
 
         <div className="header-buttons">
           <button onClick={handleExport} className="btn-primary">
-            Export Summary
+            Export Tab
+          </button>
+          <button onClick={handleExportAllSections} className="btn-secondary">
+            Export All Sections
           </button>
           <button onClick={handlePrintExportClick} className="btn-success">
-            Print/PDF
+            Print Tab
           </button>
           <button onClick={handleCustomizeExport} className="btn-purple">
             Customize Export
@@ -435,9 +536,51 @@ const ExecutiveSummary = () => {
         </div>
       </div>
 
-      {/* Executive Commentary Section */}
+      {/* Tab Navigation */}
+      <div className="tab-navigation">
+        {tabs.map(tab => (
+          <button
+            key={tab.id}
+            className={`view-btn ${activeTab === tab.id ? 'active' : ''}`}
+            onClick={() => handleTabChange(tab.id)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab Content */}
+      <div className="tab-content">
+        {/* Executive Commentary Tab */}
+        {activeTab === "executive-commentary" && (
+          <>
+            {/* Executive Commentary Section */}
       <div className="commentary-section">
         <h2 className="commentary-header">Executive Commentary</h2>
+        
+        {/* Summary Section Toggle Controls */}
+        <div className="summary-toggles">
+          <h4 className="toggles-header">Summary Sections:</h4>
+          <div className="toggle-controls">
+            {summaryRegistry.getAllSections().map((section) => (
+              <label key={section.id} className="toggle-label">
+                <input
+                  type="checkbox"
+                  checked={summaryToggles[section.id as keyof SummaryToggles]}
+                  onChange={(e) => {
+                    setSummaryToggles(prev => ({
+                      ...prev,
+                      [section.id]: e.target.checked
+                    }));
+                  }}
+                  className="toggle-checkbox"
+                />
+                <span className="toggle-text">{section.name}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+        
         <textarea
           value={userNotes}
           onChange={(e) => setUserNotes(e.target.value)}
@@ -451,8 +594,13 @@ const ExecutiveSummary = () => {
           ))}
         </div>
       </div>
+          </>
+        )}
 
-      {/* Strategic Context Section */}
+        {/* Overall Budget Tab */}
+        {activeTab === "overall-budget" && (
+          <>
+            {/* Strategic Context Section */}
 
       <div className="kpi-section strategic-context">
         <div
@@ -747,8 +895,13 @@ const ExecutiveSummary = () => {
           </div>
         )}
       </div>
+          </>
+        )}
 
-      {/* Budget vs Actual Trend Chart - Rolling */}
+        {/* Budget Visuals Tab */}
+        {activeTab === "budget-visuals" && (
+          <>
+            {/* Budget vs Actual Trend Chart - Rolling */}
       <div className="trend-chart-section">
         <h2 className="section-heading">Budget vs Actual Trend, Rolling</h2>
         <ResponsiveContainer width="100%" height={400}>
@@ -1265,11 +1418,16 @@ const ExecutiveSummary = () => {
           </div>
         )}
       </div>
+          </>
+        )}
 
-      {/* Divider between Vendor Tracking and Resource Allocation */}
-      <div className="section-divider"></div>
+        {/* Resource Allocation and Spend Tab */}
+        {activeTab === "resource-allocation" && (
+          <>
+            {/* Divider between Vendor Tracking and Resource Allocation */}
+            <div className="section-divider"></div>
 
-      {/* Resource Allocation & Hiring Capacity - Detailed Analysis */}
+            {/* Resource Allocation & Hiring Capacity - Detailed Analysis */}
       <div style={{ marginBottom: "2rem" }}>
         <h2
           style={{
@@ -1840,9 +1998,13 @@ const ExecutiveSummary = () => {
           </div>
         )}
       </div>
-      {/* Divider between Vendor Tracking and Resource Allocation */}
-      <div className="section-divider"></div>
-      {/* Vendor Tracking Section with Variance Analysis */}
+          </>
+        )}
+
+        {/* Vendor Info Tab */}
+        {activeTab === "vendor-info" && (
+          <>
+            {/* Vendor Tracking Section with Variance Analysis */}
       <div className="vendor-tracking-section">
         <h2 className="vendor-tracking-title">Vendor Tracking</h2>
 
@@ -1925,6 +2087,9 @@ const ExecutiveSummary = () => {
         onMouseMove={handleVendorMouseMove}
         onMouseLeave={handleVendorMouseLeave}
       />
+          </>
+        )}
+      </div>
 
       {/* Floating Export Buttons */}
       <button
