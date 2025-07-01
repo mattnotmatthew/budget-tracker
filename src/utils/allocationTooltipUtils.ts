@@ -14,6 +14,7 @@ const getMonthName = (month: number): string => {
   });
 };
 
+// Simplified tooltip for individual categories - only shows Support/R&D allocation
 export const getBudgetAllocationTooltipContent = (
   category: CategorySummary,
   month: number,
@@ -29,62 +30,77 @@ export const getBudgetAllocationTooltipContent = (
   const monthName = getMonthName(month);
   
   // Calculate totals including adjustments
-  const categoryBudgetTotal = category.budget + category.adjustments;
   const categoryActualTotal = category.actual + category.adjustments;
-  const categoryReforecastTotal = category.reforecast + category.adjustments;
   
-  const parentBudgetTotal = parentGroupTotal.budget + parentGroupTotal.adjustments;
-  const parentActualTotal = parentGroupTotal.actual + parentGroupTotal.adjustments;
-  const parentReforecastTotal = parentGroupTotal.reforecast + parentGroupTotal.adjustments;
+  let calculationText = "";
 
-  // Calculate percentages
-  const budgetPercent = parentBudgetTotal !== 0 ? (categoryBudgetTotal / parentBudgetTotal) * 100 : 0;
-  const actualPercent = parentActualTotal !== 0 ? (categoryActualTotal / parentActualTotal) * 100 : 0;
-  const reforecastPercent = parentReforecastTotal !== 0 ? (categoryReforecastTotal / parentReforecastTotal) * 100 : 0;
-
-  // Determine primary allocation percentage (use budget if available, otherwise actual, then reforecast)
-  let primaryPercent = budgetPercent;
-  let primaryAmount = categoryBudgetTotal;
-  let primaryType = "Budget";
-  
-  if (categoryActualTotal > 0) {
-    primaryPercent = actualPercent;
-    primaryAmount = categoryActualTotal;
-    primaryType = "Actual";
-  } else if (categoryReforecastTotal > 0 && categoryBudgetTotal === 0) {
-    primaryPercent = reforecastPercent;
-    primaryAmount = categoryReforecastTotal;
-    primaryType = "Forecast";
-  }
-
-  // Enhanced calculation section
-  let calculationText = `Budget: ${formatCurrencyExcelStyle(categoryBudgetTotal)} (${budgetPercent.toFixed(1)}%)
-${categoryActualTotal > 0 ? `Actual: ${formatCurrencyExcelStyle(categoryActualTotal)} (${actualPercent.toFixed(1)}%)` : ''}
-${categoryReforecastTotal > 0 ? `Forecast: ${formatCurrencyExcelStyle(categoryReforecastTotal)} (${reforecastPercent.toFixed(1)}%)` : ''}
-${category.adjustments !== 0 ? `Adjustments: ${formatCurrencyExcelStyle(category.adjustments)}` : ''}`;
-
-  // Add allocation breakdown if allocations exist for this category
-  if (allAllocations && primaryAmount > 0) {
+  // Show allocation breakdown if allocations exist for this category
+  if (allAllocations && categoryActualTotal > 0) {
     const allocation = allAllocations.find(a => a.categoryId === category.categoryId && a.month === month);
     
     if (allocation && (allocation.supportAmount > 0 || allocation.rdAmount > 0)) {
       const totalAllocation = allocation.supportAmount + allocation.rdAmount;
-      const unallocated = primaryAmount - totalAllocation;
+      const unallocated = categoryActualTotal - totalAllocation;
       
-      calculationText += `
-
---- Support/R&D Allocation ---
-Support: ${formatCurrencyExcelStyle(allocation.supportAmount)}
+      calculationText = `Support: ${formatCurrencyExcelStyle(allocation.supportAmount)}
 R&D: ${formatCurrencyExcelStyle(allocation.rdAmount)}
 Total Allocated: ${formatCurrencyExcelStyle(totalAllocation)}
 Unallocated: ${formatCurrencyExcelStyle(unallocated)}`;
+    } else {
+      calculationText = `No Support/R&D allocation for this category`;
     }
+  } else {
+    calculationText = `No actual amount or allocations to display`;
   }
 
   return {
-    definition: `${category.categoryName} allocation for ${monthName}`,
-    interpretation: `This category represents ${primaryPercent.toFixed(1)}% of total ${parentGroupName} ${primaryType.toLowerCase()} for ${monthName}, with ${formatCurrencyExcelStyle(primaryAmount)} allocated`,
-    formula: `Category ${primaryType} / ${parentGroupName} Total ${primaryType} × 100`,
+    definition: `${category.categoryName} Support/R&D allocation for ${monthName}`,
+    interpretation: `Support and R&D allocation breakdown for ${category.categoryName}`,
+    formula: "", // Remove formula section as requested
+    calculation: calculationText
+  };
+};
+
+// New function for parent category tooltips - shows sum of child allocations
+export const getParentCategoryAllocationTooltip = (
+  parentGroupName: string,
+  month: number,
+  childCategories: CategorySummary[],
+  allAllocations?: any[]
+): TooltipContent => {
+  const monthName = getMonthName(month);
+  
+  let totalSupport = 0;
+  let totalRD = 0;
+  let categoriesWithAllocations = 0;
+
+  if (allAllocations && childCategories) {
+    childCategories.forEach(category => {
+      const allocation = allAllocations.find(a => a.categoryId === category.categoryId && a.month === month);
+      if (allocation && (allocation.supportAmount > 0 || allocation.rdAmount > 0)) {
+        totalSupport += allocation.supportAmount;
+        totalRD += allocation.rdAmount;
+        categoriesWithAllocations++;
+      }
+    });
+  }
+
+  const totalAllocation = totalSupport + totalRD;
+  
+  let calculationText;
+  if (totalAllocation > 0) {
+    calculationText = `Support: ${formatCurrencyExcelStyle(totalSupport)}
+R&D: ${formatCurrencyExcelStyle(totalRD)}
+Total Allocated: ${formatCurrencyExcelStyle(totalAllocation)}
+Categories with allocations: ${categoriesWithAllocations}`;
+  } else {
+    calculationText = `No Support/R&D allocations in ${parentGroupName} subcategories`;
+  }
+
+  return {
+    definition: `${parentGroupName} Support/R&D allocation summary for ${monthName}`,
+    interpretation: `Total Support and R&D allocations across all ${parentGroupName} subcategories`,
+    formula: "", // Remove formula section as requested
     calculation: calculationText
   };
 };

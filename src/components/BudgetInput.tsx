@@ -29,6 +29,13 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
   const [selectedMonth, setSelectedMonth] = useState(1);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+  
+  // Allocation state management
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [allocationData, setAllocationData] = useState<{
+    [categoryId: string]: { support: string; rd: string };
+  }>({});
+  
   // Yearly budget target state
   const [isEditingYearlyBudget, setIsEditingYearlyBudget] = useState(false);
   const [yearlyBudgetInput, setYearlyBudgetInput] = useState("");
@@ -108,6 +115,25 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
     const firstMonthOfQuarter = (selectedQuarter - 1) * 3 + 1;
     setSelectedMonth(firstMonthOfQuarter);
   }, [selectedQuarter]);
+
+  // Load allocations when month, year, or allocations change
+  useEffect(() => {
+    loadAllocations();
+  }, [selectedMonth, state.selectedYear, state.allocations]);
+
+  // Restore expanded categories from sessionStorage on mount
+  useEffect(() => {
+    const savedExpanded = sessionStorage.getItem("budgetInput-expandedCategories");
+    if (savedExpanded) {
+      try {
+        const expandedArray = JSON.parse(savedExpanded);
+        setExpandedCategories(new Set(expandedArray));
+      } catch (error) {
+        console.warn("Failed to restore expanded categories from sessionStorage:", error);
+      }
+    }
+  }, []);
+
   // Get months for the selected quarter
   const getMonthsForQuarter = (quarter: number): number[] => {
     const startMonth = (quarter - 1) * 3 + 1;
@@ -256,6 +282,68 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
       setTimeout(() => setSaveMessage(null), 3000);
     }
   };
+
+  // Allocation management functions
+  const loadAllocations = () => {
+    const monthAllocations = state.allocations.filter(
+      (a) => a.year === state.selectedYear && a.month === selectedMonth
+    );
+    
+    const allocData: { [categoryId: string]: { support: string; rd: string } } = {};
+    monthAllocations.forEach((alloc) => {
+      allocData[alloc.categoryId] = {
+        support: alloc.supportAmount.toString(),
+        rd: alloc.rdAmount.toString(),
+      };
+    });
+    
+    setAllocationData(allocData);
+  };
+
+  const handleAllocationChange = (
+    categoryId: string,
+    field: "support" | "rd",
+    value: string
+  ) => {
+    if (isReadOnly) return;
+
+    const cleanedValue = value.replace(/[^0-9.-]/g, "");
+    setAllocationData((prev) => ({
+      ...prev,
+      [categoryId]: {
+        ...prev[categoryId],
+        [field]: cleanedValue,
+      },
+    }));
+  };
+
+  const validateAllocation = (categoryId: string): boolean => {
+    const actual = parseFloat(categoryData[categoryId]?.actualAmount) || 0;
+    const support = parseFloat(allocationData[categoryId]?.support) || 0;
+    const rd = parseFloat(allocationData[categoryId]?.rd) || 0;
+    
+    return Math.abs((support + rd) - actual) < 0.01; // Allow for rounding
+  };
+
+  const toggleCategory = (categoryId: string) => {
+    setExpandedCategories((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(categoryId)) {
+        newSet.delete(categoryId);
+      } else {
+        newSet.add(categoryId);
+      }
+      
+      // Save to sessionStorage
+      sessionStorage.setItem(
+        "budgetInput-expandedCategories",
+        JSON.stringify(Array.from(newSet))
+      );
+      
+      return newSet;
+    });
+  };
+
   const handleInputChange = (
     categoryId: string,
     field: keyof CategoryData,
@@ -271,6 +359,17 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
         [field]: value,
       },
     }));
+
+    // Clear allocations when actual amount is cleared
+    if (field === "actualAmount" && value === "") {
+      setAllocationData((prev) => ({
+        ...prev,
+        [categoryId]: {
+          support: "",
+          rd: "",
+        },
+      }));
+    }
   };
   // Helper function to get common input props
   const getInputProps = (
@@ -389,7 +488,61 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
             }
           }
         }
-      }); // Save to file
+      });
+
+      // Process allocation data
+      Object.entries(allocationData).forEach(([categoryId, allocation]) => {
+        const supportAmount = parseFloat(allocation.support) || 0;
+        const rdAmount = parseFloat(allocation.rd) || 0;
+        
+        if (supportAmount > 0 || rdAmount > 0) {
+          // Check if allocation already exists for this category/month/year
+          const existingAllocation = state.allocations.find(
+            (alloc) =>
+              alloc.categoryId === categoryId &&
+              alloc.month === selectedMonth &&
+              alloc.year === state.selectedYear
+          );
+
+          const allocationPayload = {
+            categoryId,
+            year: state.selectedYear,
+            month: selectedMonth,
+            supportAmount,
+            rdAmount,
+            updatedAt: new Date(),
+          };
+
+          if (existingAllocation) {
+            // Update existing allocation
+            dispatch({
+              type: "UPDATE_ALLOCATION",
+              payload: { ...allocationPayload, id: existingAllocation.id, createdAt: existingAllocation.createdAt },
+            });
+          } else {
+            // Create new allocation
+            const newAllocation = {
+              id: `allocation-${categoryId}-${state.selectedYear}-${selectedMonth}`,
+              ...allocationPayload,
+              createdAt: new Date(),
+            };
+            dispatch({ type: "ADD_ALLOCATION", payload: newAllocation });
+          }
+        } else {
+          // Remove allocation if both values are zero/empty
+          const existingAllocation = state.allocations.find(
+            (alloc) =>
+              alloc.categoryId === categoryId &&
+              alloc.month === selectedMonth &&
+              alloc.year === state.selectedYear
+          );
+          if (existingAllocation) {
+            dispatch({ type: "DELETE_ALLOCATION", payload: existingAllocation.id });
+          }
+        }
+      });
+
+      // Save to file
       const result = await smartAutoSave(
         {
           entries: state.entries,
@@ -758,44 +911,99 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
                 <h3 className="category-section-title">Cost of Sales</h3>
                 <div className="category-grid">
                   {costOfSalesCategories.map((category) => (
-                    <div key={category.id} className="category-row">
-                      <div className="category-name">{category.name}</div>
-                      <input
-                        id={`${category.id}-budgetAmount`}
-                        type="text"
-                        placeholder="Budget"
-                        className="amount-input"
-                        {...getInputProps(category.id, "budgetAmount")}
-                      />
-                      <input
-                        id={`${category.id}-actualAmount`}
-                        type="text"
-                        placeholder="Actual"
-                        className="amount-input"
-                        {...getInputProps(category.id, "actualAmount")}
-                      />
-                      <input
-                        id={`${category.id}-reforecastAmount`}
-                        type="text"
-                        placeholder="Reforecast"
-                        className="amount-input"
-                        {...getInputProps(category.id, "reforecastAmount")}
-                      />
-                      <input
-                        id={`${category.id}-adjustmentAmount`}
-                        type="text"
-                        placeholder="Adjustments"
-                        className="amount-input"
-                        {...getInputProps(category.id, "adjustmentAmount")}
-                      />
-                      <input
-                        id={`${category.id}-notes`}
-                        type="text"
-                        placeholder="Notes"
-                        className="notes-input"
-                        {...getInputProps(category.id, "notes")}
-                      />
-                    </div>
+                    <React.Fragment key={category.id}>
+                      <div className="category-row">
+                        <div className="category-name">
+                          <span
+                            className="collapse-icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleCategory(category.id);
+                            }}
+                            style={{ cursor: "pointer" }}
+                          >
+                            {expandedCategories.has(category.id) ? "▼" : "▶"}
+                          </span>
+                          {category.name}
+                        </div>
+                        <input
+                          id={`${category.id}-budgetAmount`}
+                          type="text"
+                          placeholder="Budget"
+                          className="amount-input"
+                          {...getInputProps(category.id, "budgetAmount")}
+                        />
+                        <input
+                          id={`${category.id}-actualAmount`}
+                          type="text"
+                          placeholder="Actual"
+                          className="amount-input"
+                          {...getInputProps(category.id, "actualAmount")}
+                        />
+                        <input
+                          id={`${category.id}-reforecastAmount`}
+                          type="text"
+                          placeholder="Reforecast"
+                          className="amount-input"
+                          {...getInputProps(category.id, "reforecastAmount")}
+                        />
+                        <input
+                          id={`${category.id}-adjustmentAmount`}
+                          type="text"
+                          placeholder="Adjustments"
+                          className="amount-input"
+                          {...getInputProps(category.id, "adjustmentAmount")}
+                        />
+                        <input
+                          id={`${category.id}-notes`}
+                          type="text"
+                          placeholder="Notes"
+                          className="notes-input"
+                          {...getInputProps(category.id, "notes")}
+                        />
+                      </div>
+                      {/* Allocation Row for this category */}
+                      {expandedCategories.has(category.id) && (
+                        <div className="allocation-row">
+                          <div></div> {/* Empty cell for category name column */}
+                          <div></div> {/* Empty cell for budget column */}
+                          <div className="allocation-inputs">
+                            <div className="allocation-input-group">
+                              <div className="allocation-label">Support</div>
+                              <input
+                                type="text"
+                                className="allocation-input"
+                                value={allocationData[category.id]?.support || ""}
+                                onChange={(e) =>
+                                  handleAllocationChange(category.id, "support", e.target.value)
+                                }
+                                disabled={isReadOnly}
+                                placeholder="0.00"
+                              />
+                            </div>
+                            <div className="allocation-input-group">
+                              <div className="allocation-label">R&D</div>
+                              <input
+                                type="text"
+                                className="allocation-input"
+                                value={allocationData[category.id]?.rd || ""}
+                                onChange={(e) =>
+                                  handleAllocationChange(category.id, "rd", e.target.value)
+                                }
+                                disabled={isReadOnly}
+                                placeholder="0.00"
+                              />
+                            </div>
+                          </div>
+                          {!validateAllocation(category.id) && 
+                           (allocationData[category.id]?.support || allocationData[category.id]?.rd) && (
+                            <div className="allocation-error">
+                              Support + R&D must equal Actual amount
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </React.Fragment>
                   ))}
                 </div>
               </div>
@@ -804,44 +1012,99 @@ const BudgetInput: React.FC<BudgetInputProps> = ({
                 <h3 className="category-section-title">Operating Expenses</h3>
                 <div className="category-grid">
                   {opexCategories.map((category) => (
-                    <div key={category.id} className="category-row">
-                      <div className="category-name">{category.name}</div>
-                      <input
-                        id={`${category.id}-budgetAmount`}
-                        type="text"
-                        placeholder="Budget"
-                        className="amount-input"
-                        {...getInputProps(category.id, "budgetAmount")}
-                      />
-                      <input
-                        id={`${category.id}-actualAmount`}
-                        type="text"
-                        placeholder="Actual"
-                        className="amount-input"
-                        {...getInputProps(category.id, "actualAmount")}
-                      />
-                      <input
-                        id={`${category.id}-reforecastAmount`}
-                        type="text"
-                        placeholder="Reforecast"
-                        className="amount-input"
-                        {...getInputProps(category.id, "reforecastAmount")}
-                      />
-                      <input
-                        id={`${category.id}-adjustmentAmount`}
-                        type="text"
-                        placeholder="Adjustments"
-                        className="amount-input"
-                        {...getInputProps(category.id, "adjustmentAmount")}
-                      />
-                      <input
-                        id={`${category.id}-notes`}
-                        type="text"
-                        placeholder="Notes"
-                        className="notes-input"
-                        {...getInputProps(category.id, "notes")}
-                      />
-                    </div>
+                    <React.Fragment key={category.id}>
+                      <div className="category-row">
+                        <div className="category-name">
+                          <span
+                            className="collapse-icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleCategory(category.id);
+                            }}
+                            style={{ cursor: "pointer" }}
+                          >
+                            {expandedCategories.has(category.id) ? "▼" : "▶"}
+                          </span>
+                          {category.name}
+                        </div>
+                        <input
+                          id={`${category.id}-budgetAmount`}
+                          type="text"
+                          placeholder="Budget"
+                          className="amount-input"
+                          {...getInputProps(category.id, "budgetAmount")}
+                        />
+                        <input
+                          id={`${category.id}-actualAmount`}
+                          type="text"
+                          placeholder="Actual"
+                          className="amount-input"
+                          {...getInputProps(category.id, "actualAmount")}
+                        />
+                        <input
+                          id={`${category.id}-reforecastAmount`}
+                          type="text"
+                          placeholder="Reforecast"
+                          className="amount-input"
+                          {...getInputProps(category.id, "reforecastAmount")}
+                        />
+                        <input
+                          id={`${category.id}-adjustmentAmount`}
+                          type="text"
+                          placeholder="Adjustments"
+                          className="amount-input"
+                          {...getInputProps(category.id, "adjustmentAmount")}
+                        />
+                        <input
+                          id={`${category.id}-notes`}
+                          type="text"
+                          placeholder="Notes"
+                          className="notes-input"
+                          {...getInputProps(category.id, "notes")}
+                        />
+                      </div>
+                      {/* Allocation Row for this category */}
+                      {expandedCategories.has(category.id) && (
+                        <div className="allocation-row">
+                          <div></div> {/* Empty cell for category name column */}
+                          <div></div> {/* Empty cell for budget column */}
+                          <div className="allocation-inputs">
+                            <div className="allocation-input-group">
+                              <div className="allocation-label">Support</div>
+                              <input
+                                type="text"
+                                className="allocation-input"
+                                value={allocationData[category.id]?.support || ""}
+                                onChange={(e) =>
+                                  handleAllocationChange(category.id, "support", e.target.value)
+                                }
+                                disabled={isReadOnly}
+                                placeholder="0.00"
+                              />
+                            </div>
+                            <div className="allocation-input-group">
+                              <div className="allocation-label">R&D</div>
+                              <input
+                                type="text"
+                                className="allocation-input"
+                                value={allocationData[category.id]?.rd || ""}
+                                onChange={(e) =>
+                                  handleAllocationChange(category.id, "rd", e.target.value)
+                                }
+                                disabled={isReadOnly}
+                                placeholder="0.00"
+                              />
+                            </div>
+                          </div>
+                          {!validateAllocation(category.id) && 
+                           (allocationData[category.id]?.support || allocationData[category.id]?.rd) && (
+                            <div className="allocation-error">
+                              Support + R&D must equal Actual amount
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </React.Fragment>
                   ))}
                 </div>
               </div>

@@ -769,15 +769,13 @@ floating-save-container {
 .category-row:hover {
   background: #dfe7ef;
 }
-/* 
 .category-row .category-name {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 0.5rem;
   font-weight: 500;
   color: #3f3a35;
-  /* padding: 0.5rem; */
-/* } */
+}
 .category-row .amount-input,
 .category-row .notes-input {
   padding: 0.5rem;
@@ -1021,4 +1019,56 @@ floating-save-container {
   background: #172a3a;
   color: #ffffff;
   transform: translateY(-1px);
+}
+
+/* Allocation Styles */
+.allocation-row {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1.2fr 1.2fr 1.2fr 1.2fr;
+  padding: 0.5rem 0.75rem;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e2dcd3;
+}
+
+.allocation-inputs {
+  grid-column: 3 / 4;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.allocation-input-group {
+  display: flex;
+  flex-direction: column;
+  width: 45%;
+}
+
+.allocation-label {
+  font-size: 0.75rem;
+  color: #666;
+  margin-bottom: 0.25rem;
+  text-align: center;
+}
+
+.allocation-input {
+  padding: 0.5rem;
+  border: 1px solid #5d6a5c;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  text-align: right;
+}
+
+.allocation-input:focus {
+  outline: none;
+  border-color: #334915;
+  box-shadow: 0 0 0 2px rgba(51, 73, 21, 0.1);
+}
+
+.allocation-error {
+  grid-column: 4 / 7;
+  color: #dc3545;
+  font-size: 0.75rem;
+  padding-left: 0.5rem;
+  display: flex;
+  align-items: center;
 }

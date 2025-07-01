@@ -78,10 +78,12 @@ const Tooltip: React.FC<TooltipProps> = ({
         <h4>{content.definition}</h4>
         <div className="interpretation">{content.interpretation}</div>
 
-        <div className="formula-section">
-          <strong>Formula</strong>
-          {content.formula}
-        </div>
+        {content.formula && (
+          <div className="formula-section">
+            <strong>Formula</strong>
+            {content.formula}
+          </div>
+        )}
 
         <div className="calculation-section">
           <strong>Calculation</strong>
