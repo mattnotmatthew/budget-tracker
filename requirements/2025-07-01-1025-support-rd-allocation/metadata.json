@@ -1,0 +1,19 @@
+{
+  "id": "support-rd-allocation",
+  "started": "2025-07-01T17:25:00Z",
+  "lastUpdated": "2025-07-01T17:25:00Z",
+  "status": "active",
+  "phase": "discovery",
+  "progress": {
+    "discovery": {
+      "answered": 0,
+      "total": 5
+    },
+    "detail": {
+      "answered": 0,
+      "total": 0
+    }
+  },
+  "contextFiles": [],
+  "relatedFeatures": []
+}
