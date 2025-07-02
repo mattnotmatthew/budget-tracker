@@ -6,17 +6,9 @@ import {
 import { ResourceData } from "./resourceCalculations";
 import { VendorData } from "./vendorCalculations";
 import { 
-  VendorConcentrationData, 
   VendorSpendVelocity, 
-  calculateVendorConcentration,
   calculateVendorSpendVelocity 
 } from "./vendorPortfolioCalculations";
-import { 
-  VendorRiskScore, 
-  ComplianceMetrics, 
-  calculateVendorRiskScores,
-  calculateComplianceMetrics 
-} from "./vendorRiskAnalysis";
 
 export interface TooltipContent {
   definition: string;
@@ -402,36 +394,6 @@ export const getVendorPortfolioTooltipContent = (
   const selectedYear = state.selectedYear;
 
   switch (metricType) {
-    case "vendorConcentration":
-      const concentration = calculateVendorConcentration(vendorData, vendorTrackingData, selectedYear);
-      return {
-        definition: "Measure of how vendor spending is distributed across your vendor portfolio",
-        interpretation: `Your top 5 vendors account for ${concentration.concentrationRatio.top5Percentage.toFixed(1)}% of total spend. ${
-          concentration.concentrationRatio.top5Percentage > 70 
-            ? "High concentration suggests dependency risk" 
-            : concentration.concentrationRatio.top5Percentage > 50 
-            ? "Moderate concentration - consider diversification" 
-            : "Well-diversified vendor portfolio"
-        }`,
-        formula: "Top N vendors spend / Total vendor spend × 100",
-        calculation: `Top 5: ${concentration.concentrationRatio.top5Percentage.toFixed(1)}% | Top 10: ${concentration.concentrationRatio.top10Percentage.toFixed(1)}%`
-      };
-
-    case "vendorRisk":
-      const riskScores = calculateVendorRiskScores(vendorData, vendorTrackingData, selectedYear);
-      const highRiskCount = riskScores.filter(v => v.riskLevel === 'high' || v.riskLevel === 'critical').length;
-      return {
-        definition: "Assessment of potential risks from vendor relationships and dependencies",
-        interpretation: `${highRiskCount} vendors identified as high risk. ${
-          highRiskCount > 5 
-            ? "High number of risky vendors requires immediate attention" 
-            : highRiskCount > 2 
-            ? "Some vendor risks need mitigation planning" 
-            : "Low vendor risk profile"
-        }`,
-        formula: "Risk Score = Concentration + Variance + Contract + Volatility + Diversification risks",
-        calculation: `Critical: ${riskScores.filter(v => v.riskLevel === 'critical').length} | High: ${riskScores.filter(v => v.riskLevel === 'high').length} | Medium: ${riskScores.filter(v => v.riskLevel === 'medium').length}`
-      };
 
     case "spendVelocity":
       const velocity = calculateVendorSpendVelocity(vendorData, vendorTrackingData, selectedYear);
@@ -448,20 +410,6 @@ export const getVendorPortfolioTooltipContent = (
         calculation: `${formatCurrencyFull(velocity.totalActualSpend)} / ${formatCurrencyFull(velocity.totalBudgetAllocated)} = ${velocity.utilizationRate.toFixed(1)}%`
       };
 
-    case "compliance":
-      const compliance = calculateComplianceMetrics(vendorData, vendorTrackingData, selectedYear);
-      return {
-        definition: "Assessment of vendor data quality and process adherence",
-        interpretation: `Audit readiness score: ${compliance.auditReadiness.score.toFixed(0)}%. ${
-          compliance.auditReadiness.score >= 85 
-            ? "Strong compliance posture" 
-            : compliance.auditReadiness.score >= 70 
-            ? "Good compliance with some improvements needed" 
-            : "Compliance gaps require attention"
-        }`,
-        formula: "Composite score based on data completeness, process adherence, and audit findings",
-        calculation: `Data: ${compliance.dataCompleteness.vendorDataCompleteness.toFixed(0)}% | Budget: ${compliance.processAdherence.budgetComplianceRate.toFixed(0)}% | Audit: ${compliance.auditReadiness.score.toFixed(0)}%`
-      };
 
     case "velocityTotalBudget":
       const velocityBudget = calculateVendorSpendVelocity(vendorData, vendorTrackingData, selectedYear);

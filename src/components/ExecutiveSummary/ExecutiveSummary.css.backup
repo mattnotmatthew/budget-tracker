@@ -1,13 +1,4 @@
 /* ExecutiveSummary.css */
-
-/* CSS Variables for consistent spacing and typography */
-:root {
-  --tab-panel-padding: 1.5rem;
-  --section-spacing: 2rem;
-  --section-header-size: 1.5rem;
-  --section-header-margin: 1rem;
-}
-
 .executive-summary {
   position: relative;
   background: #fff;
@@ -46,16 +37,16 @@
 /* Base KPI Card Styles */
 .kpi-card {
   background: #ffffff;
-  border-radius: 6px;
-  padding: 1rem;
+  border-radius: 12px;
+  padding: 1.5rem 2rem;
   flex: 1;
   min-width: 200px;
   text-align: center;
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
-  border: 1px solid #dee2e6;
-  box-shadow: none;
+  border: 2px solid #e1e8ed;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   color: #2d3a4a;
 }
 
@@ -63,41 +54,39 @@
 
 /* Hover Effects */
 .kpi-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border-color: #c1c7cd;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
 /* Typography */
 .kpi-card span {
   display: block;
   font-size: 0.9rem;
+
   color: #6b7a8f;
-  margin-bottom: 0.5rem;
-  letter-spacing: normal;
-  text-transform: none;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 .kpi-card strong {
-  font-size: 1.5rem;
+  font-size: 1.6rem;
   font-weight: 700;
   display: block;
   line-height: 1.2;
   color: #2d3a4a;
-  margin-bottom: 0.5rem;
 }
 
 /* Performance-Based Dynamic Styling */
 .performance-good {
   border-color: #28a745 !important;
-  background-color: #f8fff9;
+  box-shadow: 0 0 20px rgba(40, 167, 69, 0.3);
 }
 .performance-warning {
   border-color: #ffc107 !important;
-  background-color: #fffbf0;
+  box-shadow: 0 0 20px rgba(255, 193, 7, 0.3);
 }
 .performance-danger {
   border-color: #dc3545 !important;
-  background-color: #fff8f8;
+  box-shadow: 0 0 20px rgba(220, 53, 69, 0.3);
 }
 
 /* Trend indicators */
@@ -224,20 +213,20 @@
   margin-left: 1rem;
   margin-right: 1rem;
 }
-.commentary-textarea {
-  width: 100%;
+.commentary-section textarea {
+  width: 96.5%;
   min-height: 60px;
   border-radius: 6px;
   border: 1px solid #d1dbe6;
   padding: 0.7rem 1rem;
   font-size: 1rem;
   resize: vertical;
-  margin: 1rem 0;
+  margin: 1rem;
   height: 300px;
 }
 
 /* Hide print text version during normal viewing */
-.commentary-print-text {
+.commentary-section .commentary-print-text {
   display: none;
 }
 .summary-actions {
@@ -719,7 +708,7 @@
 
 /* Trend Data Table Styles */
 .trend-data-table-section {
-  margin: 2rem 0;
+  margin-top: 2rem;
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
@@ -855,8 +844,6 @@
   background: #334915;
   border-color: #334915;
   color: #ffffff;
-  box-shadow: 0 2px 8px rgba(51, 73, 21, 0.3);
-  font-weight: 600;
 }
 
 .view-btn:focus {
@@ -1644,11 +1631,11 @@
   }
 
   /* Hide textarea in print view */
-  .commentary-textarea {
+  .commentary-section .commentary-textarea {
     display: none !important;
   }
   /* Show and style print text version */
-  .commentary-print-text {
+  .commentary-section .commentary-print-text {
     display: block !important;
     background: white !important;
     color: black !important;
@@ -1659,7 +1646,7 @@
     border: none !important;
     font-family: inherit !important;
   }
-  .commentary-print-text p {
+  .commentary-section .commentary-print-text p {
     margin: 0 0 0.4rem 0 !important;
     padding: 0 !important;
     color: black !important;
@@ -1667,7 +1654,7 @@
     line-height: 1.4 !important;
   }
 
-  .commentary-print-text p:last-child {
+  .commentary-section .commentary-print-text p:last-child {
     margin-bottom: 0 !important;
   }
 
@@ -1845,24 +1832,6 @@ body.printing .total-comp-capitalization-section .resource-summary-cards {
   display: grid !important;
 }
 
-/* Print styles for new tab panel and section classes */
-body.printing .tab-panel {
-  padding: 1rem !important;
-  min-height: auto !important;
-  page-break-inside: avoid;
-}
-
-body.printing .section-container {
-  margin-bottom: 1.5rem !important;
-  page-break-inside: avoid;
-}
-
-body.printing .section-heading {
-  font-size: 1.2rem !important;
-  color: black !important;
-  page-break-after: avoid;
-}
-
 /* Vendor Spending KPI for formatting */
 .vendor-spending .kpi-row {
   margin-bottom: 1rem;
@@ -1985,167 +1954,6 @@ body.printing .section-heading {
   cursor: pointer;
   font-size: 0.875rem;
   font-weight: 500;
-}
-
-/* Monthly Spending Analysis Section */
-.monthly-spending-container {
-  margin-bottom: 1.5rem;
-  padding: 1rem;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #e1e8ed;
-}
-
-.monthly-spending-header {
-  margin-bottom: 1rem;
-  color: #2d3a4a;
-}
-
-.monthly-spending-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
-}
-
-/* KPI Description Text Styles */
-.kpi-description-text {
-  font-size: 0.85rem;
-  color: #6b7a8f;
-  margin-bottom: 0.25rem;
-}
-
-.kpi-summary-text {
-  font-size: 0.8rem;
-  color: #8b949e;
-}
-
-.kpi-subtitle {
-  font-size: 0.75rem;
-  color: #6b7a8f;
-  margin-top: 0.5rem;
-  font-style: italic;
-}
-
-/* Table Color Utility Classes */
-.text-blue {
-  color: #2D78FB;
-}
-
-.text-green {
-  color: #33CA7F;
-}
-
-.text-orange {
-  color: #FF8C00;
-}
-
-.text-purple {
-  color: #9932CC;
-}
-
-.text-dark-red {
-  color: #8B0000;
-}
-
-/* Table Row Conditional Styling */
-.table-row-forecast {
-  font-style: italic;
-  opacity: 0.85;
-}
-
-/* Hiring Analysis Styles */
-.hiring-analysis-header {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #2d3a4a;
-  margin-bottom: 1rem;
-}
-
-.hiring-analysis-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-  margin: 24px 0;
-  width: 100%;
-}
-
-.hiring-analysis-item {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 1rem;
-  align-items: center;
-  padding: 0.75rem;
-  background-color: #ffffff;
-  border-radius: 8px;
-  border-left: 4px solid #3498db;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.hiring-analysis-item.budget-over {
-  background-color: #fdf2f2;
-  border-left-color: #e74c3c;
-}
-
-.hiring-analysis-item.budget-under {
-  background-color: #f2fdf5;
-  border-left-color: #27ae60;
-}
-
-.hiring-analysis-label {
-  font-weight: 600;
-  color: #2d3a4a;
-  font-size: 0.95rem;
-}
-
-.hiring-analysis-note {
-  font-size: 0.8rem;
-  color: #666;
-  font-style: italic;
-}
-
-.hiring-analysis-value {
-  font-weight: 700;
-  color: #3498db;
-  font-size: 1rem;
-  text-align: right;
-  min-width: 120px;
-}
-
-.hiring-analysis-value.value-positive {
-  color: #27ae60;
-}
-
-.hiring-analysis-value.value-negative {
-  color: #e74c3c;
-}
-
-/* Card Grid Layouts */
-.card-grid-two-column {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-  margin: 2rem 0;
-}
-
-.card-container {
-  background-color: #ffffff;
-  border-radius: 12px;
-  padding: 1.5rem;
-  border: 2px solid #e1e8ed;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.card-header {
-  color: #2d3a4a;
-  margin-bottom: 1rem;
-  font-size: 1.2rem;
-  font-weight: 600;
-}
-
-.card-content {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
 }
 
 /* Section headers with collapsible functionality */
@@ -2294,429 +2102,4 @@ body.printing .section-heading {
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1rem;
   margin-bottom: 2rem;
-}
-
-/* === Tab Panel and Section Consistency === */
-
-/* Tab panel wrapper for consistent content padding */
-.tab-panel {
-  padding: var(--tab-panel-padding);
-  min-height: 400px;
-}
-
-/* Section container for consistent spacing between major sections */
-.section-container {
-  margin-bottom: var(--section-spacing);
-  padding: 1.5rem;
-  background: #f8f9fa;
-  border-radius: 12px;
-  border: 1px solid #e1e8ed;
-}
-
-/* Standardized section heading for consistent typography across all tabs */
-.section-heading {
-  font-size: var(--section-header-size);
-  font-weight: 600;
-  color: #2d3a4a;
-  margin: 0 0 var(--section-header-margin) 0;
-}
-
-/* ===== EXECUTIVE SUMMARY PRINT STYLES ===== */
-
-/* Global Print Reset - Remove all web artifacts */
-@media print {
-  /* Reset all elements to remove web-specific styling */
-  *, *::before, *::after {
-    box-shadow: none !important;
-    text-shadow: none !important;
-    filter: none !important;
-    transition: none !important;
-    animation: none !important;
-  }
-
-  /* Ensure clean white background for entire document */
-  html, body {
-    background: white !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    color: black !important;
-  }
-
-  /* Hide scroll bars and web-only elements */
-  ::-webkit-scrollbar {
-    display: none !important;
-  }
-}
-
-/* Page Setup - Define page dimensions and orientation */
-@page powerpoint {
-  size: landscape;
-  margin: 0.5in;
-  background: white;
-}
-
-@page paper {
-  size: portrait;
-  margin: 1in;
-  background: white;
-}
-
-/* PowerPoint Export Styles */
-@media print {
-  .powerpoint-export {
-    page: powerpoint;
-  }
-
-  .powerpoint-export .executive-summary {
-    /* PowerPoint-optimized layout */
-    max-width: none !important;
-    margin: 0 !important;
-    padding: 1rem !important;
-    background: white !important;
-    border-radius: 0 !important;
-    width: 100% !important;
-    min-height: 7.5in !important; /* Landscape slide height minus margins */
-  }
-
-  /* Hide navigation and web-only elements */
-  .powerpoint-export .tab-navigation {
-    display: none !important;
-  }
-
-  .powerpoint-export .tab-content > div {
-    display: block !important;
-  }
-
-  /* Force all tab panels to display during export-all mode */
-  .export-all-tabs .tab-panel {
-    display: block !important;
-  }
-
-  /* PowerPoint Typography - Optimized for presentation viewing */
-  .powerpoint-export .executive-summary h1 {
-    font-size: 2.5rem !important;
-    margin-bottom: 2rem !important;
-    color: #1f2937 !important;
-    page-break-after: avoid;
-    font-weight: 700 !important;
-    text-align: center !important;
-  }
-
-  .powerpoint-export .executive-summary h2 {
-    font-size: 2rem !important;
-    margin-bottom: 1.5rem !important;
-    color: #1f2937 !important;
-    page-break-after: avoid;
-    font-weight: 700 !important;
-  }
-
-  .powerpoint-export .executive-summary h3 {
-    font-size: 1.5rem !important;
-    color: #374151 !important;
-    page-break-after: avoid;
-    margin-bottom: 1rem !important;
-    font-weight: 600 !important;
-  }
-
-  .powerpoint-export .executive-summary h4 {
-    font-size: 1.25rem !important;
-    color: #374151 !important;
-    page-break-after: avoid;
-    margin-bottom: 0.75rem !important;
-    font-weight: 600 !important;
-  }
-
-  /* PowerPoint KPI Cards - Enhanced for presentation */
-  .powerpoint-export .kpi-cards {
-    display: grid !important;
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 1.5rem !important;
-    margin-bottom: 2rem !important;
-  }
-
-  .powerpoint-export .kpi-card {
-    background: white !important;
-    border: 2px solid #3b82f6 !important; /* Professional blue border */
-    border-radius: 8px !important;
-    padding: 1.5rem !important;
-    page-break-inside: avoid;
-    margin-bottom: 0.75rem !important;
-  }
-
-  .powerpoint-export .kpi-card span {
-    font-size: 1.1rem !important;
-    color: #4b5563 !important;
-    line-height: 1.4 !important;
-    font-weight: 500 !important;
-  }
-
-  .powerpoint-export .kpi-card strong {
-    font-size: 1.75rem !important;
-    color: #1f2937 !important;
-    font-weight: 700 !important;
-    display: block !important;
-    margin-top: 0.5rem !important;
-  }
-
-  /* PowerPoint Charts - Optimized for presentations */
-  .powerpoint-export .trend-chart-section {
-    page-break-inside: avoid;
-    margin-bottom: 2rem !important;
-    margin-top: 1rem !important;
-  }
-
-  .powerpoint-export .trend-chart-section .recharts-wrapper {
-    height: 400px !important;
-    margin: 1rem 0 !important;
-  }
-
-  .powerpoint-export .recharts-cartesian-axis-tick-value {
-    font-size: 14px !important;
-    fill: #374151 !important;
-    font-weight: 500 !important;
-  }
-
-  .powerpoint-export .recharts-legend-item-text {
-    font-size: 14px !important;
-    color: #374151 !important;
-    font-weight: 500 !important;
-  }
-
-  /* PowerPoint Tables - Professional formatting */
-  .powerpoint-export .trend-table,
-  .powerpoint-export .variance-table {
-    font-size: 1rem !important;
-    page-break-inside: avoid;
-    margin: 1.5rem 0 !important;
-    border-collapse: collapse !important;
-    width: 100% !important;
-  }
-
-  .powerpoint-export .trend-table th,
-  .powerpoint-export .trend-table td,
-  .powerpoint-export .variance-table th,
-  .powerpoint-export .variance-table td {
-    padding: 0.75rem 1rem !important;
-    border: 1px solid #d1d5db !important;
-    line-height: 1.4 !important;
-  }
-
-  .powerpoint-export .trend-table th,
-  .powerpoint-export .variance-table th {
-    background: #f8fafc !important;
-    color: #1f2937 !important;
-    font-weight: 600 !important;
-  }
-
-  /* Hide ALL Interactive Elements - Comprehensive list */
-  .powerpoint-export button,
-  .powerpoint-export input,
-  .powerpoint-export select,
-  .powerpoint-export textarea,
-  .powerpoint-export .btn,
-  .powerpoint-export .button,
-  .powerpoint-export .toggle-button,
-  .powerpoint-export .expand-button,
-  .powerpoint-export .collapse-button,
-  .powerpoint-export .view-btn,
-  .powerpoint-export .edit-button,
-  .powerpoint-export .save-button,
-  .powerpoint-export .cancel-button,
-  .powerpoint-export .add-button,
-  .powerpoint-export .remove-button,
-  .powerpoint-export .close-button,
-  .powerpoint-export .dropdown,
-  .powerpoint-export .tooltip,
-  .powerpoint-export .tooltip-trigger,
-  .powerpoint-export .interactive-element,
-  .powerpoint-export .section-toggle,
-  .powerpoint-export .expand-collapse-btn,
-  .powerpoint-export .toggle-btn,
-  .powerpoint-export [role="button"],
-  .powerpoint-export .clickable,
-  .powerpoint-export .form-control,
-  .powerpoint-export .form-group,
-  .powerpoint-export .checkbox-wrapper,
-  .powerpoint-export .radio-wrapper,
-  .powerpoint-export .floating-back-button,
-  .powerpoint-export .floating-export-button,
-  .powerpoint-export .floating-powerpoint-button,
-  .powerpoint-export .floating-customize-button,
-  .powerpoint-export .header-buttons {
-    display: none !important;
-  }
-
-  /* Hide Chart Interactive Elements */
-  .powerpoint-export .recharts-tooltip-wrapper,
-  .powerpoint-export .recharts-active-dot,
-  .powerpoint-export .recharts-dot:hover,
-  .powerpoint-export .recharts-bar:hover {
-    display: none !important;
-  }
-
-  /* PowerPoint Commentary - Clean presentation format */
-  .powerpoint-export .commentary-section {
-    page-break-inside: avoid;
-    margin: 1.5rem 0 !important;
-  }
-
-  .powerpoint-export .commentary-section textarea,
-  .powerpoint-export .commentary-section input,
-  .powerpoint-export .commentary-section button,
-  .powerpoint-export .commentary-section .edit-mode,
-  .powerpoint-export .commentary-section .save-mode {
-    display: none !important;
-  }
-
-  .powerpoint-export .commentary-section .print-commentary {
-    display: block !important;
-    font-size: 1.1rem !important;
-    line-height: 1.6 !important;
-    color: #374151 !important;
-    padding: 1.25rem !important;
-    border: 2px solid #e5e7eb !important;
-    border-radius: 8px !important;
-    background: #f9fafb !important;
-  }
-}
-
-/* Single Slide Layout (Export Tab) - Compact fitting */
-@media print {
-  .export-current-tab .tab-panel {
-    page-break-before: avoid !important;
-    page-break-after: avoid !important;
-    page-break-inside: avoid;
-    margin: 0 !important;
-    padding: 0.5rem !important;
-  }
-
-  /* Compact layout for single slide */
-  .export-current-tab .section {
-    margin-bottom: 1rem !important;
-    padding: 0.5rem !important;
-  }
-
-  .export-current-tab .kpi-cards {
-    gap: 1rem !important;
-    margin-bottom: 1.5rem !important;
-  }
-
-  .export-current-tab .kpi-card {
-    padding: 1rem !important;
-    margin-bottom: 0.5rem !important;
-  }
-
-  /* Optimize chart size for single slide */
-  .export-current-tab .trend-chart-section .recharts-wrapper {
-    height: 300px !important;
-    margin: 0.5rem 0 !important;
-  }
-
-  /* Compact typography for single slide */
-  .export-current-tab h2 {
-    font-size: 1.75rem !important;
-    margin-bottom: 1rem !important;
-  }
-
-  .export-current-tab h3 {
-    font-size: 1.35rem !important;
-    margin-bottom: 0.75rem !important;
-  }
-
-  .export-current-tab h4 {
-    font-size: 1.15rem !important;
-    margin-bottom: 0.5rem !important;
-  }
-}
-
-/* Multi-Slide Layout (Export All Sections) - Slide breaks between tabs */
-@media print {
-  .export-all-tabs .tab-panel {
-    page-break-before: always !important;
-    page-break-inside: avoid;
-    margin: 0 !important;
-    padding: 1.5rem !important;
-    min-height: 6.5in !important; /* Ensure good slide utilization */
-  }
-
-  .export-all-tabs .tab-panel:first-child {
-    page-break-before: auto !important;
-  }
-
-  /* Slide titles for each tab */
-  .export-all-tabs .tab-panel::before {
-    content: attr(data-tab-title) !important;
-    display: block !important;
-    font-size: 2.5rem !important;
-    font-weight: 700 !important;
-    color: #1f2937 !important;
-    margin-bottom: 2rem !important;
-    text-align: center !important;
-    page-break-after: avoid;
-    border-bottom: 3px solid #3b82f6 !important;
-    padding-bottom: 1rem !important;
-  }
-
-  /* Prevent content breaking within sections */
-  .export-all-tabs .section {
-    page-break-inside: avoid;
-    margin-bottom: 1.5rem !important;
-  }
-
-  .export-all-tabs .kpi-cards {
-    page-break-inside: avoid;
-  }
-
-  .export-all-tabs .trend-chart-section {
-    page-break-inside: avoid;
-    page-break-before: avoid !important;
-  }
-}
-
-/* Paper Export Styles - 8.5x11 Document Format */
-@media print {
-  .paper-export {
-    page: paper;
-  }
-
-  .paper-export .executive-summary {
-    /* Standard paper document optimization */
-    max-width: none !important;
-    margin: 0 !important;
-    padding: 0.75rem !important;
-    font-size: 11px !important;
-    background: white !important;
-  }
-
-  .paper-export .kpi-cards {
-    grid-template-columns: repeat(3, 1fr) !important;
-    gap: 0.5rem !important;
-  }
-
-  .paper-export .kpi-card {
-    padding: 0.5rem !important;
-    font-size: 10px !important;
-    border: 1px solid #d1d5db !important;
-  }
-
-  .paper-export .trend-chart-section .recharts-wrapper {
-    height: 250px !important;
-  }
-
-  /* Paper typography - smaller for document format */
-  .paper-export h1 {
-    font-size: 1.5rem !important;
-  }
-
-  .paper-export h2 {
-    font-size: 1.25rem !important;
-  }
-
-  .paper-export h3 {
-    font-size: 1.1rem !important;
-  }
-
-  .paper-export h4 {
-    font-size: 1rem !important;
-  }
 }

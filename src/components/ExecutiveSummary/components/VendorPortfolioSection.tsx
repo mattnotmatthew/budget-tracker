@@ -3,25 +3,11 @@ import { formatCurrencyFull } from "../utils/kpiCalculations";
 import { formatCurrencyExcelStyle } from "../../../utils/currencyFormatter";
 import { getVendorPortfolioTooltipContent } from "../utils/tooltipUtils";
 import {
-  calculateVendorConcentration,
   calculateBillingAnalysis,
   calculateVendorSpendVelocity,
-  calculateSeasonalPatterns,
-  getVendorOptimizationOpportunities,
-  VendorConcentrationData,
   BillingAnalysisData,
-  VendorSpendVelocity,
-  SeasonalPatterns
+  VendorSpendVelocity
 } from "../utils/vendorPortfolioCalculations";
-import {
-  calculateVendorRiskScores,
-  analyzeDependencies,
-  calculateComplianceMetrics,
-  getVendorRiskInsights,
-  VendorRiskScore,
-  DependencyAnalysis,
-  ComplianceMetrics
-} from "../utils/vendorRiskAnalysis";
 import { BudgetState } from "../../../types";
 
 interface VendorPortfolioSectionProps {
@@ -43,40 +29,11 @@ const VendorPortfolioSection: React.FC<VendorPortfolioSectionProps> = ({
 }) => {
   // Sub-section expansion states
   const [expandedSections, setExpandedSections] = useState({
-    concentration: false,
-    riskAnalysis: false,
     billingAnalysis: false,
-    spendVelocity: false,
-    seasonalPatterns: false,
-    optimization: false,
-    compliance: false
+    spendVelocity: false
   });
 
-  // Calculate all vendor analytics
-  const vendorConcentration = useMemo((): VendorConcentrationData => 
-    calculateVendorConcentration(
-      state.vendorData || [],
-      state.vendorTrackingData || [],
-      state.selectedYear
-    ), [state.vendorData, state.vendorTrackingData, state.selectedYear]
-  );
-
-  const vendorRiskScores = useMemo((): VendorRiskScore[] => 
-    calculateVendorRiskScores(
-      state.vendorData || [],
-      state.vendorTrackingData || [],
-      state.selectedYear
-    ), [state.vendorData, state.vendorTrackingData, state.selectedYear]
-  );
-
-  const dependencyAnalysis = useMemo((): DependencyAnalysis => 
-    analyzeDependencies(
-      state.vendorData || [],
-      state.vendorTrackingData || [],
-      state.selectedYear
-    ), [state.vendorData, state.vendorTrackingData, state.selectedYear]
-  );
-
+  // Calculate vendor analytics
   const billingAnalysis = useMemo((): BillingAnalysisData => 
     calculateBillingAnalysis(
       state.vendorData || [],
@@ -92,34 +49,6 @@ const VendorPortfolioSection: React.FC<VendorPortfolioSectionProps> = ({
     ), [state.vendorData, state.vendorTrackingData, state.selectedYear]
   );
 
-  const seasonalPatterns = useMemo((): SeasonalPatterns => 
-    calculateSeasonalPatterns(
-      state.vendorTrackingData || [],
-      state.selectedYear
-    ), [state.vendorTrackingData, state.selectedYear]
-  );
-
-  const complianceMetrics = useMemo((): ComplianceMetrics => 
-    calculateComplianceMetrics(
-      state.vendorData || [],
-      state.vendorTrackingData || [],
-      state.selectedYear
-    ), [state.vendorData, state.vendorTrackingData, state.selectedYear]
-  );
-
-  const optimizationOpportunities = useMemo(() => 
-    getVendorOptimizationOpportunities(
-      state.vendorData || [],
-      state.vendorTrackingData || [],
-      state.selectedYear
-    ), [state.vendorData, state.vendorTrackingData, state.selectedYear]
-  );
-
-  const riskInsights = useMemo(() => 
-    getVendorRiskInsights(dependencyAnalysis, complianceMetrics),
-    [dependencyAnalysis, complianceMetrics]
-  );
-
   const toggleSubSection = (section: keyof typeof expandedSections) => {
     setExpandedSections(prev => ({
       ...prev,
@@ -127,21 +56,6 @@ const VendorPortfolioSection: React.FC<VendorPortfolioSectionProps> = ({
     }));
   };
 
-  const getRiskLevelColor = (level: string): string => {
-    switch (level) {
-      case 'critical': return '#dc3545';
-      case 'high': return '#fd7e14';
-      case 'medium': return '#ffc107';
-      case 'low': return '#28a745';
-      default: return '#6c757d';
-    }
-  };
-
-  const getComplianceColor = (score: number): string => {
-    if (score >= 85) return '#28a745';
-    if (score >= 70) return '#ffc107';
-    return '#dc3545';
-  };
 
   return (
     <div className="vendor-portfolio-section">
@@ -149,20 +63,18 @@ const VendorPortfolioSection: React.FC<VendorPortfolioSectionProps> = ({
       <div className="section-header" onClick={onToggleExpanded}>
         <h4 className="section-title">
           <span className="expand-icon">{isExpanded ? "−" : "+"}</span>
-          Vendor Portfolio Management
+          Vendor Analysis
         </h4>
         {!isExpanded && (
           <div className="compact-summary">
             <span className="compact-metric">
-              Vendors: <strong>{vendorConcentration.totalVendors}</strong>
+              Utilization: <strong>{spendVelocity.utilizationRate.toFixed(1)}%</strong>
             </span>
             <span className="compact-metric">
-              Active: <strong>{vendorConcentration.activeVendors}</strong>
+              Monthly Burn: <strong>{formatCurrencyFull(spendVelocity.burnRate)}</strong>
             </span>
             <span className="compact-metric">
-              Risk Level: <strong style={{ color: getRiskLevelColor(vendorRiskScores[0]?.riskLevel || 'low') }}>
-                {vendorRiskScores.filter(v => v.riskLevel === 'high' || v.riskLevel === 'critical').length} High Risk
-              </strong>
+              Off-Budget: <strong>{billingAnalysis.budgetStatusAnalysis.offBudgetPercentage.toFixed(1)}%</strong>
             </span>
           </div>
         )}
@@ -170,223 +82,15 @@ const VendorPortfolioSection: React.FC<VendorPortfolioSectionProps> = ({
 
       {isExpanded && (
         <div className="vendor-portfolio-content">
-          {/* Key Insights Summary */}
-          <div className="vendor-insights-summary">
-            <div className="insight-cards">
-              <div className="insight-card">
-                <div className="insight-value">{vendorConcentration.totalVendors}</div>
-                <div className="insight-label">Total Vendors</div>
-              </div>
-              <div 
-                className="insight-card"
-                onMouseEnter={(e) => onMouseEnter && onMouseEnter(e, "vendorConcentration")}
-                onMouseMove={(e) => onMouseMove && onMouseMove(e, "vendorConcentration")}
-                onMouseLeave={onMouseLeave}
-                style={{ cursor: 'pointer' }}
-              >
-                <div className="insight-value">{vendorConcentration.concentrationRatio.top5Percentage.toFixed(1)}%</div>
-                <div className="insight-label">Top 5 Concentration</div>
-              </div>
-              <div 
-                className="insight-card"
-                onMouseEnter={(e) => onMouseEnter && onMouseEnter(e, "vendorRisk")}
-                onMouseMove={(e) => onMouseMove && onMouseMove(e, "vendorRisk")}
-                onMouseLeave={onMouseLeave}
-                style={{ cursor: 'pointer' }}
-              >
-                <div className="insight-value" style={{ color: getRiskLevelColor('high') }}>
-                  {dependencyAnalysis.singleSourceDependencies.length}
-                </div>
-                <div className="insight-label">Single Source Deps</div>
-              </div>
-              <div 
-                className="insight-card"
-                onMouseEnter={(e) => onMouseEnter && onMouseEnter(e, "compliance")}
-                onMouseMove={(e) => onMouseMove && onMouseMove(e, "compliance")}
-                onMouseLeave={onMouseLeave}
-                style={{ cursor: 'pointer' }}
-              >
-                <div className="insight-value" style={{ color: getComplianceColor(complianceMetrics.auditReadiness.score) }}>
-                  {complianceMetrics.auditReadiness.score.toFixed(0)}%
-                </div>
-                <div className="insight-label">Audit Readiness</div>
-              </div>
-            </div>
-          </div>
 
-          {/* Risk Insights */}
-          {riskInsights.length > 0 && (
-            <div className="vendor-risk-insights">
-              <h5>Key Risk Insights</h5>
-              <div className="risk-insights-grid">
-                {riskInsights.slice(0, 3).map((insight, index) => (
-                  <div key={index} className={`risk-insight-card ${insight.type} ${insight.priority}`}>
-                    <div className="insight-header">
-                      <span className="insight-type">{insight.type.toUpperCase()}</span>
-                      <span className={`insight-priority priority-${insight.priority}`}>
-                        {insight.priority.toUpperCase()}
-                      </span>
-                    </div>
-                    <div className="insight-title">{insight.title}</div>
-                    <div className="insight-description">{insight.description}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
-          {/* Vendor Concentration Analysis */}
-          <div className="vendor-subsection">
-            <div className="subsection-header" onClick={() => toggleSubSection('concentration')}>
-              <h5>
-                <span className="expand-icon">{expandedSections.concentration ? "−" : "+"}</span>
-                Vendor Concentration Analysis
-              </h5>
-              <div className="subsection-summary">
-                <span>HHI: {vendorConcentration.concentrationRatio.herfindahlIndex.toFixed(0)}</span>
-                <span>Top 10: {vendorConcentration.concentrationRatio.top10Percentage.toFixed(1)}%</span>
-              </div>
-            </div>
-            
-            {expandedSections.concentration && (
-              <div className="subsection-content">
-                <div className="concentration-metrics">
-                  <div className="metric-card">
-                    <div className="metric-title">Concentration Ratios</div>
-                    <div className="metric-details">
-                      <div>Top 5 Vendors: {vendorConcentration.concentrationRatio.top5Percentage.toFixed(1)}%</div>
-                      <div>Top 10 Vendors: {vendorConcentration.concentrationRatio.top10Percentage.toFixed(1)}%</div>
-                      <div>Herfindahl Index: {vendorConcentration.concentrationRatio.herfindahlIndex.toFixed(0)}</div>
-                    </div>
-                  </div>
-                  
-                  <div className="metric-card">
-                    <div className="metric-title">Vendor Portfolio</div>
-                    <div className="metric-details">
-                      <div>New Vendors: {vendorConcentration.newVsRecurring.newVendors}</div>
-                      <div>Recurring Vendors: {vendorConcentration.newVsRecurring.recurringVendors}</div>
-                      <div>New Vendor Spend: {formatCurrencyFull(vendorConcentration.newVsRecurring.totalNewSpend)}</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="top-vendors-table">
-                  <h6>Top Vendors by Spend</h6>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Vendor</th>
-                        <th>Category</th>
-                        <th>Total Spend</th>
-                        <th>% of Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {vendorConcentration.topVendorsBySpend.slice(0, 10).map((vendor, index) => (
-                        <tr key={index}>
-                          <td>{vendor.vendorName}</td>
-                          <td>{vendor.category}</td>
-                          <td>{formatCurrencyFull(vendor.totalSpend)}</td>
-                          <td>{vendor.percentage.toFixed(1)}%</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Risk Analysis */}
-          <div className="vendor-subsection">
-            <div className="subsection-header" onClick={() => toggleSubSection('riskAnalysis')}>
-              <h5>
-                <span className="expand-icon">{expandedSections.riskAnalysis ? "−" : "+"}</span>
-                Risk Analysis & Dependencies
-              </h5>
-              <div className="subsection-summary">
-                <span>Critical: {vendorRiskScores.filter(v => v.riskLevel === 'critical').length}</span>
-                <span>High Risk: {vendorRiskScores.filter(v => v.riskLevel === 'high').length}</span>
-              </div>
-            </div>
-            
-            {expandedSections.riskAnalysis && (
-              <div className="subsection-content">
-                <div className="risk-overview">
-                  <div className="risk-distribution">
-                    <h6>Risk Distribution</h6>
-                    <div className="risk-levels">
-                      {['critical', 'high', 'medium', 'low'].map(level => {
-                        const count = vendorRiskScores.filter(v => v.riskLevel === level).length;
-                        return (
-                          <div key={level} className="risk-level-item">
-                            <span className="risk-indicator" style={{ backgroundColor: getRiskLevelColor(level) }}></span>
-                            <span className="risk-label">{level.charAt(0).toUpperCase() + level.slice(1)}</span>
-                            <span className="risk-count">{count}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="single-source-deps">
-                    <h6>Single Source Dependencies</h6>
-                    <div className="deps-list">
-                      {dependencyAnalysis.singleSourceDependencies.map((dep, index) => (
-                        <div key={index} className="dep-item">
-                          <div className="dep-category">{dep.category}</div>
-                          <div className="dep-vendor">{dep.vendorName}</div>
-                          <div className="dep-amount">{formatCurrencyFull(dep.spendAmount)}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="high-risk-vendors">
-                  <h6>High Risk Vendors</h6>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Vendor</th>
-                        <th>Risk Score</th>
-                        <th>Risk Level</th>
-                        <th>Primary Risk Factors</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {vendorRiskScores.filter(v => v.riskLevel === 'critical' || v.riskLevel === 'high').slice(0, 5).map((vendor, index) => (
-                        <tr key={index}>
-                          <td>{vendor.vendorName}</td>
-                          <td>{vendor.overallRiskScore.toFixed(0)}</td>
-                          <td>
-                            <span className="risk-badge" style={{ backgroundColor: getRiskLevelColor(vendor.riskLevel) }}>
-                              {vendor.riskLevel}
-                            </span>
-                          </td>
-                          <td>
-                            {Object.entries(vendor.riskFactors)
-                              .sort(([,a], [,b]) => b - a)
-                              .slice(0, 2)
-                              .map(([factor]) => factor.replace(/([A-Z])/g, ' $1').toLowerCase())
-                              .join(', ')
-                            }
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </div>
 
           {/* Billing & Contract Analysis */}
           <div className="vendor-subsection">
             <div className="subsection-header" onClick={() => toggleSubSection('billingAnalysis')}>
               <h5>
                 <span className="expand-icon">{expandedSections.billingAnalysis ? "−" : "+"}</span>
-                Billing & Contract Analysis
+                Billing Analysis
               </h5>
               <div className="subsection-summary">
                 <span>Monthly: {formatCurrencyFull(billingAnalysis.cashFlowImpact.monthlyCommitments)}</span>
@@ -552,104 +256,6 @@ const VendorPortfolioSection: React.FC<VendorPortfolioSectionProps> = ({
             )}
           </div>
 
-          {/* Optimization Opportunities */}
-          <div className="vendor-subsection">
-            <div className="subsection-header" onClick={() => toggleSubSection('optimization')}>
-              <h5>
-                <span className="expand-icon">{expandedSections.optimization ? "−" : "+"}</span>
-                Optimization Opportunities
-              </h5>
-              <div className="subsection-summary">
-                <span>{optimizationOpportunities.length} Opportunities</span>
-                <span>Potential Savings: {formatCurrencyFull(optimizationOpportunities.reduce((sum, opp) => sum + Math.max(0, opp.potentialSavings), 0))}</span>
-              </div>
-            </div>
-            
-            {expandedSections.optimization && (
-              <div className="subsection-content">
-                <div className="optimization-list">
-                  {optimizationOpportunities.map((opportunity, index) => (
-                    <div key={index} className={`optimization-card ${opportunity.type} priority-${opportunity.priority}`}>
-                      <div className="opp-header">
-                        <span className="opp-type">{opportunity.type.replace('_', ' ').toUpperCase()}</span>
-                        <span className={`opp-priority priority-${opportunity.priority}`}>{opportunity.priority.toUpperCase()}</span>
-                      </div>
-                      <div className="opp-category">{opportunity.category}</div>
-                      <div className="opp-description">{opportunity.description}</div>
-                      <div className="opp-savings">
-                        Potential Impact: {opportunity.potentialSavings >= 0 ? '+' : ''}{formatCurrencyFull(opportunity.potentialSavings)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Compliance & Data Quality */}
-          <div className="vendor-subsection">
-            <div className="subsection-header" onClick={() => toggleSubSection('compliance')}>
-              <h5>
-                <span className="expand-icon">{expandedSections.compliance ? "−" : "+"}</span>
-                Compliance & Data Quality
-              </h5>
-              <div className="subsection-summary">
-                <span>Audit Score: {complianceMetrics.auditReadiness.score.toFixed(0)}%</span>
-                <span>Data Quality: {complianceMetrics.dataCompleteness.vendorDataCompleteness.toFixed(0)}%</span>
-              </div>
-            </div>
-            
-            {expandedSections.compliance && (
-              <div className="subsection-content">
-                <div className="compliance-overview">
-                  <div className="compliance-scores">
-                    <div className="score-card">
-                      <div className="score-value" style={{ color: getComplianceColor(complianceMetrics.dataCompleteness.vendorDataCompleteness) }}>
-                        {complianceMetrics.dataCompleteness.vendorDataCompleteness.toFixed(0)}%
-                      </div>
-                      <div className="score-label">Vendor Data Completeness</div>
-                    </div>
-                    <div className="score-card">
-                      <div className="score-value" style={{ color: getComplianceColor(complianceMetrics.dataCompleteness.trackingDataCompleteness) }}>
-                        {complianceMetrics.dataCompleteness.trackingDataCompleteness.toFixed(0)}%
-                      </div>
-                      <div className="score-label">Tracking Data Completeness</div>
-                    </div>
-                    <div className="score-card">
-                      <div className="score-value" style={{ color: getComplianceColor(complianceMetrics.processAdherence.budgetComplianceRate) }}>
-                        {complianceMetrics.processAdherence.budgetComplianceRate.toFixed(0)}%
-                      </div>
-                      <div className="score-label">Budget Compliance</div>
-                    </div>
-                    <div className="score-card">
-                      <div className="score-value" style={{ color: getComplianceColor(complianceMetrics.auditReadiness.score) }}>
-                        {complianceMetrics.auditReadiness.score.toFixed(0)}%
-                      </div>
-                      <div className="score-label">Audit Readiness</div>
-                    </div>
-                  </div>
-                </div>
-
-                {complianceMetrics.auditReadiness.findings.length > 0 && (
-                  <div className="audit-findings">
-                    <h6>Audit Findings</h6>
-                    <div className="findings-list">
-                      {complianceMetrics.auditReadiness.findings.map((finding, index) => (
-                        <div key={index} className={`finding-item severity-${finding.severity}`}>
-                          <div className="finding-header">
-                            <span className="finding-category">{finding.category}</span>
-                            <span className={`finding-severity severity-${finding.severity}`}>{finding.severity.toUpperCase()}</span>
-                          </div>
-                          <div className="finding-description">{finding.description}</div>
-                          <div className="finding-remediation">Remediation: {finding.remediation}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
         </div>
       )}
     </div>

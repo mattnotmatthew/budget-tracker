@@ -21,7 +21,6 @@ import {
   getTopVarianceCategories,
   formatCurrencyFull,
   getLastFinalMonthName,
-  getTargetAchievementSubtitle,
   KPIData,
   VarianceCategory,
 } from "./utils/kpiCalculations";
@@ -394,19 +393,13 @@ const ExecutiveSummary = () => {
 
   // Export handlers
   const handleExport = () => {
-    handleBasicExport(
-      {
-        kpis,
-        topVariance,
-        trend,
-        alerts,
-        userNotes,
-      },
-      expandAllSections,
-      restoreOriginalStates,
-      'powerpoint',
-      'current'
-    );
+    handleBasicExport({
+      kpis,
+      topVariance,
+      trend,
+      alerts,
+      userNotes,
+    });
   };
 
   const expandAllSections = () => {
@@ -431,22 +424,14 @@ const ExecutiveSummary = () => {
     setTotalCompCapitalizationCollapsed(true);
   };
 
-  // Export mode state to render all tabs during export
-  const [isExportMode, setIsExportMode] = useState(false);
-
-  const showAllTabsForExport = () => {
-    // Enable export mode to render all tabs
-    setIsExportMode(true);
-  };
-
-  const restoreTabVisibility = () => {
-    // Disable export mode to return to normal tab behavior
-    setIsExportMode(false);
-  };
-
   const handlePrintExportClick = () => {
-    // For print functionality with tabs, print current tab optimized for 8.5x11 paper
-    handlePrintExport(expandAllSections, restoreOriginalStates, 'paper');
+    // For print functionality with tabs, we'll print the current tab only
+    // Users can use "Export All Sections" if they need everything
+    const currentTab = activeTab;
+    
+    handlePrintExport(expandAllSections, () => {
+      restoreOriginalStates();
+    });
   };
 
   const handleCustomizeExport = () => {
@@ -459,28 +444,31 @@ const ExecutiveSummary = () => {
   };
 
   const handleExportAllSections = () => {
-    // Export all sections with PowerPoint formatting and multi-slide layout
-    handleBasicExport(
-      {
-        kpis,
-        topVariance,
-        trend,
-        alerts,
-        userNotes,
-      },
-      expandAllSections,
-      restoreOriginalStates,
-      'powerpoint',
-      'all',
-      showAllTabsForExport,
-      restoreTabVisibility
-    );
+    const currentTab = activeTab; // Store current tab
+    
+    // Temporarily expand all sections
+    expandAllSections();
+    
+    // Export all sections (not just current tab)
+    handleBasicExport({
+      kpis,
+      topVariance,
+      trend,
+      alerts,
+      userNotes,
+    });
+    
+    // Restore original states after a short delay
+    setTimeout(() => {
+      restoreOriginalStates();
+      setActiveTab(currentTab); // Return to original tab
+    }, 100);
   };
 
   // Helper to get performance class for dynamic styling
   const getPerformanceClass = (
     kpiType: string,
-    value: number | string,
+    value: number,
     percentage?: number
   ) => {
     switch (kpiType) {
@@ -490,19 +478,14 @@ const ExecutiveSummary = () => {
         return "performance-warning";
 
       case "budgetUtilization":
-        if (typeof value === "number") {
-          if (value > 80) return "performance-warning"; // High utilization
-          if (value < 30) return "performance-good"; // Low utilization
-        }
+        if (value > 80) return "performance-warning"; // High utilization
+        if (value < 30) return "performance-good"; // Low utilization
         return "";
 
       case "targetAchievement":
-        if (typeof value === "number") {
-          if (value >= 85 && value <= 115) return "performance-good"; // More forgiving range
-          if (value > 130 || value < 50) return "performance-danger"; // Much more forgiving thresholds
-          return "performance-warning";
-        }
-        return "";
+        if (value >= 85 && value <= 115) return "performance-good"; // More forgiving range
+        if (value > 130 || value < 50) return "performance-danger"; // Much more forgiving thresholds
+        return "performance-warning";
 
       case "ytdVariance":
         // Positive variance = under budget (good), negative = over budget (bad)
@@ -511,55 +494,15 @@ const ExecutiveSummary = () => {
         return ""; // Neutral for small variances
 
       case "forecastVariance":
-        if (typeof value === "number") {
-          if (value > 1000000) return "performance-warning"; // greater than $1M variance is concerning
-          if (value < -1000000) return "performance-danger"; // less than -$1M is over spend
-          if (value > 0 && value <= 1000000) return "performance-good"; // under budget is good
-          return "performance-warning";
-        }
-        return "";
+        if (value > 1000000) return "performance-warning"; // greater than $1M variance is concerning
+        if (value < -1000000) return "performance-danger"; // less than -$1M is over spend
+        if (value > 0 && value <= 1000000) return "performance-good"; // under budget is good
+        return "performance-warning";
 
       case "monthsRemaining":
-        if (typeof value === "number") {
-          if (value > 6) return "performance-good"; // Plenty of runway
-          if (value < 2) return "performance-danger"; // Low runway
-          return "performance-warning";
-        }
-        return "";
-
-      case "fullYearForecast":
-        // Compare forecast to annual budget target to determine performance
-        if (typeof value === "number") {
-          const annualTarget = kpis?.annualBudgetTarget || 0;
-          if (annualTarget > 0) {
-            const forecastVsTarget = ((value - annualTarget) / annualTarget) * 100;
-            if (forecastVsTarget > 10) return "performance-danger"; // Significantly over budget
-            if (forecastVsTarget < -5) return "performance-good"; // Under budget
-            return "performance-warning"; // Close to budget
-          }
-        }
-        return "";
-
-      case "burnRate":
-        // Compare burn rate to expected monthly budget
-        if (typeof value === "number") {
-          const expectedMonthlyBudget = (kpis?.annualBudgetTarget || 0) / 12;
-          if (expectedMonthlyBudget > 0) {
-            const burnRateRatio = value / expectedMonthlyBudget;
-            if (burnRateRatio > 1.2) return "performance-danger"; // Burning too fast
-            if (burnRateRatio < 0.8) return "performance-good"; // Burning slower than expected
-            return "performance-warning"; // Normal burn rate
-          }
-        }
-        return "";
-
-      case "varianceTrend":
-        if (typeof value === "string") {
-          if (value === "Improving") return "performance-good";
-          if (value === "Declining") return "performance-danger";
-          if (value === "Stable") return "performance-warning";
-        }
-        return "";
+        if (value > 6) return "performance-good"; // Plenty of runway
+        if (value < 2) return "performance-danger"; // Low runway
+        return "performance-warning";
 
       default:
         return "";
@@ -609,11 +552,11 @@ const ExecutiveSummary = () => {
       {/* Tab Content */}
       <div className="tab-content">
         {/* Executive Commentary Tab */}
-        {(activeTab === "executive-commentary" || isExportMode) && (
-          <div className="tab-panel" role="tabpanel" aria-labelledby="tab-executive-commentary">
+        {activeTab === "executive-commentary" && (
+          <>
             {/* Executive Commentary Section */}
-            <div className="section-container">
-              <h2 className="section-heading">Executive Commentary</h2>
+      <div className="commentary-section">
+        <h2 className="commentary-header">Executive Commentary</h2>
         
         {/* Summary Section Toggle Controls */}
         <div className="summary-toggles">
@@ -649,14 +592,14 @@ const ExecutiveSummary = () => {
           {userNotes.split("\n").map((line, index) => (
             <p key={index}>{line || "\u00A0"}</p>
           ))}
-            </div>
-            </div>
-          </div>
+        </div>
+      </div>
+          </>
         )}
 
         {/* Overall Budget Tab */}
-        {(activeTab === "overall-budget" || isExportMode) && (
-          <div className="tab-panel" role="tabpanel" aria-labelledby="tab-overall-budget">
+        {activeTab === "overall-budget" && (
+          <>
             {/* Strategic Context Section */}
 
       <div className="kpi-section strategic-context">
@@ -735,11 +678,6 @@ const ExecutiveSummary = () => {
                   onMouseEnter={(e) => handleMouseEnter(e, "annualVariance")}
                   onMouseMove={(e) => handleMouseMove(e, "annualVariance")}
                   onMouseLeave={handleMouseLeave}
-                  className={`kpi-card ${getPerformanceClass(
-                    "annualVariance",
-                    kpis.annualVariance,
-                    kpis.annualVariancePct
-                  )}`}
                 />
                 <KPICard
                   title="Budget Utilization"
@@ -752,16 +690,11 @@ const ExecutiveSummary = () => {
                   onMouseEnter={(e) => handleMouseEnter(e, "budgetUtilization")}
                   onMouseMove={(e) => handleMouseMove(e, "budgetUtilization")}
                   onMouseLeave={handleMouseLeave}
-                  className={`kpi-card ${getPerformanceClass(
-                    "budgetUtilization",
-                    kpis.budgetUtilization
-                  )}`}
                 />
                 <KPICard
                   title="Target Achievement"
                   value={kpis.targetAchievement}
                   isPercentage={true}
-                  subtitle={getTargetAchievementSubtitle(kpis.targetAchievement)}
                   kpiType={getPerformanceClass(
                     "targetAchievement",
                     kpis.targetAchievement
@@ -769,10 +702,6 @@ const ExecutiveSummary = () => {
                   onMouseEnter={(e) => handleMouseEnter(e, "targetAchievement")}
                   onMouseMove={(e) => handleMouseMove(e, "targetAchievement")}
                   onMouseLeave={handleMouseLeave}
-                  className={`kpi-card ${getPerformanceClass(
-                    "targetAchievement",
-                    kpis.targetAchievement
-                  )}`}
                 />
               </div>
             </div>
@@ -883,17 +812,10 @@ const ExecutiveSummary = () => {
               title="Full-Year Forecast"
               value={kpis.fullYearForecast}
               isCurrency={true}
-              kpiType={getPerformanceClass(
-                "fullYearForecast",
-                kpis.fullYearForecast
-              )}
+              kpiType="fullYearForecast"
               onMouseEnter={(e) => handleMouseEnter(e, "fullYearForecast")}
               onMouseMove={(e) => handleMouseMove(e, "fullYearForecast")}
               onMouseLeave={handleMouseLeave}
-              className={`kpi-card ${getPerformanceClass(
-                "fullYearForecast",
-                kpis.fullYearForecast
-              )}`}
             />
             <KPICard
               title="Forecast vs Target"
@@ -906,10 +828,6 @@ const ExecutiveSummary = () => {
               onMouseEnter={(e) => handleMouseEnter(e, "forecastVsTarget")}
               onMouseMove={(e) => handleMouseMove(e, "forecastVsTarget")}
               onMouseLeave={handleMouseLeave}
-              className={`kpi-card ${getPerformanceClass(
-                "forecastVariance",
-                kpis.forecastVsTargetVariance
-              )}`}
             />
             </div>
           </div>
@@ -958,14 +876,7 @@ const ExecutiveSummary = () => {
               title="Monthly Burn Rate"
               value={kpis.burnRate}
               isCurrency={true}
-              kpiType={getPerformanceClass(
-                "burnRate",
-                kpis.burnRate
-              )}
-              className={`kpi-card ${getPerformanceClass(
-                "burnRate",
-                kpis.burnRate
-              )}`}
+              kpiType="burnRate"
               onMouseEnter={(e) => handleMouseEnter(e, "burnRate")}
               onMouseMove={(e) => handleMouseMove(e, "burnRate")}
               onMouseLeave={handleMouseLeave}
@@ -979,10 +890,6 @@ const ExecutiveSummary = () => {
                 "monthsRemaining",
                 kpis.monthsRemaining
               )}
-              className={`kpi-card ${getPerformanceClass(
-                "monthsRemaining",
-                kpis.monthsRemaining
-              )}`}
               onMouseEnter={(e) => handleMouseEnter(e, "monthsRemaining")}
               onMouseMove={(e) => handleMouseMove(e, "monthsRemaining")}
               onMouseLeave={handleMouseLeave}
@@ -990,14 +897,7 @@ const ExecutiveSummary = () => {
             <KPICard
               title="Variance Trend"
               value={kpis.varianceTrend}
-              kpiType={getPerformanceClass(
-                "varianceTrend",
-                kpis.varianceTrend
-              )}
-              className={`kpi-card ${getPerformanceClass(
-                "varianceTrend",
-                kpis.varianceTrend
-              )}`}
+              kpiType="varianceTrend"
               onMouseEnter={(e) => handleMouseEnter(e, "varianceTrend")}
               onMouseMove={(e) => handleMouseMove(e, "varianceTrend")}
               onMouseLeave={handleMouseLeave}
@@ -1006,12 +906,12 @@ const ExecutiveSummary = () => {
           </div>
         )}
       </div>
-          </div>
+          </>
         )}
 
         {/* Budget Visuals Tab */}
-        {(activeTab === "budget-visuals" || isExportMode) && (
-          <div className="tab-panel" role="tabpanel" aria-labelledby="tab-budget-visuals">
+        {activeTab === "budget-visuals" && (
+          <>
             {/* Budget vs Actual Trend Chart - Rolling */}
       <div className="trend-chart-section">
         <h2 className="section-heading">Budget vs Actual Trend, Rolling</h2>
@@ -1102,10 +1002,10 @@ const ExecutiveSummary = () => {
               <thead>
                 <tr>
                   <th>Period</th>
-                  <th className="text-blue">Rolling Budget</th>
-                  <th className="text-green">Rolling Actual</th>
-                  <th className="text-orange">Rolling Forecast</th>
-                  <th className="text-purple">Rolling Adj Actual</th>
+                  <th>Rolling Budget</th>
+                  <th>Rolling Actual</th>
+                  <th>Rolling Forecast</th>
+                  <th>Rolling Adj Actual</th>
                 </tr>
               </thead>
               <tbody>
@@ -1209,69 +1109,26 @@ const ExecutiveSummary = () => {
         </ResponsiveContainer>
       </div>
 
-      {/* Monthly Trend Data Table - Collapsible */}
-      <div className="trend-data-table-section">
-        <div
-          className="collapsible-header"
-          onClick={() =>
-            setMonthlyTrendTableCollapsed(!monthlyTrendTableCollapsed)
-          }
-        >
-          <h3>
-            {monthlyTrendTableCollapsed ? "+" : "−"} Monthly Trend Chart Data
-          </h3>
-        </div>
-
-        {!monthlyTrendTableCollapsed && (
-          <div className="trend-data-table">
-            <table className="trend-table monthly-trend-table">
-              <thead>
-                <tr>
-                  <th>Period</th>
-                  <th className="text-blue">Monthly Budget</th>
-                  <th className="text-green">Monthly Actual</th>
-                  <th className="text-orange">Monthly Forecast</th>
-                  <th className="text-dark-red">Monthly Adj Actual</th>
-                </tr>
-              </thead>
-              <tbody>
-                {trend.map((data, index) => (
-                  <tr key={index} className={!data.isFinalMonth ? "table-row-forecast" : ""}>
-                    <td>{data.period}</td>
-                    <td>
-                      {data.monthlyBudget !== null
-                        ? formatCurrencyFull(data.monthlyBudget)
-                        : "-"}
-                    </td>
-                    <td>
-                      {data.monthlyActual !== null
-                        ? formatCurrencyFull(data.monthlyActual)
-                        : "-"}
-                    </td>
-                    <td>
-                      {data.monthlyReforecast !== null
-                        ? formatCurrencyFull(data.monthlyReforecast)
-                        : "-"}
-                    </td>
-                    <td>
-                      {data.monthlyAdjusted !== null
-                        ? formatCurrencyFull(data.monthlyAdjusted)
-                        : "-"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
       {/* Monthly Spending KPIs */}
-      <div className="monthly-spending-container">
-        <h4 className="monthly-spending-header">
+      <div
+        style={{
+          marginBottom: "1.5rem",
+          padding: "1rem",
+          backgroundColor: "#f8f9fa",
+          borderRadius: "8px",
+          border: "1px solid #e1e8ed",
+        }}
+      >
+        <h4 style={{ marginBottom: "1rem", color: "#2d3a4a" }}>
           Monthly Spending Analysis
         </h4>
-        <div className="monthly-spending-grid">
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+            gap: "1rem",
+          }}
+        >
           {(() => {
             // Calculate Average Monthly Spend YTD (Regular and Adjusted)
             const finalMonths = trend.filter((data) => data.isFinalMonth);
@@ -1340,24 +1197,96 @@ const ExecutiveSummary = () => {
 
             return (
               <>
-                <div className="kpi-card">
-                  <span>Avg Monthly Spend YTD</span>
-                  <strong>{formatCurrencyFull(avgMonthlyAdjustedYTD)}</strong>
-                  <div className="kpi-description-text">
+                <div
+                  style={{
+                    backgroundColor: "white",
+                    padding: "1rem",
+                    borderRadius: "6px",
+                    border: "1px solid #dee2e6",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "0.9rem",
+                      color: "#6b7a8f",
+                      marginBottom: "0.5rem",
+                    }}
+                  >
+                    Avg Monthly Spend YTD
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "1.5rem",
+                      fontWeight: "700",
+                      color: "#2d3a4a",
+                      marginBottom: "0.5rem",
+                    }}
+                  >
+                    {formatCurrencyFull(avgMonthlyAdjustedYTD)}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "#6b7a8f",
+                      marginBottom: "0.25rem",
+                    }}
+                  >
                     Regular: {formatCurrencyFull(avgMonthlySpendYTD)}
                   </div>
-                  <div className="kpi-summary-text">
+                  <div
+                    style={{
+                      fontSize: "0.8rem",
+                      color: "#8b949e",
+                      marginTop: "0.25rem",
+                    }}
+                  >
                     Based on {finalMonths.length} completed months
                   </div>
                 </div>
 
-                <div className="kpi-card">
-                  <span>Avg Quarterly Spend</span>
-                  <strong>{formatCurrencyFull(avgQuarterlyAdjusted)}</strong>
-                  <div className="kpi-description-text">
+                <div
+                  style={{
+                    backgroundColor: "white",
+                    padding: "1rem",
+                    borderRadius: "6px",
+                    border: "1px solid #dee2e6",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "0.9rem",
+                      color: "#6b7a8f",
+                      marginBottom: "0.5rem",
+                    }}
+                  >
+                    Avg Quarterly Spend
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "1.5rem",
+                      fontWeight: "700",
+                      color: "#2d3a4a",
+                      marginBottom: "0.5rem",
+                    }}
+                  >
+                    {formatCurrencyFull(avgQuarterlyAdjusted)}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "#6b7a8f",
+                      marginBottom: "0.25rem",
+                    }}
+                  >
                     Regular: {formatCurrencyFull(avgQuarterlySpend)}
                   </div>
-                  <div className="kpi-summary-text">
+                  <div
+                    style={{
+                      fontSize: "0.8rem",
+                      color: "#8b949e",
+                      marginTop: "0.25rem",
+                    }}
+                  >
                     Q{lastCompletedQuarter} average ({quarterData.length}{" "}
                     months)
                   </div>
@@ -1368,40 +1297,225 @@ const ExecutiveSummary = () => {
         </div>
       </div>
 
+      {/* Monthly Trend Data Table - Collapsible */}
+      <div style={{ marginBottom: "2rem" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "1rem",
+            cursor: "pointer",
+          }}
+          onClick={() =>
+            setMonthlyTrendTableCollapsed(!monthlyTrendTableCollapsed)
+          }
+        >
+          <h3
+            style={{
+              fontSize: "1.25rem",
+              fontWeight: "600",
+              color: "#2d3a4a",
+              margin: 0,
+            }}
+          >
+            {monthlyTrendTableCollapsed ? "+" : "−"} Monthly Trend Chart Data
+          </h3>
+        </div>
+
+        {!monthlyTrendTableCollapsed && (
+          <div
+            style={{
+              overflowX: "auto",
+              border: "1px solid #e1e8ed",
+              borderRadius: "8px",
+            }}
+          >
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                fontSize: "0.875rem",
+              }}
+            >
+              <thead>
+                <tr style={{ backgroundColor: "#f8f9fa" }}>
+                  <th
+                    style={{
+                      padding: "0.75rem",
+                      textAlign: "left",
+                      borderBottom: "2px solid #dee2e6",
+                    }}
+                  >
+                    Period
+                  </th>
+                  <th
+                    style={{
+                      padding: "0.75rem",
+                      textAlign: "right",
+                      borderBottom: "2px solid #dee2e6",
+                    }}
+                  >
+                    Monthly Budget
+                  </th>
+                  <th
+                    style={{
+                      padding: "0.75rem",
+                      textAlign: "right",
+                      borderBottom: "2px solid #dee2e6",
+                    }}
+                  >
+                    Monthly Actual
+                  </th>
+                  <th
+                    style={{
+                      padding: "0.75rem",
+                      textAlign: "right",
+                      borderBottom: "2px solid #dee2e6",
+                    }}
+                  >
+                    Monthly Forecast
+                  </th>
+                  <th
+                    style={{
+                      padding: "0.75rem",
+                      textAlign: "right",
+                      borderBottom: "2px solid #dee2e6",
+                    }}
+                  >
+                    Monthly Adj Actual
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {trend.map((data, index) => (
+                  <tr
+                    key={index}
+                    style={{
+                      backgroundColor: index % 2 === 0 ? "#fff" : "#f8f9fa",
+                      borderBottom: "1px solid #dee2e6",
+                      ...(!data.isFinalMonth
+                        ? { fontStyle: "italic", opacity: 0.85 }
+                        : {}),
+                    }}
+                  >
+                    <td style={{ padding: "0.75rem", fontWeight: "500" }}>
+                      {data.period}
+                    </td>
+                    <td style={{ padding: "0.75rem", textAlign: "right" }}>
+                      {data.monthlyBudget !== null
+                        ? formatCurrencyFull(data.monthlyBudget)
+                        : "-"}
+                    </td>
+                    <td style={{ padding: "0.75rem", textAlign: "right" }}>
+                      {data.monthlyActual !== null
+                        ? formatCurrencyFull(data.monthlyActual)
+                        : "-"}
+                    </td>
+                    <td style={{ padding: "0.75rem", textAlign: "right" }}>
+                      {data.monthlyReforecast !== null
+                        ? formatCurrencyFull(data.monthlyReforecast)
+                        : "-"}
+                    </td>
+                    <td style={{ padding: "0.75rem", textAlign: "right" }}>
+                      {data.monthlyAdjusted !== null
+                        ? formatCurrencyFull(data.monthlyAdjusted)
+                        : "-"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
+        )}
+      </div>
+          </>
         )}
 
         {/* Resource Allocation and Spend Tab */}
-        {(activeTab === "resource-allocation" || isExportMode) && (
-          <div className="tab-panel" role="tabpanel" aria-labelledby="tab-resource-allocation">
- 
+        {activeTab === "resource-allocation" && (
+          <>
+            {/* Divider between Vendor Tracking and Resource Allocation */}
+            <div className="section-divider"></div>
 
             {/* Resource Allocation & Hiring Capacity - Detailed Analysis */}
-            <div className="section-container">
-              <h2 className="section-heading">
-                Resource Allocation & Hiring Capacity
-              </h2>
+      <div style={{ marginBottom: "2rem" }}>
+        <h2
+          style={{
+            fontSize: "1.5rem",
+            fontWeight: "600",
+            color: "#2d3a4a",
+            marginBottom: "1rem",
+          }}
+        >
+          Resource Allocation & Hiring Capacity
+        </h2>
 
-        <div className="mb-2">
-          <h3 className="hiring-analysis-header">
+        <div style={{ marginBottom: "2rem" }}>
+          <h3
+            style={{
+              fontSize: "1.25rem",
+              fontWeight: "600",
+              color: "#2d3a4a",
+              marginBottom: "1rem",
+            }}
+          >
             Hiring Runway Analysis
           </h3>
 
-          <div className="hiring-analysis-container">
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "0.8rem",
+              margin: "24px 0",
+              width: "100%",
+            }}
+          >
             <div
-              className="hiring-analysis-item"
+              style={{
+                display: "grid",
+                gridTemplateColumns: "auto 1fr auto",
+                gap: "1rem",
+                alignItems: "center",
+                padding: "0.75rem",
+                backgroundColor: "#ffffff",
+                borderRadius: "8px",
+                borderLeft: "4px solid #3498db",
+                boxShadow: "0 2px 4px rgba(0, 0, 0, 0.05)",
+              }}
               onMouseEnter={(e) =>
                 handleHiringMouseEnter(e, "netCompAvailable")
               }
               onMouseLeave={handleHiringMouseLeave}
             >
-              <span className="hiring-analysis-label">
+              <span
+                style={{
+                  fontWeight: "600",
+                  color: "#2d3a4a",
+                  fontSize: "0.95rem",
+                }}
+              >
                 Net Compensation Available
               </span>
-              <span className="hiring-analysis-note">
+              <span
+                style={{
+                  fontSize: "0.8rem",
+                  color: "#666",
+                  fontStyle: "italic",
+                }}
+              >
                 Annual compensation budget minus YTD actual spend
               </span>
-              <span className="hiring-analysis-value">
+              <span
+                style={{
+                  fontWeight: "700",
+                  color: "#3498db",
+                  fontSize: "1rem",
+                  textAlign: "right",
+                  minWidth: "120px",
+                }}
+              >
                 {formatCurrencyFull(
                   resourceData.hiringCapacity.netCompensationAvailable
                 )}
@@ -1674,38 +1788,55 @@ const ExecutiveSummary = () => {
       </div>
 
       {/* Total Comp & Capitalization Section */}
-      <div className="kpi-section total-comp-capitalization">
+      <div style={{ marginBottom: "2rem" }}>
         <div
-          className="section-header"
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "1rem",
+            cursor: "pointer",
+          }}
           onClick={() =>
             setTotalCompCapitalizationCollapsed(
               !totalCompCapitalizationCollapsed
             )
           }
         >
-          <h4 className="section-title">
-            <span className="expand-icon">
-              {totalCompCapitalizationCollapsed ? "+" : "−"}
-            </span>
-            Total Comp & Capitalization
-          </h4>
-          {totalCompCapitalizationCollapsed && (
-            <div className="compact-summary">
-              <span className="compact-metric">
-                <strong>Total Compensation:</strong>
-              </span>
-              <span className="compact-metric">
-                YTD: <strong>{formatCurrencyFull(resourceData.totalCompensation.ytdActual)}</strong>
-              </span>
-              <span className="compact-metric">
-                Budget: <strong>{formatCurrencyFull(resourceData.totalCompensation.annualBudget)}</strong>
-              </span>
-              <span className="compact-metric">
-                Remaining: <strong>{formatCurrencyFull(resourceData.totalCompensation.remaining)}</strong>
-              </span>
-            </div>
-          )}
+          <h2
+            style={{
+              fontSize: "1.5rem",
+              fontWeight: "600",
+              color: "#2d3a4a",
+              margin: 0,
+            }}
+          >
+            {totalCompCapitalizationCollapsed ? "+" : "−"} Total Comp &
+            Capitalization
+          </h2>
         </div>
+
+        {totalCompCapitalizationCollapsed && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "1rem",
+              fontSize: "0.875rem",
+              color: "#6b7a8f",
+            }}
+          >
+            <span style={{ fontWeight: "600" }}>Total Compensation:</span>
+            <span>
+              YTD:{" "}
+              {formatCurrencyFull(resourceData.totalCompensation.ytdActual)} |
+              Budget:{" "}
+              {formatCurrencyFull(resourceData.totalCompensation.annualBudget)}{" "}
+              | Remaining:{" "}
+              {formatCurrencyFull(resourceData.totalCompensation.remaining)}
+            </span>
+          </div>
+        )}
 
         {!totalCompCapitalizationCollapsed && (
           <div
@@ -1877,16 +2008,16 @@ const ExecutiveSummary = () => {
             </div>
           </div>
         )}
-            </div>
-          </div>
+      </div>
+          </>
         )}
 
         {/* Vendor Info Tab */}
-        {(activeTab === "vendor-info" || isExportMode) && (
-          <div className="tab-panel" role="tabpanel" aria-labelledby="tab-vendor-info">
+        {activeTab === "vendor-info" && (
+          <>
             {/* Vendor Tracking Section with Variance Analysis */}
-            <div className="section-container">
-              <h2 className="section-heading">Vendor Tracking</h2>
+      <div className="vendor-tracking-section">
+        <h2 className="vendor-tracking-title">Vendor Tracking</h2>
 
         <div className="vendor-tracking-subtitle">
           Total vendor spend from budget monthly tracking report.
@@ -1956,22 +2087,37 @@ const ExecutiveSummary = () => {
           </div>
         </div>
 
-            </div>
+      </div>
 
-            {/* Vendor Portfolio Management Section */}
-            <VendorPortfolioSection
-              state={state}
-              isExpanded={isVendorPortfolioExpanded}
-              onToggleExpanded={() => setIsVendorPortfolioExpanded(!isVendorPortfolioExpanded)}
-              onMouseEnter={handleVendorMouseEnter}
-              onMouseMove={handleVendorMouseMove}
-              onMouseLeave={handleVendorMouseLeave}
-            />
-          </div>
+      {/* Vendor Portfolio Management Section */}
+      <VendorPortfolioSection
+        state={state}
+        isExpanded={isVendorPortfolioExpanded}
+        onToggleExpanded={() => setIsVendorPortfolioExpanded(!isVendorPortfolioExpanded)}
+        onMouseEnter={handleVendorMouseEnter}
+        onMouseMove={handleVendorMouseMove}
+        onMouseLeave={handleVendorMouseLeave}
+      />
+          </>
         )}
       </div>
 
-     
+      {/* Floating Export Buttons */}
+      <button
+        onClick={handlePrintExportClick}
+        title="Export Executive Summary to PDF"
+        className="floating-export-button"
+      >
+        📊 Print to PDF
+      </button>
+
+      <button
+        onClick={handleCustomizeExport}
+        title="Export as Presentation Slides"
+        className="floating-customize-button"
+      >
+        📊 Export as Slides
+      </button>
 
       {/* Tooltip */}
       <Tooltip

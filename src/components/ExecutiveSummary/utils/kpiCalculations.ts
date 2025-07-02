@@ -74,56 +74,36 @@ export const getKPIData = (state: any): KPIData => {
   const variance = (ytdActual - ytdBudget) * -1;
   const variancePct = ytdBudget ? (variance / ytdBudget) * 100 : 0;
 
-  // Calculate full year forecast using the same logic as YearlyBudgetDashboard
+  // Calculate full year forecast by summing monthly "Tracking" totals from Monthly View
   const calculateFullYearForecast = (): number => {
     let totalForecast = 0;
 
     // Generate monthly data for all 12 months
     const allMonths = Array.from({ length: 12 }, (_, i) => i + 1);
-    const monthlyData = allMonths.map((month) =>
-      calculateMonthlyData(
+    
+    allMonths.forEach((month) => {
+      const monthData = calculateMonthlyData(
         state.entries,
         state.categories,
         month,
         state.selectedYear
-      )
-    );
+      );
 
-    // Group months into quarters and calculate forecast
-    for (let quarter = 1; quarter <= 4; quarter++) {
-      const quarterMonths = [
-        (quarter - 1) * 3 + 1,
-        (quarter - 1) * 3 + 2,
-        (quarter - 1) * 3 + 3,
-      ];
+      // Check if this month is marked as final (true) or forecast (false)
+      const isMonthFinal =
+        state.monthlyForecastModes?.[state.selectedYear]?.[month] ?? false;
 
-      // Check if quarter is in forecast mode
-      const isQuarterForecast =
-        !state.quarterlyForecastModes?.[state.selectedYear]?.[quarter];
+      // Calculate tracking values using the same logic as Monthly View
+      const budgetTracking = calculateBudgetTracking(monthData.netTotal);
 
-      if (isQuarterForecast) {
-        // Use forecast amounts for entire quarter
-        quarterMonths.forEach((month) => {
-          const monthData = monthlyData[month - 1];
-          totalForecast +=
-            monthData.netTotal.reforecast || monthData.netTotal.budget;
-        });
+      if (isMonthFinal) {
+        // Month is final - use actual tracking value
+        totalForecast += budgetTracking.actual || 0;
       } else {
-        // Use actual amounts for entire quarter (final mode)
-        quarterMonths.forEach((month) => {
-          const monthData = monthlyData[month - 1];
-          // Check individual month forecast mode
-          const isMonthFinal =
-            state.monthlyForecastModes[state.selectedYear]?.[month] ?? false;
-          if (isMonthFinal) {
-            totalForecast += monthData.netTotal.actual || 0;
-          } else {
-            totalForecast +=
-              monthData.netTotal.reforecast || monthData.netTotal.budget;
-          }
-        });
+        // Month is forecast - use forecast tracking value
+        totalForecast += budgetTracking.reforecast || 0;
       }
-    }
+    });
 
     return totalForecast;
   };
@@ -334,4 +314,18 @@ export const getLastFinalMonthName = (state: any) => {
   }
 
   return lastFinalMonth > 0 ? monthNames[lastFinalMonth] : "Current";
+};
+
+export const getTargetAchievementSubtitle = (targetAchievement: number): string => {
+  if (targetAchievement >= 110) {
+    return "Spending faster than planned";
+  } else if (targetAchievement >= 105) {
+    return "Slightly ahead of pace";
+  } else if (targetAchievement >= 95) {
+    return "On track with spending plan";
+  } else if (targetAchievement >= 85) {
+    return "Slightly behind pace";
+  } else {
+    return "Spending slower than planned";
+  }
 };

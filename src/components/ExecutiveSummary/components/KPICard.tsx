@@ -9,6 +9,7 @@ interface KPICardProps {
   isCurrency?: boolean;
   kpiType?: string;
   percentage?: number;
+  subtitle?: string;
   onMouseEnter?: (event: React.MouseEvent) => void;
   onMouseMove?: (event: React.MouseEvent) => void;
   onMouseLeave?: () => void;
@@ -22,6 +23,7 @@ const KPICard: React.FC<KPICardProps> = ({
   isCurrency = false,
   kpiType = "",
   percentage,
+  subtitle,
   onMouseEnter,
   onMouseMove,
   onMouseLeave,
@@ -66,6 +68,11 @@ const KPICard: React.FC<KPICardProps> = ({
         >
           ({percentage >= 0 ? "+" : ""}
           {percentage.toFixed(1)}%)
+        </div>
+      )}
+      {subtitle && (
+        <div className="kpi-subtitle">
+          {subtitle}
         </div>
       )}
     </div>
