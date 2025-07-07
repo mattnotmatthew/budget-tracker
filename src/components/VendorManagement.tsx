@@ -3,6 +3,7 @@ import { useBudget } from "../context/BudgetContext";
 import { VendorData } from "../types";
 import { formatCurrencyExcelStyle } from "../utils/currencyFormatter";
 import { VendorTrackingTable } from "./VendorTracking";
+import { TableActionButtons } from "./shared";
 import "../styles/App-new.css";
 
 const VendorManagement: React.FC = () => {
@@ -1551,27 +1552,15 @@ const VendorManagement: React.FC = () => {
                           )}
                         </td>
                         <td>
-                          <div className="vendor-actions">
-                            {isComplete && (
-                              <button
-                                className="edit-row-btn"
-                                onClick={() => toggleEditMode(vendor.id)}
-                                title={
-                                  inEditMode ? "Finish editing" : "Edit vendor"
-                                }
-                              >
-                                {inEditMode ? "✓" : "✏️"}
-                              </button>
-                            )}
-                            <button
-                              className="remove-row-btn"
-                              onClick={() => deleteVendor(vendor.id)}
-                              disabled={currentYearVendors.length === 1}
-                              title="Remove vendor"
-                            >
-                              🗑️
-                            </button>
-                          </div>
+                          {isComplete && (
+                            <TableActionButtons
+                              isEditing={inEditMode}
+                              onEdit={() => toggleEditMode(vendor.id)}
+                              onDelete={() => deleteVendor(vendor.id)}
+                              editTooltip={inEditMode ? "Finish editing" : "Edit vendor"}
+                              deleteTooltip={currentYearVendors.length === 1 ? "Cannot delete the last vendor" : "Remove vendor"}
+                            />
+                          )}
                         </td>
                       </tr>
                     );

@@ -24,17 +24,17 @@ export const useDebouncedAutoSave = <T>(
     timeoutRef.current = setTimeout(() => {
       // Skip saving if shouldSkip function returns true
       if (shouldSkip && shouldSkip(data)) {
-        console.log("Skipping debounced save due to shouldSkip condition");
+        // console.log("Skipping debounced save due to shouldSkip condition");
         return;
       }
 
       // Skip if data hasn't changed from initial
       if (initialDataRef.current === data) {
-        console.log("Skipping debounced save - data unchanged from initial state");
+        // console.log("Skipping debounced save - data unchanged from initial state");
         return;
       }
 
-      console.log("Executing debounced save after", delay + "ms");
+      // console.log("Executing debounced save after", delay + "ms");
       saveFunction(data);
       timeoutRef.current = null;
     }, delay);

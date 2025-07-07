@@ -107,14 +107,7 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
   //   };
   // }, [state.persistence.cacheAutoSaveInterval]);  // Debounced auto-save to cache to prevent excessive writes
   const debouncedCacheSave = useCallback((stateToSave: CombinedState) => {
-    console.log("Executing debounced cache save:", {
-      entriesCount: stateToSave.entries.length,
-      vendorDataCount: (stateToSave.vendorData || []).length,
-      yearlyTargetsCount: Object.keys(stateToSave.yearlyBudgetTargets).length,
-      monthlyModesCount: Object.keys(stateToSave.monthlyForecastModes).length,
-      currentFile: stateToSave.currentFile?.name,
-      hasUnsavedChanges: stateToSave.persistence.hasUnsavedChanges,
-    });
+    // Removed console.log for cache save
 
     persistenceManager.saveToCache(stateToSave);
 
@@ -157,7 +150,13 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
   // Persistence functions
   const saveToFile = async (): Promise<boolean> => {
     try {
-      const fileManager = await import("../utils/fileManager"); // Use smartAutoSave with enhanced handle validation
+      const fileManager = await import("../utils/fileManager");
+      
+      // Debug logging
+      console.log("SaveToFile - Functional Allocations:", state.functionalAllocations);
+      console.log("SaveToFile - Full state:", state);
+      
+      // Use smartAutoSave with enhanced handle validation
       const result = await fileManager.smartAutoSave(
         {
           entries: state.entries,
@@ -167,6 +166,8 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
           monthlyForecastModes: state.monthlyForecastModes,
           vendorData: state.vendorData,
           vendorTrackingData: state.vendorTrackingData,
+          teams: state.teams,
+          functionalAllocations: state.functionalAllocations,
         },
         state.currentFile
       );
@@ -292,6 +293,22 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
         // Load data into state
         dispatch({ type: "LOAD_ENTRIES", payload: loadedData.entries });
 
+        // Load allocations (CategoryAllocation)
+        if (loadedData.allocations) {
+          const allocationsWithDates = loadedData.allocations.map((allocation: any) => ({
+            ...allocation,
+            createdAt: new Date(allocation.createdAt),
+            updatedAt: new Date(allocation.updatedAt),
+          }));
+          // We need to dispatch each allocation individually since there's no LOAD_ALLOCATIONS action
+          allocationsWithDates.forEach((allocation: any) => {
+            dispatch({
+              type: "ADD_ALLOCATION",
+              payload: allocation,
+            });
+          });
+        }
+
         // Load yearly budget targets
         if (loadedData.yearlyBudgetTargets) {
           Object.entries(loadedData.yearlyBudgetTargets).forEach(
@@ -371,6 +388,36 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
           dispatch({
             type: "LOAD_VENDOR_TRACKING",
             payload: vendorTrackingWithDates,
+          });
+        }
+
+        // Load team data
+        if (loadedData.teams) {
+          const teamsWithDates = loadedData.teams.map(
+            (team: any) => ({
+              ...team,
+              createdAt: new Date(team.createdAt),
+              updatedAt: new Date(team.updatedAt),
+            })
+          );
+          dispatch({
+            type: "LOAD_TEAMS",
+            payload: teamsWithDates,
+          });
+        }
+
+        // Load functional allocations
+        if (loadedData.functionalAllocations) {
+          const functionalAllocationsWithDates = loadedData.functionalAllocations.map(
+            (allocation: any) => ({
+              ...allocation,
+              createdAt: new Date(allocation.createdAt),
+              updatedAt: new Date(allocation.updatedAt),
+            })
+          );
+          dispatch({
+            type: "SET_FUNCTIONAL_ALLOCATIONS",
+            payload: functionalAllocationsWithDates,
           });
         }
 
@@ -455,6 +502,20 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
               updatedAt: new Date(tracking.updatedAt),
             })
           ) : state.vendorTrackingData,
+          teams: loadedData.teams ? loadedData.teams.map(
+            (team: any) => ({
+              ...team,
+              createdAt: new Date(team.createdAt),
+              updatedAt: new Date(team.updatedAt),
+            })
+          ) : state.teams,
+          functionalAllocations: loadedData.functionalAllocations ? loadedData.functionalAllocations.map(
+            (allocation: any) => ({
+              ...allocation,
+              createdAt: new Date(allocation.createdAt),
+              updatedAt: new Date(allocation.updatedAt),
+            })
+          ) : state.functionalAllocations,
         };
         
         persistenceManager.saveToCache(updatedState);
@@ -469,6 +530,21 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
         
         // Process the loaded data similar to the File System Access API path
         dispatch({ type: "LOAD_ENTRIES", payload: loadedData.entries });
+        
+        // Load allocations (CategoryAllocation)
+        if (loadedData.allocations) {
+          const allocationsWithDates = loadedData.allocations.map((allocation: any) => ({
+            ...allocation,
+            createdAt: new Date(allocation.createdAt),
+            updatedAt: new Date(allocation.updatedAt),
+          }));
+          allocationsWithDates.forEach((allocation: any) => {
+            dispatch({
+              type: "ADD_ALLOCATION",
+              payload: allocation,
+            });
+          });
+        }
         
         if (loadedData.yearlyBudgetTargets) {
           Object.entries(loadedData.yearlyBudgetTargets).forEach(
@@ -544,6 +620,34 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
           });
         }
         
+        if (loadedData.teams) {
+          const teamsWithDates = loadedData.teams.map(
+            (team: any) => ({
+              ...team,
+              createdAt: new Date(team.createdAt),
+              updatedAt: new Date(team.updatedAt),
+            })
+          );
+          dispatch({
+            type: "LOAD_TEAMS",
+            payload: teamsWithDates,
+          });
+        }
+        
+        if (loadedData.functionalAllocations) {
+          const functionalAllocationsWithDates = loadedData.functionalAllocations.map(
+            (allocation: any) => ({
+              ...allocation,
+              createdAt: new Date(allocation.createdAt),
+              updatedAt: new Date(allocation.updatedAt),
+            })
+          );
+          dispatch({
+            type: "SET_FUNCTIONAL_ALLOCATIONS",
+            payload: functionalAllocationsWithDates,
+          });
+        }
+        
         dispatch({
           type: "SET_SELECTED_PERIOD",
           payload: { year: loadedData.year as number },
@@ -585,6 +689,8 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
           },
           vendorData: loadedData.vendorData || state.vendorData,
           vendorTrackingData: loadedData.vendorTrackingData || state.vendorTrackingData,
+          teams: loadedData.teams || state.teams,
+          functionalAllocations: loadedData.functionalAllocations || state.functionalAllocations,
         };
         
         persistenceManager.saveToCache(updatedState);

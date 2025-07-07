@@ -11,6 +11,10 @@ import {
   Tooltip as RechartsTooltip,
   Legend,
   ResponsiveContainer,
+  BarChart,
+  PieChart,
+  Pie,
+  Cell,
 } from "recharts";
 import ExportCustomizer from "../ExportCustomizer/ExportCustomizer";
 import "./ExecutiveSummary.css";
@@ -46,14 +50,24 @@ import {
 } from "./utils/summaryGenerator";
 import {
   generateAlerts,
-  handleBasicExport,
-  handlePrintExport,
 } from "./utils/exportUtils";
+import { generatePDF } from "./utils/pdfGenerator";
+import { generatePPTX } from "./utils/pptxGenerator";
+import {
+  getTeamMetrics,
+  getHeadcountChartData,
+  getCostDistributionChartData,
+  getCostCenterColor,
+  calculateTeamEfficiency,
+  groupTeamsByCostCenter,
+  CHART_COLORS
+} from "./utils/teamCalculations";
 
 // Import components
 import Tooltip from "./components/Tooltip";
 import KPICard from "./components/KPICard";
 import VendorPortfolioSection from "./components/VendorPortfolioSection";
+import ExportModal from "./components/ExportModal";
 
 // Import vendor portfolio CSS
 import "./components/VendorPortfolio.css";
@@ -92,6 +106,12 @@ const ExecutiveSummary = () => {
     setTotalCompCapitalizationCollapsed,
   ] = useState(true);
 
+  // Resources tab state for collapsible cost centers
+  const [costCenterExpanded, setCostCenterExpanded] = useState<Record<string, boolean>>({});
+
+  // Export modal state
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+
   // Tooltip state - initialize with invalid coordinates to prevent flash
   const [tooltip, setTooltip] = useState<TooltipState>({
     visible: false,
@@ -112,8 +132,9 @@ const ExecutiveSummary = () => {
     { id: "executive-commentary", label: "Executive Commentary" },
     { id: "overall-budget", label: "Overall Budget" },
     { id: "budget-visuals", label: "Budget Visuals" },
-    { id: "resource-allocation", label: "Resource Allocation and Spend" },
-    { id: "vendor-info", label: "Vendor Info" }
+    { id: "resource-allocation", label: "Resource Spend" },
+    { id: "vendor-info", label: "Vendor Info" },
+    { id: "resources", label: "Resource Allocation" }
   ];
 
   // Load active tab from localStorage
@@ -196,6 +217,20 @@ const ExecutiveSummary = () => {
   useEffect(() => {
     setUserNotes(intelligentSummary);
   }, [intelligentSummary]);
+
+  // Memoize team metrics calculation
+  const teamMetrics = useMemo(() => {
+    return getTeamMetrics(state.teams || []);
+  }, [state.teams]);
+
+  // Memoize chart data calculations
+  const headcountChartData = useMemo(() => {
+    return getHeadcountChartData(teamMetrics.costCenterGroups);
+  }, [teamMetrics.costCenterGroups]);
+
+  const costDistributionData = useMemo(() => {
+    return getCostDistributionChartData(teamMetrics.costCenterGroups);
+  }, [teamMetrics.costCenterGroups]);
 
   // Get the last final month number for vendor table display
   const getLastFinalMonthNumber = useMemo(() => {
@@ -392,21 +427,102 @@ const ExecutiveSummary = () => {
     });
   };
 
-  // Export handlers
-  const handleExport = () => {
-    handleBasicExport(
-      {
-        kpis,
-        topVariance,
-        trend,
-        alerts,
-        userNotes,
-      },
-      expandAllSections,
-      restoreOriginalStates,
-      'powerpoint',
-      'current'
-    );
+  // Export presentation handler
+  const handleExportPresentation = () => {
+    setIsExportModalOpen(true);
+  };
+
+  // Export modal handlers
+  const handleCloseExportModal = () => {
+    setIsExportModalOpen(false);
+  };
+
+  const handleExport = async (format: string, layout: string) => {
+    try {
+      // The slides will be passed from the ExportModal component
+      // For now, we'll handle the export logic in the modal's onExport handler
+      console.log('Export requested:', format, layout);
+      return { success: true, filename: `executive-summary.${format}` };
+    } catch (error) {
+      console.error('Export failed:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Export failed' 
+      };
+    }
+  };
+
+  // Export customizer handler (for legacy ExportCustomizer component)
+  const handleApplyTemplateAndExport = (template: any) => {
+    console.log('Apply template:', template);
+    // TODO: This could be integrated with the new export system later
+  };
+
+  // Store original states for restoration
+  const [originalSectionStates, setOriginalSectionStates] = useState<any>(null);
+
+  const expandAllSectionsForExport = () => {
+    console.log('Expanding all sections for export...');
+    
+    // Save current states before expanding
+    if (!originalSectionStates) {
+      setOriginalSectionStates({
+        isStrategicContextExpanded,
+        isYTDPerformanceExpanded,
+        isForwardLookingExpanded,
+        isRiskVelocityExpanded,
+        isVendorSpendingExpanded,
+        isVendorPortfolioExpanded,
+        trendTableCollapsed,
+        monthlyTrendTableCollapsed,
+        rollingTrendTableCollapsed,
+        totalCompCapitalizationCollapsed,
+        costCenterExpanded
+      });
+    }
+    
+    // Expand all sections
+    setIsStrategicContextExpanded(true);
+    setIsYTDPerformanceExpanded(true);
+    setIsForwardLookingExpanded(true);
+    setIsRiskVelocityExpanded(true);
+    setIsVendorSpendingExpanded(true);
+    setIsVendorPortfolioExpanded(true);
+    setTrendTableCollapsed(false);
+    setMonthlyTrendTableCollapsed(false);
+    setRollingTrendTableCollapsed(false);
+    setTotalCompCapitalizationCollapsed(false);
+    
+    // Expand all cost centers
+    const expandedCostCenters: Record<string, boolean> = {};
+    if (state.teams && state.teams.length > 0) {
+      const costCenterGroups = groupTeamsByCostCenter(state.teams);
+      costCenterGroups.forEach(group => {
+        expandedCostCenters[group.costCenter] = true;
+      });
+      setCostCenterExpanded(expandedCostCenters);
+    }
+  };
+
+  const restoreOriginalSectionStates = () => {
+    console.log('Restoring original section states...');
+    
+    if (originalSectionStates) {
+      setIsStrategicContextExpanded(originalSectionStates.isStrategicContextExpanded);
+      setIsYTDPerformanceExpanded(originalSectionStates.isYTDPerformanceExpanded);
+      setIsForwardLookingExpanded(originalSectionStates.isForwardLookingExpanded);
+      setIsRiskVelocityExpanded(originalSectionStates.isRiskVelocityExpanded);
+      setIsVendorSpendingExpanded(originalSectionStates.isVendorSpendingExpanded);
+      setIsVendorPortfolioExpanded(originalSectionStates.isVendorPortfolioExpanded);
+      setTrendTableCollapsed(originalSectionStates.trendTableCollapsed);
+      setMonthlyTrendTableCollapsed(originalSectionStates.monthlyTrendTableCollapsed);
+      setRollingTrendTableCollapsed(originalSectionStates.rollingTrendTableCollapsed);
+      setTotalCompCapitalizationCollapsed(originalSectionStates.totalCompCapitalizationCollapsed);
+      setCostCenterExpanded(originalSectionStates.costCenterExpanded);
+      
+      // Clear saved states
+      setOriginalSectionStates(null);
+    }
   };
 
   const expandAllSections = () => {
@@ -444,38 +560,6 @@ const ExecutiveSummary = () => {
     setIsExportMode(false);
   };
 
-  const handlePrintExportClick = () => {
-    // For print functionality with tabs, print current tab optimized for 8.5x11 paper
-    handlePrintExport(expandAllSections, restoreOriginalStates, 'paper');
-  };
-
-  const handleCustomizeExport = () => {
-    setShowExportCustomizer(true);
-  };
-
-  const handleApplyTemplateAndExport = (template: any) => {
-    setCurrentExportTemplate(template);
-    // handlePowerPointExport(template); // This would need to be implemented separately
-  };
-
-  const handleExportAllSections = () => {
-    // Export all sections with PowerPoint formatting and multi-slide layout
-    handleBasicExport(
-      {
-        kpis,
-        topVariance,
-        trend,
-        alerts,
-        userNotes,
-      },
-      expandAllSections,
-      restoreOriginalStates,
-      'powerpoint',
-      'all',
-      showAllTabsForExport,
-      restoreTabVisibility
-    );
-  };
 
   // Helper to get performance class for dynamic styling
   const getPerformanceClass = (
@@ -578,17 +662,8 @@ const ExecutiveSummary = () => {
         </div>
 
         <div className="header-buttons">
-          <button onClick={handleExport} className="btn-primary">
-            Export Tab
-          </button>
-          <button onClick={handleExportAllSections} className="btn-secondary">
-            Export All Sections
-          </button>
-          <button onClick={handlePrintExportClick} className="btn-success">
-            Print Tab
-          </button>
-          <button onClick={handleCustomizeExport} className="btn-purple">
-            Customize Export
+          <button onClick={handleExportPresentation} className="btn-primary">
+            📊 Export Presentation
           </button>
         </div>
       </div>
@@ -693,7 +768,7 @@ const ExecutiveSummary = () => {
         </div>
 
         {/* Expandable content */}
-        {isStrategicContextExpanded && (
+        {(isStrategicContextExpanded || isExportMode) && (
           <>
             <div className="kpi-row">
               <div className="kpi-cards">
@@ -810,7 +885,7 @@ const ExecutiveSummary = () => {
           )}
         </div>
 
-        {isYTDPerformanceExpanded && (
+        {(isYTDPerformanceExpanded || isExportMode) && (
           <div className="kpi-row">
             <div className="kpi-cards">
               <KPICard
@@ -876,7 +951,7 @@ const ExecutiveSummary = () => {
           )}
         </div>
 
-        {isForwardLookingExpanded && (
+        {(isForwardLookingExpanded || isExportMode) && (
           <div className="kpi-row">
             <div className="kpi-cards">
             <KPICard
@@ -951,7 +1026,7 @@ const ExecutiveSummary = () => {
           )}
         </div>
 
-        {isRiskVelocityExpanded && (
+        {(isRiskVelocityExpanded || isExportMode) && (
           <div className="kpi-row">
             <div className="kpi-cards">
             <KPICard
@@ -1969,6 +2044,226 @@ const ExecutiveSummary = () => {
             />
           </div>
         )}
+
+        {/* Resources Tab */}
+        {(activeTab === "resources" || isExportMode) && (
+          <div className="tab-panel" role="tabpanel" aria-labelledby="tab-resources">
+            
+            {/* Empty state check */}
+            {state.teams.length === 0 ? (
+              <div className="empty-state-container">
+                <p className="empty-state-message">
+                  No teams have been added yet. Visit the Resources section to add teams.
+                </p>
+              </div>
+            ) : (
+                <>
+                  {/* Summary Cards Section */}
+                  <div className="section-container">
+                    <h2 className="section-heading">Team Composition Summary</h2>
+                    <div className="kpi-row">
+                      <div className="kpi-cards">
+                        <KPICard
+                          title="Total Teams"
+                          value={teamMetrics.totalTeams}
+                          isCurrency={false}
+                          kpiType="neutral"
+                          className="kpi-card neutral"
+                        />
+                        <KPICard
+                          title="Total Headcount"
+                          value={teamMetrics.totalHeadcount}
+                          isCurrency={false}
+                          kpiType="neutral"
+                          className="kpi-card neutral"
+                        />
+                        <KPICard
+                          title="Total Cost"
+                          value={teamMetrics.totalCost}
+                          isCurrency={true}
+                          kpiType="neutral"
+                          className="kpi-card neutral"
+                        />
+                        <KPICard
+                          title="Average Cost per Head"
+                          value={teamMetrics.averageCostPerHead}
+                          isCurrency={true}
+                          kpiType="neutral"
+                          className="kpi-card neutral"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* All Teams Table Section */}
+                  <div className="section-container">
+                    <h2 className="section-heading">All Teams Overview</h2>
+                    <div style={{ overflowX: 'auto' }}>
+                      <table className="team-details-table">
+                        <thead>
+                          <tr>
+                            <th>Team Name</th>
+                            <th>Cost Center</th>
+                            <th>Headcount</th>
+                            <th>Total Cost</th>
+                            <th>Cost per Head</th>
+                            {state.teams.some(team => team.notes) && <th>Notes</th>}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {[...state.teams]
+                            .sort((a, b) => b.cost - a.cost)
+                            .map((team) => {
+                              const efficiency = calculateTeamEfficiency(team);
+                              return (
+                                <tr key={team.id}>
+                                  <td>{team.teamName}</td>
+                                  <td>{team.currentCostCenter || 'Unassigned'}</td>
+                                  <td>{team.headcount}</td>
+                                  <td>{formatCurrencyFull(team.cost)}</td>
+                                  <td>{efficiency ? formatCurrencyFull(efficiency) : '-'}</td>
+                                  {state.teams.some(t => t.notes) && <td>{team.notes || '-'}</td>}
+                                </tr>
+                              );
+                            })}
+                        </tbody>
+                        <tfoot>
+                          <tr style={{ fontWeight: 'bold', backgroundColor: '#f8f9fa' }}>
+                            <td>Total</td>
+                            <td>-</td>
+                            <td>{teamMetrics.totalHeadcount}</td>
+                            <td>{formatCurrencyFull(teamMetrics.totalCost)}</td>
+                            <td>{formatCurrencyFull(teamMetrics.averageCostPerHead)}</td>
+                            {state.teams.some(team => team.notes) && <td>-</td>}
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Cost Center Groups Section */}
+                  <div className="section-container">
+                    <h2 className="section-heading">Teams by Cost Center</h2>
+                    {teamMetrics.costCenterGroups.map((group, index) => {
+                      const isExpanded = costCenterExpanded[group.costCenter] !== false; // Default to expanded
+                      return (
+                        <div key={group.costCenter} className="kpi-section cost-center-section">
+                          <div 
+                            className="section-header"
+                            onClick={() => setCostCenterExpanded(prev => ({
+                              ...prev,
+                              [group.costCenter]: !isExpanded
+                            }))}
+                          >
+                            <h4 className="section-title">
+                              <span className="expand-icon">{isExpanded ? "−" : "+"}</span>
+                              {group.costCenter}
+                            </h4>
+                            {!isExpanded && (
+                              <div className="compact-summary">
+                                <span className="compact-metric">
+                                  Teams: <strong>{group.teams.length}</strong>
+                                </span>
+                                <span className="compact-metric">
+                                  Headcount: <strong>{group.totalHeadcount}</strong>
+                                </span>
+                                <span className="compact-metric">
+                                  Total Cost: <strong>{formatCurrencyFull(group.totalCost)}</strong>
+                                </span>
+                                <span className="compact-metric">
+                                  Avg Cost/Head: <strong>{formatCurrencyFull(group.averageCostPerHead)}</strong>
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          {isExpanded && (
+                            <div className="cost-center-content">
+                              <table className="team-details-table">
+                                <thead>
+                                  <tr>
+                                    <th>Team Name</th>
+                                    <th>Headcount</th>
+                                    <th>Total Cost</th>
+                                    <th>Cost per Head</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {group.teams.map((team) => {
+                                    const efficiency = calculateTeamEfficiency(team);
+                                    return (
+                                      <tr key={team.id}>
+                                        <td>{team.teamName}</td>
+                                        <td>{team.headcount}</td>
+                                        <td>{formatCurrencyFull(team.cost)}</td>
+                                        <td>{efficiency ? formatCurrencyFull(efficiency) : '-'}</td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Visualizations Section */}
+                  <div className="chart-section">
+                    <h2 className="section-heading">Team Analytics</h2>
+                    
+                    {/* Headcount Distribution Bar Chart */}
+                    <div className="chart-container">
+                      <h3>Headcount Distribution by Team</h3>
+                      <ResponsiveContainer width="100%" height={400}>
+                        <BarChart data={headcountChartData}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
+                          <YAxis />
+                          <RechartsTooltip />
+                          <Bar dataKey="headcount">
+                            {headcountChartData.map((entry, index) => (
+                              <Cell 
+                                key={`cell-${index}`} 
+                                fill={getCostCenterColor(entry.costCenter, teamMetrics.costCenterGroups)} 
+                              />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    {/* Cost Distribution Pie Chart */}
+                    <div className="chart-container">
+                      <h3>Cost Distribution by Cost Center</h3>
+                      <ResponsiveContainer width="100%" height={400}>
+                        <PieChart>
+                          <Pie
+                            data={costDistributionData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                            outerRadius={120}
+                            fill="#8884d8"
+                            dataKey="value"
+                          >
+                            {costDistributionData.map((entry, index) => (
+                              <Cell 
+                                key={`cell-${index}`} 
+                                fill={CHART_COLORS[index % CHART_COLORS.length]} 
+                              />
+                            ))}
+                          </Pie>
+                          <RechartsTooltip formatter={(value) => formatCurrencyFull(value as number)} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </>
+            )}
+          </div>
+        )}
       </div>
 
      
@@ -1987,6 +2282,16 @@ const ExecutiveSummary = () => {
         isOpen={showExportCustomizer}
         onClose={() => setShowExportCustomizer(false)}
         onApplyTemplate={handleApplyTemplateAndExport}
+      />
+
+      {/* Export Modal */}
+      <ExportModal
+        isOpen={isExportModalOpen}
+        onClose={handleCloseExportModal}
+        onExport={handleExport}
+        setExportMode={setIsExportMode}
+        expandAllSections={expandAllSectionsForExport}
+        restoreSectionStates={restoreOriginalSectionStates}
       />
     </div>
   );

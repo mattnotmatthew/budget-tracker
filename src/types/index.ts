@@ -188,5 +188,41 @@ export interface VendorTracking {
   updatedAt: Date;
 }
 
+// Team management interfaces
+export interface TeamData {
+  id: string;
+  teamName: string;
+  currentCostCenter: string;
+  location?: string;
+  headcount: number;
+  cost: number;
+  notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface TeamState {
+  teams: TeamData[];
+}
+
+// Functional Allocation Types
+export interface FunctionalAllocation {
+  id: string;
+  year: number;
+  month: number;              // 1-12
+  teamName: string;           // Must match Resources teams
+  function: 'Development' | 'Infrastructure' | 'Revenue' | 'Support';
+  currentCostCenter: string;
+  product: string;
+  cost: number;               // In thousands
+  percentOfWork: number;      // 0-100
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface FunctionalAllocationState {
+  allocations: FunctionalAllocation[];
+}
+
 // Re-export planning types for convenience
 export * from "./planning";

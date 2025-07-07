@@ -3,7 +3,7 @@
 /* Yearly Budget Dashboard */
 .yearly-budget-dashboard {
   background: var(--background-card);
-  border: 1px solid var(--border-color);
+  
   border-radius: var(--radius-xl);
   margin-bottom: var(--spacing-lg);
   overflow: hidden;

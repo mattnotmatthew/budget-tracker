@@ -17,6 +17,8 @@ import "../styles/App-new.css";
 import { useNavigate } from "react-router-dom";
 import ExecutiveSummary from "./ExecutiveSummary/ExecutiveSummary";
 import VendorManagement from "./VendorManagement";
+import Resources from "./Resources";
+import FunctionalAllocation from "./FunctionalAllocation";
 
 // Utility function to get current quarter
 const getCurrentQuarter = (): number => {
@@ -44,7 +46,7 @@ const Dashboard: React.FC = () => {
   const [showHotkeysHelp, setShowHotkeysHelp] = useState(false);
   const [isReadOnly, setIsReadOnly] = useState(true); // Default to Read Only mode
   const [currentView, setCurrentView] = useState<
-    "executive" | "budget" | "vendor"
+    "executive" | "budget" | "vendor" | "resources" | "functionalAllocation"
   >("executive"); // Default to Executive Summary
   const navigate = useNavigate();
 
@@ -172,11 +174,15 @@ const Dashboard: React.FC = () => {
           case "s":
           case "S":
             event.preventDefault();
-            // Cycle through views: executive -> budget -> vendor -> executive
+            // Cycle through views: executive -> budget -> vendor -> resources -> functionalAllocation -> executive
             if (currentView === "executive") {
               setCurrentView("budget");
             } else if (currentView === "budget") {
               setCurrentView("vendor");
+            } else if (currentView === "vendor") {
+              setCurrentView("resources");
+            } else if (currentView === "resources") {
+              setCurrentView("functionalAllocation");
             } else {
               setCurrentView("executive");
             }
@@ -319,7 +325,7 @@ const Dashboard: React.FC = () => {
         </div>
       )}{" "}
       <div className="dashboard-header">
-        <div className="view-controls">
+        <div className={`view-controls ${currentView ? 'has-active-view' : ''}`}>
           <div className="year-selector">
             <label>Year: </label>{" "}
             <div className="year-selector-container">
@@ -357,6 +363,20 @@ const Dashboard: React.FC = () => {
             Vendor Management
           </button>
           <button
+            className={`view-btn ${currentView === "resources" ? "active" : ""}`}
+            onClick={() => setCurrentView("resources")}
+            title="Team Allocation"
+          >
+            Team Allocation
+          </button>
+          <button
+            className={`view-btn ${currentView === "functionalAllocation" ? "active" : ""}`}
+            onClick={() => setCurrentView("functionalAllocation")}
+            title="Product Allocation"
+          >
+            Product Allocation
+          </button>
+          <button
             className={`view-btn ${
               currentView === "executive" ? "active" : ""
             }`}
@@ -365,49 +385,8 @@ const Dashboard: React.FC = () => {
           >
             Executive Summary
           </button>
-          {/* Only show quarter selector and read-only toggle when viewing Budget */}
-          {currentView === "budget" && (
-            <>
-              <QuarterSelector
-                selectedQuarters={selectedQuarters}
-                onQuarterToggle={handleQuarterToggle}
-              />
-              <div className="toggle-control">
-                <label className="toggle-label">
-                  <span className="toggle-text">
-                    {isReadOnly ? "Read Only" : "Edit Mode"}
-                  </span>
-                  <label className="toggle-switch">
-                    <input
-                      type="checkbox"
-                      checked={isReadOnly}
-                      onChange={() => setIsReadOnly(!isReadOnly)}
-                    />
-                    <span className="toggle-slider round"></span>
-                  </label>
-                </label>
-              </div>
-            </>
-          )}
         </div>{" "}
         <div className="action-controls">
-          {/* Only show View/Edit Data button when viewing Budget */}
-          {currentView === "budget" && (
-            <button
-              className="input-btn"
-              onClick={handleEditDataClick}
-              title={
-                isReadOnly ? "View Data (Ctrl+E)" : "Edit/Add Data (Ctrl+E)"
-              }
-            >
-              {showInput
-                ? "Close"
-                : isReadOnly
-                ? "👁️ View Data"
-                : "✏️ Edit Data"}{" "}
-              <small>(Ctrl+E)</small>
-            </button>
-          )}
 
           <button
             className="file-manager-btn"
@@ -477,7 +456,7 @@ const Dashboard: React.FC = () => {
                 <div className="hotkey-item">
                   <span className="hotkey">Ctrl + S</span>
                   <span className="description">
-                    Cycle Views (Executive→Budget→Vendor)
+                    Cycle Views (Executive→Budget→Vendor→Team Allocation→Product Allocation)
                   </span>
                 </div>
                 <div className="hotkey-item">
@@ -521,26 +500,65 @@ const Dashboard: React.FC = () => {
         {" "}
         {currentView === "budget" && (
           <>
-            <div className="controls-and-currency">
-              <div className="toggle-control">
-                <label className="toggle-label">
-                  <span className="toggle-text">
-                    Collapse All <small>(Alt+C)</small>
+            <div className="budget-controls-section">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                  <QuarterSelector
+                    selectedQuarters={selectedQuarters}
+                    onQuarterToggle={handleQuarterToggle}
+                  />
+                  <button
+                    className="input-btn"
+                    onClick={handleEditDataClick}
+                    title={
+                      isReadOnly ? "View Data (Ctrl+E)" : "Edit/Add Data (Ctrl+E)"
+                    }
+                  >
+                    {showInput
+                      ? "Close"
+                      : isReadOnly
+                      ? "👁️ View Data"
+                      : "✏️ Edit Data"}{" "}
+                    <small>(Ctrl+E)</small>
+                  </button>
+                </div>
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                  <div className="toggle-control">
+                    <label className="toggle-label">
+                      <span className="toggle-text">
+                        {isReadOnly ? "Read Only" : "Edit Mode"}
+                      </span>
+                      <label className="toggle-switch">
+                        <input
+                          type="checkbox"
+                          checked={isReadOnly}
+                          onChange={() => setIsReadOnly(!isReadOnly)}
+                        />
+                        <span className="toggle-slider round"></span>
+                      </label>
+                    </label>
+                  </div>
+                  <div className="toggle-control">
+                    <label className="toggle-label">
+                      <span className="toggle-text">
+                        Collapse All <small>(Alt+C)</small>
+                      </span>
+                      <label className="toggle-switch">
+                        <input
+                          type="checkbox"
+                          checked={collapseAll}
+                          onChange={() => setCollapseAll(!collapseAll)}
+                        />
+                        <span className="toggle-slider round"></span>
+                      </label>
+                    </label>
+                  </div>
+                  <span className="currency-note">
+                    <small>💡 (USD in Thousands)</small>
                   </span>
-                  <label className="toggle-switch">
-                    <input
-                      type="checkbox"
-                      checked={collapseAll}
-                      onChange={() => setCollapseAll(!collapseAll)}
-                    />
-                    <span className="toggle-slider round"></span>
-                  </label>
-                </label>
+                </div>
               </div>
-              <span className="currency-note">
-                <small>💡 (USD in Thousands)</small>
-              </span>
-            </div>{" "}
+            </div>
             <YearlyBudgetDashboard collapseAll={collapseAll} />
             <MonthlyView
               collapseAll={collapseAll}
@@ -549,6 +567,8 @@ const Dashboard: React.FC = () => {
           </>
         )}
         {currentView === "vendor" && <VendorManagement />}
+        {currentView === "resources" && <Resources />}
+        {currentView === "functionalAllocation" && <FunctionalAllocation />}
         {currentView === "executive" && <ExecutiveSummary />}
       </div>
     </div>

@@ -17,6 +17,7 @@
 @import "./components/modals.css";
 @import "./components/budget.css";
 @import "./components/vendor-management.css";
+@import "./components/resources.css";
 
 /* View-Specific Styles */
 @import "./views/quarterly.css";

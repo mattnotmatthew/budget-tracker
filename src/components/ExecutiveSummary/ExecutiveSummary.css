@@ -2321,402 +2321,130 @@ body.printing .section-heading {
   margin: 0 0 var(--section-header-margin) 0;
 }
 
-/* ===== EXECUTIVE SUMMARY PRINT STYLES ===== */
 
-/* Global Print Reset - Remove all web artifacts */
-@media print {
-  /* Reset all elements to remove web-specific styling */
-  *, *::before, *::after {
-    box-shadow: none !important;
-    text-shadow: none !important;
-    filter: none !important;
-    transition: none !important;
-    animation: none !important;
-  }
-
-  /* Ensure clean white background for entire document */
-  html, body {
-    background: white !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    color: black !important;
-  }
-
-  /* Hide scroll bars and web-only elements */
-  ::-webkit-scrollbar {
-    display: none !important;
-  }
+/* Resources Tab Styles */
+.cost-center-group {
+  margin-bottom: 1.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #ffffff;
 }
 
-/* Page Setup - Define page dimensions and orientation */
-@page powerpoint {
-  size: landscape;
-  margin: 0.5in;
-  background: white;
+.cost-center-title {
+  font-size: 1.1rem;
+  color: #3B82F6;
+  margin: 0;
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 8px 8px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-@page paper {
-  size: portrait;
-  margin: 1in;
-  background: white;
+.cost-center-group {
+  margin-bottom: 1.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #ffffff;
 }
 
-/* PowerPoint Export Styles */
-@media print {
-  .powerpoint-export {
-    page: powerpoint;
-  }
-
-  .powerpoint-export .executive-summary {
-    /* PowerPoint-optimized layout */
-    max-width: none !important;
-    margin: 0 !important;
-    padding: 1rem !important;
-    background: white !important;
-    border-radius: 0 !important;
-    width: 100% !important;
-    min-height: 7.5in !important; /* Landscape slide height minus margins */
-  }
-
-  /* Hide navigation and web-only elements */
-  .powerpoint-export .tab-navigation {
-    display: none !important;
-  }
-
-  .powerpoint-export .tab-content > div {
-    display: block !important;
-  }
-
-  /* Force all tab panels to display during export-all mode */
-  .export-all-tabs .tab-panel {
-    display: block !important;
-  }
-
-  /* PowerPoint Typography - Optimized for presentation viewing */
-  .powerpoint-export .executive-summary h1 {
-    font-size: 2.5rem !important;
-    margin-bottom: 2rem !important;
-    color: #1f2937 !important;
-    page-break-after: avoid;
-    font-weight: 700 !important;
-    text-align: center !important;
-  }
-
-  .powerpoint-export .executive-summary h2 {
-    font-size: 2rem !important;
-    margin-bottom: 1.5rem !important;
-    color: #1f2937 !important;
-    page-break-after: avoid;
-    font-weight: 700 !important;
-  }
-
-  .powerpoint-export .executive-summary h3 {
-    font-size: 1.5rem !important;
-    color: #374151 !important;
-    page-break-after: avoid;
-    margin-bottom: 1rem !important;
-    font-weight: 600 !important;
-  }
-
-  .powerpoint-export .executive-summary h4 {
-    font-size: 1.25rem !important;
-    color: #374151 !important;
-    page-break-after: avoid;
-    margin-bottom: 0.75rem !important;
-    font-weight: 600 !important;
-  }
-
-  /* PowerPoint KPI Cards - Enhanced for presentation */
-  .powerpoint-export .kpi-cards {
-    display: grid !important;
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 1.5rem !important;
-    margin-bottom: 2rem !important;
-  }
-
-  .powerpoint-export .kpi-card {
-    background: white !important;
-    border: 2px solid #3b82f6 !important; /* Professional blue border */
-    border-radius: 8px !important;
-    padding: 1.5rem !important;
-    page-break-inside: avoid;
-    margin-bottom: 0.75rem !important;
-  }
-
-  .powerpoint-export .kpi-card span {
-    font-size: 1.1rem !important;
-    color: #4b5563 !important;
-    line-height: 1.4 !important;
-    font-weight: 500 !important;
-  }
-
-  .powerpoint-export .kpi-card strong {
-    font-size: 1.75rem !important;
-    color: #1f2937 !important;
-    font-weight: 700 !important;
-    display: block !important;
-    margin-top: 0.5rem !important;
-  }
-
-  /* PowerPoint Charts - Optimized for presentations */
-  .powerpoint-export .trend-chart-section {
-    page-break-inside: avoid;
-    margin-bottom: 2rem !important;
-    margin-top: 1rem !important;
-  }
-
-  .powerpoint-export .trend-chart-section .recharts-wrapper {
-    height: 400px !important;
-    margin: 1rem 0 !important;
-  }
-
-  .powerpoint-export .recharts-cartesian-axis-tick-value {
-    font-size: 14px !important;
-    fill: #374151 !important;
-    font-weight: 500 !important;
-  }
-
-  .powerpoint-export .recharts-legend-item-text {
-    font-size: 14px !important;
-    color: #374151 !important;
-    font-weight: 500 !important;
-  }
-
-  /* PowerPoint Tables - Professional formatting */
-  .powerpoint-export .trend-table,
-  .powerpoint-export .variance-table {
-    font-size: 1rem !important;
-    page-break-inside: avoid;
-    margin: 1.5rem 0 !important;
-    border-collapse: collapse !important;
-    width: 100% !important;
-  }
-
-  .powerpoint-export .trend-table th,
-  .powerpoint-export .trend-table td,
-  .powerpoint-export .variance-table th,
-  .powerpoint-export .variance-table td {
-    padding: 0.75rem 1rem !important;
-    border: 1px solid #d1d5db !important;
-    line-height: 1.4 !important;
-  }
-
-  .powerpoint-export .trend-table th,
-  .powerpoint-export .variance-table th {
-    background: #f8fafc !important;
-    color: #1f2937 !important;
-    font-weight: 600 !important;
-  }
-
-  /* Hide ALL Interactive Elements - Comprehensive list */
-  .powerpoint-export button,
-  .powerpoint-export input,
-  .powerpoint-export select,
-  .powerpoint-export textarea,
-  .powerpoint-export .btn,
-  .powerpoint-export .button,
-  .powerpoint-export .toggle-button,
-  .powerpoint-export .expand-button,
-  .powerpoint-export .collapse-button,
-  .powerpoint-export .view-btn,
-  .powerpoint-export .edit-button,
-  .powerpoint-export .save-button,
-  .powerpoint-export .cancel-button,
-  .powerpoint-export .add-button,
-  .powerpoint-export .remove-button,
-  .powerpoint-export .close-button,
-  .powerpoint-export .dropdown,
-  .powerpoint-export .tooltip,
-  .powerpoint-export .tooltip-trigger,
-  .powerpoint-export .interactive-element,
-  .powerpoint-export .section-toggle,
-  .powerpoint-export .expand-collapse-btn,
-  .powerpoint-export .toggle-btn,
-  .powerpoint-export [role="button"],
-  .powerpoint-export .clickable,
-  .powerpoint-export .form-control,
-  .powerpoint-export .form-group,
-  .powerpoint-export .checkbox-wrapper,
-  .powerpoint-export .radio-wrapper,
-  .powerpoint-export .floating-back-button,
-  .powerpoint-export .floating-export-button,
-  .powerpoint-export .floating-powerpoint-button,
-  .powerpoint-export .floating-customize-button,
-  .powerpoint-export .header-buttons {
-    display: none !important;
-  }
-
-  /* Hide Chart Interactive Elements */
-  .powerpoint-export .recharts-tooltip-wrapper,
-  .powerpoint-export .recharts-active-dot,
-  .powerpoint-export .recharts-dot:hover,
-  .powerpoint-export .recharts-bar:hover {
-    display: none !important;
-  }
-
-  /* PowerPoint Commentary - Clean presentation format */
-  .powerpoint-export .commentary-section {
-    page-break-inside: avoid;
-    margin: 1.5rem 0 !important;
-  }
-
-  .powerpoint-export .commentary-section textarea,
-  .powerpoint-export .commentary-section input,
-  .powerpoint-export .commentary-section button,
-  .powerpoint-export .commentary-section .edit-mode,
-  .powerpoint-export .commentary-section .save-mode {
-    display: none !important;
-  }
-
-  .powerpoint-export .commentary-section .print-commentary {
-    display: block !important;
-    font-size: 1.1rem !important;
-    line-height: 1.6 !important;
-    color: #374151 !important;
-    padding: 1.25rem !important;
-    border: 2px solid #e5e7eb !important;
-    border-radius: 8px !important;
-    background: #f9fafb !important;
-  }
+.cost-center-group .collapsible-header {
+  background: #f8f9fa;
+  padding: 1rem 1.5rem;
+  transition: background-color 0.2s ease;
 }
 
-/* Single Slide Layout (Export Tab) - Compact fitting */
-@media print {
-  .export-current-tab .tab-panel {
-    page-break-before: avoid !important;
-    page-break-after: avoid !important;
-    page-break-inside: avoid;
-    margin: 0 !important;
-    padding: 0.5rem !important;
-  }
-
-  /* Compact layout for single slide */
-  .export-current-tab .section {
-    margin-bottom: 1rem !important;
-    padding: 0.5rem !important;
-  }
-
-  .export-current-tab .kpi-cards {
-    gap: 1rem !important;
-    margin-bottom: 1.5rem !important;
-  }
-
-  .export-current-tab .kpi-card {
-    padding: 1rem !important;
-    margin-bottom: 0.5rem !important;
-  }
-
-  /* Optimize chart size for single slide */
-  .export-current-tab .trend-chart-section .recharts-wrapper {
-    height: 300px !important;
-    margin: 0.5rem 0 !important;
-  }
-
-  /* Compact typography for single slide */
-  .export-current-tab h2 {
-    font-size: 1.75rem !important;
-    margin-bottom: 1rem !important;
-  }
-
-  .export-current-tab h3 {
-    font-size: 1.35rem !important;
-    margin-bottom: 0.75rem !important;
-  }
-
-  .export-current-tab h4 {
-    font-size: 1.15rem !important;
-    margin-bottom: 0.5rem !important;
-  }
+.cost-center-group .collapsible-header:hover {
+  background: #f3f4f6;
 }
 
-/* Multi-Slide Layout (Export All Sections) - Slide breaks between tabs */
-@media print {
-  .export-all-tabs .tab-panel {
-    page-break-before: always !important;
-    page-break-inside: avoid;
-    margin: 0 !important;
-    padding: 1.5rem !important;
-    min-height: 6.5in !important; /* Ensure good slide utilization */
-  }
-
-  .export-all-tabs .tab-panel:first-child {
-    page-break-before: auto !important;
-  }
-
-  /* Slide titles for each tab */
-  .export-all-tabs .tab-panel::before {
-    content: attr(data-tab-title) !important;
-    display: block !important;
-    font-size: 2.5rem !important;
-    font-weight: 700 !important;
-    color: #1f2937 !important;
-    margin-bottom: 2rem !important;
-    text-align: center !important;
-    page-break-after: avoid;
-    border-bottom: 3px solid #3b82f6 !important;
-    padding-bottom: 1rem !important;
-  }
-
-  /* Prevent content breaking within sections */
-  .export-all-tabs .section {
-    page-break-inside: avoid;
-    margin-bottom: 1.5rem !important;
-  }
-
-  .export-all-tabs .kpi-cards {
-    page-break-inside: avoid;
-  }
-
-  .export-all-tabs .trend-chart-section {
-    page-break-inside: avoid;
-    page-break-before: avoid !important;
-  }
+.cost-center-title {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  font-size: 1.125rem;
+  color: #2d3a4a;
+  font-weight: 600;
 }
 
-/* Paper Export Styles - 8.5x11 Document Format */
-@media print {
-  .paper-export {
-    page: paper;
-  }
+.cost-center-summary {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: normal;
+  margin-left: auto;
+  padding-left: 1rem;
+}
 
-  .paper-export .executive-summary {
-    /* Standard paper document optimization */
-    max-width: none !important;
-    margin: 0 !important;
-    padding: 0.75rem !important;
-    font-size: 11px !important;
-    background: white !important;
-  }
+.cost-center-content {
+  padding: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
 
-  .paper-export .kpi-cards {
-    grid-template-columns: repeat(3, 1fr) !important;
-    gap: 0.5rem !important;
-  }
+.team-details-table {
+  width: 100%;
+  border-collapse: collapse;
+}
 
-  .paper-export .kpi-card {
-    padding: 0.5rem !important;
-    font-size: 10px !important;
-    border: 1px solid #d1d5db !important;
-  }
+.team-details-table th {
+  background: #f3f4f6;
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+}
 
-  .paper-export .trend-chart-section .recharts-wrapper {
-    height: 250px !important;
-  }
+.team-details-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 0.875rem;
+}
 
-  /* Paper typography - smaller for document format */
-  .paper-export h1 {
-    font-size: 1.5rem !important;
-  }
+.team-details-table tr:last-child td {
+  border-bottom: none;
+}
 
-  .paper-export h2 {
-    font-size: 1.25rem !important;
-  }
+.team-details-table tr:hover td {
+  background: #f9fafb;
+}
 
-  .paper-export h3 {
-    font-size: 1.1rem !important;
-  }
+.empty-state-container {
+  text-align: center;
+  padding: 4rem 2rem;
+}
 
-  .paper-export h4 {
-    font-size: 1rem !important;
+.empty-state-message {
+  color: #6b7280;
+  font-size: 1.125rem;
+}
+
+/* Resources Tab - Responsive Design */
+@media (max-width: 768px) {
+  .cost-center-title {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .cost-center-summary {
+    margin-left: 0;
+    padding-left: 0;
+    margin-top: 0.5rem;
+  }
+  
+  .team-details-table {
+    font-size: 0.8rem;
+  }
+  
+  .team-details-table th,
+  .team-details-table td {
+    padding: 0.5rem;
+  }
+  
+  /* Make table responsive with horizontal scroll */
+  .cost-center-content {
+    overflow-x: auto;
   }
 }

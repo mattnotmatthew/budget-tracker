@@ -1,4 +1,4 @@
-import { BudgetState, BudgetEntry, VendorData, VendorTracking, CategoryAllocation } from "../types";
+import { BudgetState, BudgetEntry, VendorData, VendorTracking, CategoryAllocation, TeamData, FunctionalAllocation } from "../types";
 
 // Cache keys
 const CACHE_KEY = "budget-tracker-data";
@@ -30,6 +30,8 @@ export interface CachedBudgetData {
   allocations: CategoryAllocation[];
   vendorData: VendorData[];
   vendorTrackingData: VendorTracking[];
+  teams: TeamData[];
+  functionalAllocations: FunctionalAllocation[];
   selectedYear: number;
   yearlyBudgetTargets: { [year: number]: number };
   monthlyForecastModes: { [year: number]: { [month: number]: boolean } };
@@ -82,41 +84,45 @@ export class PersistenceManager {
   /**
    * Save data to cache
    */
-  public saveToCache(budgetState: BudgetState): void {
+  public saveToCache(budgetState: BudgetState & { teams?: TeamData[]; functionalAllocations?: FunctionalAllocation[] }): void {
     try {
       const cacheData: CachedBudgetData = {
         entries: budgetState.entries,
         allocations: budgetState.allocations || [],
         vendorData: budgetState.vendorData || [],
         vendorTrackingData: budgetState.vendorTrackingData || [],
+        teams: budgetState.teams || [],
+        functionalAllocations: budgetState.functionalAllocations || [],
         selectedYear: budgetState.selectedYear,
         yearlyBudgetTargets: budgetState.yearlyBudgetTargets,
         monthlyForecastModes: budgetState.monthlyForecastModes,
         lastUpdated: new Date().toISOString(),
         version: "1.0",
       }; // Debug logging to track empty data saves
-      console.log("PersistenceManager.saveToCache called with:", {
-        entriesCount: cacheData.entries.length,
-        allocationsCount: cacheData.allocations.length,
-        vendorDataCount: cacheData.vendorData.length,
-        vendorTrackingDataCount: cacheData.vendorTrackingData.length,
-        yearlyTargetsCount: Object.keys(cacheData.yearlyBudgetTargets).length,
-        monthlyModesCount: Object.keys(cacheData.monthlyForecastModes).length,
-        timestamp: cacheData.lastUpdated,
-      });
+      // console.log("PersistenceManager.saveToCache called with:", {
+      //   entriesCount: cacheData.entries.length,
+      //   allocationsCount: cacheData.allocations.length,
+      //   vendorDataCount: cacheData.vendorData.length,
+      //   vendorTrackingDataCount: cacheData.vendorTrackingData.length,
+      //   yearlyTargetsCount: Object.keys(cacheData.yearlyBudgetTargets).length,
+      //   monthlyModesCount: Object.keys(cacheData.monthlyForecastModes).length,
+      //   timestamp: cacheData.lastUpdated,
+      // });
 
       if (
         cacheData.entries.length === 0 &&
         cacheData.allocations.length === 0 &&
         cacheData.vendorData.length === 0 &&
         cacheData.vendorTrackingData.length === 0 &&
+        cacheData.teams.length === 0 &&
+        cacheData.functionalAllocations.length === 0 &&
         Object.keys(cacheData.yearlyBudgetTargets).length === 0 &&
         Object.keys(cacheData.monthlyForecastModes).length === 0
       ) {
-        console.warn(
-          "WARNING: Saving empty data to cache! Stack trace:",
-          new Error().stack
-        );
+        // console.warn(
+        //   "WARNING: Saving empty data to cache! Stack trace:",
+        //   new Error().stack
+        // );
       }
 
       localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData)); // Update persistence state - but preserve the current hasUnsavedChanges value
@@ -128,13 +134,13 @@ export class PersistenceManager {
       // This should only be set when actual data changes occur
       this.savePersistenceState(persistenceState);
 
-      console.log(
-        "Data saved to cache at",
-        new Date().toLocaleTimeString(),
-        "with",
-        cacheData.entries.length,
-        "entries"
-      );
+      // console.log(
+      //   "Data saved to cache at",
+      //   new Date().toLocaleTimeString(),
+      //   "with",
+      //   cacheData.entries.length,
+      //   "entries"
+      // );
     } catch (error) {
       console.error("Failed to save data to cache:", error);
     }
@@ -182,6 +188,22 @@ export class PersistenceManager {
             })
           );
         }
+        // Convert date strings back to Date objects for team data
+        if (data.teams) {
+          data.teams = data.teams.map((team: any) => ({
+            ...team,
+            createdAt: new Date(team.createdAt),
+            updatedAt: new Date(team.updatedAt),
+          }));
+        }
+        // Convert date strings back to Date objects for functional allocations
+        if (data.functionalAllocations) {
+          data.functionalAllocations = data.functionalAllocations.map((allocation: any) => ({
+            ...allocation,
+            createdAt: new Date(allocation.createdAt),
+            updatedAt: new Date(allocation.updatedAt),
+          }));
+        }
         return data;
       }
     } catch (error) {
@@ -197,7 +219,7 @@ export class PersistenceManager {
     try {
       localStorage.removeItem(CACHE_KEY);
       localStorage.removeItem(PERSISTENCE_STATE_KEY);
-      console.log("Cache cleared");
+      // console.log("Cache cleared");
     } catch (error) {
       console.error("Failed to clear cache:", error);
     }
@@ -342,12 +364,12 @@ export class PersistenceManager {
     const saveInterval = interval || DEFAULT_CACHE_AUTOSAVE_INTERVAL;
     this.autoSaveTimer = setInterval(() => {
       callback();
-      console.log("Auto-save to cache triggered");
+      // console.log("Auto-save to cache triggered");
     }, saveInterval);
 
-    console.log(
-      `Auto-save started with ${saveInterval / 1000} second interval`
-    );
+    // console.log(
+    //   `Auto-save started with ${saveInterval / 1000} second interval`
+    // );
   }
 
   /**
@@ -357,7 +379,7 @@ export class PersistenceManager {
     if (this.autoSaveTimer) {
       clearInterval(this.autoSaveTimer);
       this.autoSaveTimer = null;
-      console.log("Auto-save stopped");
+      // console.log("Auto-save stopped");
     }
   }
 

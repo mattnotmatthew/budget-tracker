@@ -3205,7 +3205,7 @@ button small {
 .controls-and-currency {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 1rem;
   margin-bottom: 1rem;
 }

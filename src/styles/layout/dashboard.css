@@ -83,6 +83,11 @@
   gap: var(--spacing-sm);
   flex-wrap: wrap;
   align-items: center;
+  transition: gap 0.3s ease;
+}
+
+.view-controls.has-active-view {
+  gap: 0.25rem;
 }
 
 .view-btn {
@@ -93,8 +98,22 @@
   border-radius: var(--radius-lg);
   font-weight: 500;
   cursor: pointer;
-  transition: var(--transition-fast);
+  transition: all 0.3s ease;
   display: inline-block;
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.has-active-view .view-btn:not(.active) {
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.has-active-view .view-btn:not(.active):hover {
+  opacity: 1;
+  padding: 0.75rem var(--spacing-lg);
 }
 
 .view-btn:hover {
@@ -106,6 +125,18 @@
   background: var(--primary-green);
   border-color: var(--primary-green);
   color: var(--background-card);
+  transform: scale(1);
+  padding: 0.75rem var(--spacing-lg);
+  font-size: 1rem;
+  opacity: 1;
+}
+
+/* Budget Controls Section */
+.budget-controls-section {
+  padding: 0 2rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #5d6a5c;
+  padding-bottom: 1rem;
 }
 
 /* Action Controls Container */
@@ -340,6 +371,11 @@ input:checked + .toggle-slider:before {
   gap: 0.5rem;
   flex-wrap: wrap;
   align-items: center;
+  transition: gap 0.3s ease;
+}
+
+.view-controls.has-active-view {
+  gap: 0.25rem;
 }
 /* Used in Dashboard.tsx:337 */
 .mode-indicator {
@@ -362,9 +398,24 @@ input:checked + .toggle-slider:before {
   border-radius: 8px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   display: inline-block;
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
 }
+
+.has-active-view .view-btn:not(.active) {
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.has-active-view .view-btn:not(.active):hover {
+  opacity: 1;
+  padding: 0.75rem 1.5rem;
+}
+
 .view-btn:hover {
   border-color: #334915;
   color: #334915;
@@ -373,6 +424,10 @@ input:checked + .toggle-slider:before {
   background: #334915;
   border-color: #334915;
   color: #ffffff;
+  transform: scale(1);
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  opacity: 1;
 }
 
 .help-btn:hover {

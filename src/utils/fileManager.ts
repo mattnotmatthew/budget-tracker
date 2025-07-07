@@ -1,4 +1,4 @@
-import { BudgetEntry, BudgetState, VendorData, VendorTracking, CategoryAllocation } from "../types";
+import { BudgetEntry, BudgetState, VendorData, VendorTracking, CategoryAllocation, TeamData, FunctionalAllocation } from "../types";
 
 // Cache key for storing file information
 const CACHE_KEY = "budget-tracker-file-info";
@@ -21,6 +21,8 @@ export interface BudgetDataFile {
   monthlyForecastModes?: { [year: number]: { [month: number]: boolean } };
   vendorData?: VendorData[]; // NEW: Vendor data
   vendorTrackingData?: VendorTracking[]; // NEW: Vendor tracking data
+  teams?: TeamData[]; // NEW: Team data
+  functionalAllocations?: FunctionalAllocation[]; // NEW: Functional allocations
   metadata: {
     totalEntries: number;
     dateRange: {
@@ -68,10 +70,10 @@ export const saveBudgetData = (
     | "selectedQuarter"
     | "selectedMonth"
     | "persistence"
-  >,
+  > & { teams?: TeamData[]; functionalAllocations?: FunctionalAllocation[] },
   customFileName?: string
 ) => {
-  const { entries, allocations, selectedYear, vendorData, vendorTrackingData } = state;
+  const { entries, allocations, selectedYear, vendorData, vendorTrackingData, teams, functionalAllocations } = state;
 
   // Filter entries for the selected year
   const yearEntries = entries.filter(
@@ -94,6 +96,12 @@ export const saveBudgetData = (
       (tracking: VendorTracking) => tracking.year === selectedYear
     ) || [];
 
+  // Filter functional allocations for the selected year
+  const yearFunctionalAllocations =
+    functionalAllocations?.filter(
+      (allocation: FunctionalAllocation) => allocation.year === selectedYear
+    ) || [];
+
   // Create metadata
   const dates = yearEntries.map((entry: BudgetEntry) => entry.createdAt);
   const categorySet = new Set(
@@ -111,6 +119,8 @@ export const saveBudgetData = (
     monthlyForecastModes: state.monthlyForecastModes || {},
     vendorData: yearVendorData,
     vendorTrackingData: yearVendorTrackingData,
+    teams: teams || [],
+    functionalAllocations: yearFunctionalAllocations,
     metadata: {
       totalEntries: yearEntries.length,
       dateRange: {
@@ -208,6 +218,24 @@ export const loadBudgetData = (): Promise<{ data: BudgetDataFile; fileName: stri
             );
           }
 
+          // Convert date strings in team data
+          if (data.teams) {
+            data.teams = data.teams.map((team) => ({
+              ...team,
+              createdAt: new Date(team.createdAt),
+              updatedAt: new Date(team.updatedAt),
+            }));
+          }
+
+          // Convert date strings in functional allocations
+          if (data.functionalAllocations) {
+            data.functionalAllocations = data.functionalAllocations.map((allocation) => ({
+              ...allocation,
+              createdAt: new Date(allocation.createdAt),
+              updatedAt: new Date(allocation.updatedAt),
+            }));
+          }
+
           resolve({ data, fileName: file.name });
         } catch (error) {
           reject(
@@ -292,7 +320,7 @@ export const saveToFileHandle = async (
     | "selectedQuarter"
     | "selectedMonth"
     | "persistence"
-  >,
+  > & { teams?: TeamData[]; functionalAllocations?: FunctionalAllocation[] },
   fileHandle?: FileSystemFileHandle
 ): Promise<{
   saved: boolean;
@@ -309,7 +337,7 @@ export const saveToFileHandle = async (
         fileName: `budget-data-${state.selectedYear}.json`,
       };
     }
-    const { entries, allocations, selectedYear, vendorData, vendorTrackingData } = state;
+    const { entries, allocations, selectedYear, vendorData, vendorTrackingData, teams, functionalAllocations } = state;
     const yearEntries = entries.filter(
       (entry: BudgetEntry) => entry.year === selectedYear
     );
@@ -332,11 +360,22 @@ export const saveToFileHandle = async (
         (tracking: VendorTracking) => tracking.year === selectedYear
       ) || [];
 
+    // Filter functional allocations for the selected year
+    const yearFunctionalAllocations =
+      functionalAllocations?.filter(
+        (allocation: FunctionalAllocation) => allocation.year === selectedYear
+      ) || [];
+
     const dates = yearEntries.map((entry: BudgetEntry) => entry.createdAt);
     const categorySet = new Set(
       yearEntries.map((entry: BudgetEntry) => entry.categoryId)
     );
     const categories = Array.from(categorySet);
+    
+    // Debug logging
+    console.log("SaveToFileHandle - functionalAllocations:", functionalAllocations);
+    console.log("SaveToFileHandle - yearFunctionalAllocations:", yearFunctionalAllocations);
+    
     const dataToSave: BudgetDataFile = {
       version: "1.0.0",
       exportDate: new Date().toISOString(),
@@ -347,6 +386,8 @@ export const saveToFileHandle = async (
       monthlyForecastModes: state.monthlyForecastModes || {},
       vendorData: yearVendorData,
       vendorTrackingData: yearVendorTrackingData,
+      teams: teams || [],
+      functionalAllocations: yearFunctionalAllocations,
       metadata: {
         totalEntries: yearEntries.length,
         dateRange: {
@@ -423,7 +464,7 @@ export const smartAutoSave = async (
     | "selectedQuarter"
     | "selectedMonth"
     | "persistence"
-  >,
+  > & { teams?: TeamData[]; functionalAllocations?: FunctionalAllocation[] },
   currentFile?: {
     name: string;
     handle?: FileSystemFileHandle;
@@ -434,6 +475,7 @@ export const smartAutoSave = async (
     hasCurrentFile: !!currentFile,
     hasHandle: !!currentFile?.handle,
     supportsFileSystemAccess: supportsFileSystemAccess(),
+    functionalAllocations: state.functionalAllocations,
   });
 
   // Check if we have a file handle and browser supports File System Access API
@@ -557,7 +599,7 @@ export const smartAutoSave = async (
       }
       
       // Prepare the data to save
-      const { entries, allocations, selectedYear, vendorData, vendorTrackingData } = state;
+      const { entries, allocations, selectedYear, vendorData, vendorTrackingData, teams } = state;
       const yearEntries = entries.filter((entry) => entry.year === selectedYear);
       const yearAllocations = allocations?.filter((allocation) => allocation.year === selectedYear) || [];
       const yearVendorData = vendorData?.filter((vendor) => vendor.year === selectedYear) || [];
@@ -577,6 +619,7 @@ export const smartAutoSave = async (
         monthlyForecastModes: state.monthlyForecastModes || {},
         vendorData: yearVendorData,
         vendorTrackingData: yearVendorTrackingData,
+        teams: teams || [],
         metadata: {
           totalEntries: yearEntries.length,
           dateRange: {
@@ -904,6 +947,15 @@ export const attemptRestoreCachedFile = async (): Promise<{
           updatedAt: new Date(tracking.updatedAt),
         })
       );
+    }
+
+    // Convert date strings in team data
+    if (data.teams) {
+      data.teams = data.teams.map((team: any) => ({
+        ...team,
+        createdAt: new Date(team.createdAt),
+        updatedAt: new Date(team.updatedAt),
+      }));
     }
 
     return {

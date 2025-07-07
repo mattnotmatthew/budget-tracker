@@ -5,7 +5,8 @@ import {
   generateYTDPerformanceAnalysis,
   generateForecastAnalysis,
   generateCapitalizedSalariesAnalysis,
-  generateResourceAnalysis,
+  generateResourceSpend,
+  generateResourceAllocation,
 } from "./sectionGenerators";
 
 // Initialize the registry with default sections
@@ -47,12 +48,21 @@ function initializeRegistry() {
   });
 
   summaryRegistry.registerSection({
-    id: "resourceAnalysis",
-    name: "Resource Analysis",
+    id: "resourceSpend",
+    name: "Resource Spend",
     description: "Hiring capacity and compensation budget analysis",
-    generator: generateResourceAnalysis,
+    generator: generateResourceSpend,
     defaultEnabled: true,
     order: 5,
+  });
+
+  summaryRegistry.registerSection({
+    id: "resourceAllocation",
+    name: "Resource Allocation",
+    description: "Team composition and cost center efficiency analysis",
+    generator: generateResourceAllocation,
+    defaultEnabled: true,
+    order: 6,
   });
 }
 

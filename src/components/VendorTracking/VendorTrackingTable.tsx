@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useBudget } from "../../context/BudgetContext";
 import { VendorTracking } from "../../types";
 import { formatCurrencyExcelStyle } from "../../utils/currencyFormatter";
+import { TableActionButtons } from "../shared";
 import "./vendor-tracking.css";
 
 /**
@@ -1061,22 +1062,13 @@ const VendorTrackingTable: React.FC<VendorTrackingTableProps> = (props) => {
                 )}
               </td>
               <td>
-                <div className="vendor-actions">
-                  <button
-                    className="edit-row-btn"
-                    onClick={() => handleEdit(item.id)}
-                    title={isRowInEditMode(item.id) ? "Save Row" : "Edit Row"}
-                  >
-                    {isRowInEditMode(item.id) ? "💾" : "✏️"}
-                  </button>
-                  <button
-                    className="remove-row-btn"
-                    onClick={() => handleDelete(item.id)}
-                    title="Delete Row"
-                  >
-                    🗑️
-                  </button>
-                </div>
+                <TableActionButtons
+                  isEditing={isRowInEditMode(item.id)}
+                  onEdit={() => handleEdit(item.id)}
+                  onDelete={() => handleDelete(item.id)}
+                  editTooltip={isRowInEditMode(item.id) ? "Save Row" : "Edit Row"}
+                  deleteTooltip="Delete Row"
+                />
               </td>
             </tr>
           ))}

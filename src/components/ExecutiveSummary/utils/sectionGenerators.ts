@@ -4,6 +4,7 @@ import {
   KPIData,
 } from "./kpiCalculations";
 import { getResourceData } from "./resourceCalculations";
+import { getTeamMetrics } from "./teamCalculations";
 
 export const generateStrategicContext = (state: any, kpiData: KPIData): string => {
   const lastMonthName = getLastFinalMonthName(state);
@@ -86,7 +87,7 @@ export const generateCapitalizedSalariesAnalysis = (state: any, kpiData: KPIData
   return "";
 };
 
-export const generateResourceAnalysis = (state: any, kpiData: KPIData): string => {
+export const generateResourceSpend = (state: any, kpiData: KPIData): string => {
   const lastMonthName = getLastFinalMonthName(state);
   const resourceData = getResourceData(state);
   const hiringData = resourceData.hiringCapacity;
@@ -114,6 +115,63 @@ export const generateResourceAnalysis = (state: any, kpiData: KPIData): string =
     summary += `We are projected to exceed our compensation budget by ${formatCurrencyFull(
       Math.abs(hiringData.budgetVsProjection)
     )}, requiring careful monitoring of new hires and discretionary compensation.`;
+  }
+
+  return summary;
+};
+
+export const generateResourceAllocation = (state: any, kpiData: KPIData): string => {
+  const teams = state.teams || [];
+  
+  // Handle empty state
+  if (teams.length === 0) {
+    return "No team data is currently available for resource allocation analysis.";
+  }
+
+  const teamMetrics = getTeamMetrics(teams);
+  let summary = "";
+
+  // Team overview
+  summary += `Our organization currently comprises ${teamMetrics.totalTeams} teams with ${teamMetrics.totalHeadcount} total headcount, representing ${formatCurrencyFull(teamMetrics.totalCost)} in total costs. `;
+  
+  // Average cost per head
+  summary += `The average cost per head across the organization is ${formatCurrencyFull(teamMetrics.averageCostPerHead)}. `;
+
+  // Top 3 teams by cost
+  const topTeams = [...teams].sort((a, b) => b.cost - a.cost).slice(0, 3);
+  if (topTeams.length > 0) {
+    summary += `\n\nThe highest cost teams are: `;
+    topTeams.forEach((team, index) => {
+      summary += `${team.teamName} (${formatCurrencyFull(team.cost)})`;
+      if (index < topTeams.length - 2) {
+        summary += ", ";
+      } else if (index === topTeams.length - 2) {
+        summary += ", and ";
+      }
+    });
+    summary += `. `;
+  }
+
+  // Cost center efficiency comparison
+  const costCentersWithTeams = teamMetrics.costCenterGroups.filter(g => g.teams.length > 0);
+  if (costCentersWithTeams.length > 1) {
+    const sorted = [...costCentersWithTeams].sort((a, b) => a.averageCostPerHead - b.averageCostPerHead);
+    const mostEfficient = sorted[0];
+    const leastEfficient = sorted[sorted.length - 1];
+    
+    const efficiencyGap = leastEfficient.averageCostPerHead - mostEfficient.averageCostPerHead;
+    const efficiencyGapPct = ((efficiencyGap / mostEfficient.averageCostPerHead) * 100).toFixed(0);
+    
+    summary += `\n\nAcross cost centers, ${mostEfficient.costCenter} demonstrates the highest efficiency with an average cost per head of ${formatCurrencyFull(mostEfficient.averageCostPerHead)}, `;
+    summary += `while ${leastEfficient.costCenter} has an average cost per head of ${formatCurrencyFull(leastEfficient.averageCostPerHead)}, `;
+    summary += `representing a ${efficiencyGapPct}% variance in resource efficiency between cost centers.`;
+  }
+
+  // Distribution insights
+  if (costCentersWithTeams.length > 0) {
+    const largestCostCenter = [...costCentersWithTeams].sort((a, b) => b.totalCost - a.totalCost)[0];
+    const costCenterPct = ((largestCostCenter.totalCost / teamMetrics.totalCost) * 100).toFixed(0);
+    summary += ` ${largestCostCenter.costCenter} represents the largest resource investment at ${costCenterPct}% of total team costs.`;
   }
 
   return summary;

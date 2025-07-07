@@ -13,7 +13,8 @@ export interface SummaryToggles {
   strategicContext: boolean;
   ytdPerformance: boolean;
   forecastAnalysis: boolean;
-  resourceAnalysis: boolean;
+  resourceSpend: boolean;
+  resourceAllocation: boolean;
   capitalizedSalaries: boolean;
 }
 
@@ -55,7 +56,8 @@ export class SummaryRegistry {
       strategicContext: true,
       ytdPerformance: true,
       forecastAnalysis: true,
-      resourceAnalysis: true,
+      resourceSpend: true,
+      resourceAllocation: true,
       capitalizedSalaries: true,
     };
 

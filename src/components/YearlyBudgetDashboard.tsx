@@ -264,7 +264,7 @@ const YearlyBudgetDashboard: React.FC<YearlyBudgetDashboardProps> = ({
 
   return (
     <div className="yearly-budget-dashboard">
-      <div className="yearly-header">
+      {/* <div className="yearly-header">
         <h3
           className="collapsible"
           onClick={toggleCollapse}
@@ -283,7 +283,7 @@ const YearlyBudgetDashboard: React.FC<YearlyBudgetDashboardProps> = ({
         {saveMessage && (
           <div className="save-message-inline">{saveMessage}</div>
         )}
-      </div>
+      </div> */}
 
       {!isCollapsed && (
         <div className="yearly-budget-section">

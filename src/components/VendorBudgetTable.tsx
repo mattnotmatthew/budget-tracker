@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useBudget } from "../context/BudgetContext";
 import { VendorData } from "../types";
 import { formatCurrencyExcelStyle } from "../utils/currencyFormatter";
+import { TableActionButtons } from "./shared";
 
 interface VendorBudgetTableProps {
   vendors: VendorData[];
@@ -647,25 +648,15 @@ const VendorBudgetTable: React.FC<VendorBudgetTableProps> = ({
                       )}
                     </td>
                     <td>
-                      <div className="vendor-actions">
-                        {isComplete && (
-                          <button
-                            className="edit-row-btn"
-                            onClick={() => toggleEditMode(vendor.id)}
-                            title={inEditMode ? "Finish editing" : "Edit vendor"}
-                          >
-                            {inEditMode ? "✓" : "✏️"}
-                          </button>
-                        )}
-                        <button
-                          className="remove-row-btn"
-                          onClick={() => deleteVendor(vendor.id)}
-                          disabled={vendors.length === 1}
-                          title="Remove vendor"
-                        >
-                          🗑️
-                        </button>
-                      </div>
+                      {isComplete && (
+                        <TableActionButtons
+                          isEditing={inEditMode}
+                          onEdit={() => toggleEditMode(vendor.id)}
+                          onDelete={() => deleteVendor(vendor.id)}
+                          editTooltip={inEditMode ? "Finish editing" : "Edit vendor"}
+                          deleteTooltip={vendors.length === 1 ? "Cannot delete the last vendor" : "Remove vendor"}
+                        />
+                      )}
                     </td>
                   </tr>
                 );

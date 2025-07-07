@@ -2,10 +2,15 @@ import { budgetReducer, BudgetState, BudgetAction, initialBudgetState } from "./
 import { vendorReducer, VendorState, VendorAction, initialVendorState } from "./vendorReducer";
 import { planningReducer, PlanningState, PlanningAction, initialPlanningState } from "./planningReducer";
 import { persistenceReducer, PersistenceState, PersistenceAction } from "./persistenceReducer";
+import { teamReducer, TeamState, TeamAction, initialTeamState } from "./teamReducer";
+import { functionalAllocationReducer, FunctionalAllocationState, FunctionalAllocationAction } from "./functionalAllocationReducer";
+import { FunctionalAllocation } from "../../types";
 import { PersistenceManager } from "../../services/persistenceManager";
 
 // Combined state interface
-export interface CombinedState extends BudgetState, VendorState, PlanningState, PersistenceState {}
+export interface CombinedState extends BudgetState, VendorState, PlanningState, PersistenceState, TeamState {
+  functionalAllocations: FunctionalAllocation[];
+}
 
 // Combined action type
 export type CombinedAction = 
@@ -13,6 +18,8 @@ export type CombinedAction =
   | VendorAction 
   | PlanningAction 
   | PersistenceAction
+  | TeamAction
+  | FunctionalAllocationAction
   | { type: "LOAD_FROM_CACHE"; payload: any };
 
 // Helper function to load file info from cache
@@ -59,6 +66,12 @@ export const getInitialCombinedState = (): CombinedState => {
     // Planning state
     ...initialPlanningState,
     
+    // Team state
+    ...initialTeamState,
+    
+    // Functional Allocation state
+    functionalAllocations: [],
+    
     // Persistence state
     currentFile: cachedFileInfo
       ? {
@@ -98,6 +111,13 @@ const shouldMarkUnsaved = (action: CombinedAction): boolean => {
     "ADD_VENDOR_TRACKING",
     "UPDATE_VENDOR_TRACKING",
     "DELETE_VENDOR_TRACKING",
+    "ADD_TEAM",
+    "UPDATE_TEAM",
+    "DELETE_TEAM",
+    "ADD_FUNCTIONAL_ALLOCATION",
+    "UPDATE_FUNCTIONAL_ALLOCATION",
+    "DELETE_FUNCTIONAL_ALLOCATION",
+    "SET_FUNCTIONAL_ALLOCATIONS",
   ];
   
   return unsavedActions.includes(action.type);
@@ -123,6 +143,10 @@ export const combinedReducer = (
       // Vendor data
       vendorData: action.payload.vendorData || [],
       vendorTrackingData: action.payload.vendorTrackingData || [],
+      // Team data
+      teams: action.payload.teams || [],
+      // Functional Allocation data
+      functionalAllocations: action.payload.functionalAllocations || [],
       // Persistence state
       persistence: {
         ...state.persistence,
@@ -152,6 +176,10 @@ export const combinedReducer = (
       // Reset vendor state
       vendorData: [],
       vendorTrackingData: [],
+      // Reset team state
+      teams: [],
+      // Reset functional allocation state
+      functionalAllocations: [],
       // Reset file state
       currentFile: undefined,
     };
@@ -178,6 +206,15 @@ export const combinedReducer = (
   const persistenceActions = [
     "SET_CURRENT_FILE", "MARK_UNSAVED_CHANGES", "MARK_SAVED_TO_FILE",
     "UPDATE_CACHE_TIMESTAMP", "SET_FIRST_TIME_USER"
+  ];
+
+  const teamActions = [
+    "ADD_TEAM", "UPDATE_TEAM", "DELETE_TEAM", "LOAD_TEAMS"
+  ];
+
+  const functionalAllocationActions = [
+    "ADD_FUNCTIONAL_ALLOCATION", "UPDATE_FUNCTIONAL_ALLOCATION", 
+    "DELETE_FUNCTIONAL_ALLOCATION", "SET_FUNCTIONAL_ALLOCATIONS"
   ];
 
   // Apply budget reducer
@@ -235,6 +272,29 @@ export const combinedReducer = (
       action as PersistenceAction
     );
     newState = { ...newState, ...persistenceState };
+  }
+
+  // Apply team reducer
+  if (teamActions.includes(action.type)) {
+    const teamState = teamReducer(
+      {
+        teams: state.teams,
+      },
+      action as TeamAction
+    );
+    newState = { ...newState, ...teamState };
+  }
+
+  // Apply functional allocation reducer
+  if (functionalAllocationActions.includes(action.type)) {
+    const functionalAllocationState = functionalAllocationReducer(
+      {
+        allocations: state.functionalAllocations,
+      },
+      action as FunctionalAllocationAction
+    );
+    // Map the allocations to functionalAllocations to avoid property conflict
+    newState = { ...newState, functionalAllocations: functionalAllocationState.allocations };
   }
 
   // Auto-mark unsaved changes for data-modifying actions

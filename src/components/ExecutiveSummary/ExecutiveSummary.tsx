@@ -1,2 +1,3 @@
 // Main ExecutiveSummary export - uses the modular implementation
-export { default } from "./ExecutiveSummaryModular";
+import ExecutiveSummary from "./ExecutiveSummaryModular";
+export default ExecutiveSummary;
