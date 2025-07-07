@@ -1,5 +1,5 @@
 import { SlideData, TableData } from '../components/ExportModal';
-import html2canvas from 'html2canvas';
+import * as htmlToImage from 'html-to-image';
 
 export const generateAlerts = (
   entries: any[],
@@ -405,166 +405,108 @@ interface SectionState {
 let savedSectionStates: SectionState[] = [];
 
 export const expandAllSections = (): void => {
-  console.log('Starting DOM-based expandAllSections...');
+  console.log('Starting enhanced section expansion...');
   
-  // Clear any previous saved states
   savedSectionStates = [];
-  let expandedCount = 0;
-
-  // First, make all tab panels visible for extraction
+  
+  // 1. Make all tab panels visible
   const allTabPanels = document.querySelectorAll('.tab-panel[role="tabpanel"]');
   allTabPanels.forEach(panel => {
     const panelElement = panel as HTMLElement;
-    // Remove any display:none or visibility:hidden
+    
+    // Save original state
+    savedSectionStates.push({
+      element: panelElement,
+      originalDisplay: panelElement.style.display,
+      originalHeight: panelElement.style.height,
+      originalOverflow: panelElement.style.overflow,
+      wasCollapsed: panelElement.style.display === 'none'
+    });
+    
+    // Force visibility
     panelElement.style.display = 'block';
     panelElement.style.visibility = 'visible';
     panelElement.style.opacity = '1';
-    
-    // Remove hidden class if it exists
     panelElement.classList.remove('hidden');
     
-    // Force a specific height if needed
     if (panelElement.offsetHeight === 0) {
       panelElement.style.minHeight = '500px';
     }
   });
 
-  // Click all section headers with expand icons
-  const sectionHeaders = document.querySelectorAll('.section-header');
-  
-  sectionHeaders.forEach(header => {
-    const headerElement = header as HTMLElement;
-    const expandIcon = headerElement.querySelector('.expand-icon');
-    
-    if (expandIcon && expandIcon.textContent === '+') {
-      console.log('Clicking collapsed section:', headerElement.querySelector('.section-title')?.textContent);
-      
-      // Save state before expanding
-      savedSectionStates.push({
-        element: headerElement,
-        originalDisplay: '',
-        originalHeight: '',
-        originalOverflow: '',
-        wasCollapsed: true
-      });
-      
-      // Simulate click
-      headerElement.click();
-      expandedCount++;
-    }
-  });
-
-  // Also handle specific collapsible headers (for tables)
-  const collapsibleHeaders = document.querySelectorAll('.collapsible-header');
-  collapsibleHeaders.forEach(header => {
-    const headerElement = header as HTMLElement;
-    const headerText = headerElement.textContent || '';
-    
-    if (headerText.includes('+')) {
-      console.log('Clicking collapsed table:', headerText);
-      
-      savedSectionStates.push({
-        element: headerElement,
-        originalDisplay: '',
-        originalHeight: '',
-        originalOverflow: '',
-        wasCollapsed: true
-      });
-      
-      headerElement.click();
-      expandedCount++;
-    }
-  });
-
-  // Find all collapsible/collapsed elements
-  const collapsibleSelectors = [
-    '.collapsed',
-    '.collapsible-content',
-    '[data-collapsed="true"]',
-    '.accordion-content',
-    '.expandable-section',
-    '.toggle-content',
-    '.section-content.hidden',
-    '.trend-table-collapsed',
-    '.table-container.collapsed'
+  // 2. Click expand buttons more reliably
+  const expandableElements = [
+    '.section-header', 
+    '.collapsible-header',
+    '.toggle-button',
+    '[data-toggle]',
+    '.expand-button'
   ];
-
-  for (let i = 0; i < collapsibleSelectors.length; i++) {
-    const selector = collapsibleSelectors[i];
-    const elements = document.querySelectorAll(selector);
-    for (let j = 0; j < elements.length; j++) {
-      const el = elements[j];
-      const element = el as HTMLElement;
-      const computedStyle = window.getComputedStyle(element);
-      
-      // Save current state
-      const state: SectionState = {
-        element: element,
-        originalDisplay: computedStyle.display,
-        originalHeight: computedStyle.height,
-        originalOverflow: computedStyle.overflow,
-        wasCollapsed: element.classList.contains('collapsed') || 
-                     computedStyle.display === 'none' ||
-                     element.hasAttribute('data-collapsed')
-      };
-      
-      savedSectionStates.push(state);
-      
-      // Expand the section
-      if (state.wasCollapsed) {
-        element.classList.remove('collapsed');
-        element.removeAttribute('data-collapsed');
-        element.style.display = 'block';
-        element.style.height = 'auto';
-        element.style.overflow = 'visible';
-        
-        // Mark as expanded for restoration
-        element.setAttribute('data-export-expanded', 'true');
-      }
-    }
-  }
-
-  // Also expand any toggle buttons or collapse controls
-  const toggleButtons = document.querySelectorAll(
-    '.toggle-button, .collapse-button, .expand-button, [data-toggle]'
-  );
   
-  for (let k = 0; k < toggleButtons.length; k++) {
-    const button = toggleButtons[k];
-    const btn = button as HTMLElement;
-    // Trigger click only if it's currently showing "expand" state
-    if (btn.textContent?.includes('▶') || 
-        btn.textContent?.includes('Show') ||
-        btn.textContent?.includes('Expand') ||
-        btn.classList.contains('collapsed')) {
+  expandableElements.forEach(selector => {
+    const elements = document.querySelectorAll(selector);
+    elements.forEach(element => {
+      const el = element as HTMLElement;
       
-      // Simulate click to expand
-      const clickEvent = new MouseEvent('click', {
-        bubbles: true,
-        cancelable: true,
-        view: window
-      });
-      btn.dispatchEvent(clickEvent);
-    }
-  }
+      // Check if it's in collapsed state
+      const expandIcon = el.querySelector('.expand-icon');
+      const isCollapsed = expandIcon?.textContent === '+' || 
+                         el.textContent?.includes('+') ||
+                         el.classList.contains('collapsed');
+      
+      if (isCollapsed) {
+        // Save state
+        savedSectionStates.push({
+          element: el,
+          originalDisplay: '',
+          originalHeight: '',
+          originalOverflow: '',
+          wasCollapsed: true
+        });
+        
+        // Trigger expansion
+        const clickEvent = new MouseEvent('click', {
+          bubbles: true,
+          cancelable: true,
+          view: window
+        });
+        el.dispatchEvent(clickEvent);
+      }
+    });
+  });
 
-  console.log(`Expanded ${savedSectionStates.length} sections for export`);
+  // 3. Force expand any remaining collapsed elements
+  const stillCollapsed = document.querySelectorAll('.collapsed, [data-collapsed="true"]');
+  stillCollapsed.forEach(element => {
+    const el = element as HTMLElement;
+    
+    savedSectionStates.push({
+      element: el,
+      originalDisplay: el.style.display,
+      originalHeight: el.style.height,
+      originalOverflow: el.style.overflow,
+      wasCollapsed: true
+    });
+    
+    el.classList.remove('collapsed');
+    el.removeAttribute('data-collapsed');
+    el.style.display = 'block';
+    el.style.height = 'auto';
+    el.style.overflow = 'visible';
+    el.setAttribute('data-export-expanded', 'true');
+  });
+
+  console.log(`Enhanced expansion: processed ${savedSectionStates.length} elements`);
 };
 
 export const restoreSectionStates = (): void => {
-  // First restore tab panel visibility
-  const exportVisiblePanels = document.querySelectorAll('[data-export-visible="true"]');
-  exportVisiblePanels.forEach(panel => {
-    const panelElement = panel as HTMLElement;
-    panelElement.style.display = '';
-    panelElement.removeAttribute('data-export-visible');
-  });
-
-  // Restore all saved section states
+  console.log('Restoring section states...');
+  
   savedSectionStates.forEach(state => {
     if (state.wasCollapsed) {
-      if (state.originalDisplay === 'none') {
-        state.element.style.display = 'none';
+      // Restore original state
+      if (state.originalDisplay) {
+        state.element.style.display = state.originalDisplay;
       } else {
         state.element.classList.add('collapsed');
       }
@@ -573,17 +515,14 @@ export const restoreSectionStates = (): void => {
       state.element.style.overflow = state.originalOverflow;
       state.element.removeAttribute('data-export-expanded');
       
-      // Restore data attributes
       if (state.element.hasAttribute('data-export-expanded')) {
         state.element.setAttribute('data-collapsed', 'true');
       }
     }
   });
 
-  // Clear saved states
   savedSectionStates = [];
-  
-  console.log('Restored original section states');
+  console.log('Section states restored');
 };
 
 // Helper function to ensure specific Executive Summary sections are expanded
@@ -792,94 +731,61 @@ export const preserveFinancialFormatting = (text: string): string => {
 };
 
 // Capture KPI cards as images to preserve styling
+// Simple KPI card capture with explicit sizing for export
 export const captureKPICards = async (element: HTMLElement): Promise<{ type: 'kpi-cards', images: string[], layout: string }[]> => {
   const kpiSections: { type: 'kpi-cards', images: string[], layout: string }[] = [];
-  
-  // Keep track of already processed elements to avoid duplicates
   const processedElements = new Set<HTMLElement>();
   
-  // Find only the innermost KPI containers (.kpi-cards) to avoid nested captures
-  // Exclude vendor-specific KPI grids which are handled separately
   const kpiSectionElements = element.querySelectorAll('.kpi-cards:not(.vendor-kpi-grid)');
   
   for (let i = 0; i < kpiSectionElements.length; i++) {
     const section = kpiSectionElements[i];
     const sectionElement = section as HTMLElement;
     
-    // Skip if not visible or already processed
     if (sectionElement.offsetHeight === 0) continue;
     if (processedElements.has(sectionElement)) continue;
     
-    // Check if this element is already captured as part of a parent
-    let isNested = false;
-    processedElements.forEach(processed => {
-      if (processed.contains(sectionElement) || sectionElement.contains(processed)) {
-        isNested = true;
-      }
-    });
-    if (isNested) continue;
-    
     processedElements.add(sectionElement);
     
+    // --- Begin: Explicit sizing for export ---
+    const originalWidth = sectionElement.style.width;
+    const originalHeight = sectionElement.style.height;
+    sectionElement.style.width = '800px'; // or set to your preferred fixed width
+    sectionElement.style.height = 'auto';
+    sectionElement.offsetHeight; // force reflow
+    // --- End: Explicit sizing for export ---
+    
     try {
-      // Ensure all styles are computed before capture
-      sectionElement.style.position = 'relative';
-      
-      // Capture the entire KPI section as an image
-      const canvas = await html2canvas(sectionElement, {
-        backgroundColor: '#ffffff',
-        scale: 2, // High quality
-        logging: false,
-        useCORS: true,
-        allowTaint: true,
-        // This is crucial for preserving CSS
-        onclone: (clonedDoc, originalElement) => {
-          const clonedElement = clonedDoc.querySelector(`[class="${originalElement.className}"]`);
-          if (clonedElement) {
-            // Copy computed styles
-            const computedStyle = window.getComputedStyle(originalElement);
-            (clonedElement as HTMLElement).style.cssText = computedStyle.cssText;
-            
-            // Also copy styles for all child elements
-            const originalChildren = originalElement.querySelectorAll('*');
-            const clonedChildren = clonedElement.querySelectorAll('*');
-            
-            originalChildren.forEach((child, index) => {
-              if (clonedChildren[index]) {
-                const childStyle = window.getComputedStyle(child);
-                (clonedChildren[index] as HTMLElement).style.cssText = childStyle.cssText;
-              }
-            });
-          }
-        }
+      console.log('Capturing KPI section with explicit sizing...');
+      const imageData = await htmlToImage.toPng(sectionElement, {
+        quality: 0.95,
+        pixelRatio: 2,
+        backgroundColor: '#ffffff'
       });
-      
-      const imageData = canvas.toDataURL('image/png', 0.95);
-      
-      // Determine layout based on number of cards
       const cards = sectionElement.querySelectorAll('.kpi-card');
       const layout = cards.length <= 2 ? 'half' : cards.length <= 3 ? 'third' : 'quarter';
-      
       kpiSections.push({
         type: 'kpi-cards',
         images: [imageData],
         layout: layout
       });
-      
     } catch (error) {
       console.error('Failed to capture KPI section:', error);
+    } finally {
+      // Restore original styles
+      sectionElement.style.width = originalWidth;
+      sectionElement.style.height = originalHeight;
     }
   }
   
   return kpiSections;
 };
 
-// Capture vendor KPI grids and other styled sections
+// Simple styled sections capture
 export const captureStyledSections = async (element: HTMLElement): Promise<{ type: string, image: string }[]> => {
   const styledSections: { type: string, image: string }[] = [];
   const processedElements = new Set<HTMLElement>();
   
-  // List of styled sections to capture - be more specific to avoid duplicates
   const styledSelectors = [
     { selector: '.vendor-kpi-grid:not(.kpi-cards)', type: 'vendor-grid' },
     { selector: '.hiring-analysis-container', type: 'hiring-analysis' },
@@ -895,21 +801,18 @@ export const captureStyledSections = async (element: HTMLElement): Promise<{ typ
       const sectionElement = section as HTMLElement;
       
       if (sectionElement.offsetHeight === 0) continue;
-      
-      // Skip if already processed
       if (processedElements.has(sectionElement)) continue;
       processedElements.add(sectionElement);
       
       try {
-        const canvas = await html2canvas(sectionElement, {
-          backgroundColor: '#ffffff',
-          scale: 2,
-          logging: false,
-          useCORS: true,
-          allowTaint: true
+        console.log(`Capturing ${type} with simple method...`);
+        
+        const imageData = await htmlToImage.toPng(sectionElement, {
+          quality: 0.95,
+          pixelRatio: 2,
+          backgroundColor: '#ffffff'
         });
         
-        const imageData = canvas.toDataURL('image/png', 0.95);
         styledSections.push({ type, image: imageData });
         
       } catch (error) {
@@ -921,12 +824,13 @@ export const captureStyledSections = async (element: HTMLElement): Promise<{ typ
   return styledSections;
 };
 
-// Helper to prepare elements for capture
+// Simplified element preparation for html-to-image compatibility
+// Simplified element preparation (minimal changes needed)
 export const prepareElementForCapture = async (element: HTMLElement): Promise<void> => {
   // Force layout recalculation
   element.offsetHeight;
   
-  // Ensure all images are loaded
+  // Wait for images to load
   const images = element.querySelectorAll('img');
   const imagePromises = Array.from(images).map(img => {
     const imgElement = img as HTMLImageElement;
@@ -939,39 +843,46 @@ export const prepareElementForCapture = async (element: HTMLElement): Promise<vo
   
   await Promise.all(imagePromises);
   
-  // Ensure all fonts are loaded
+  // Wait for fonts
   if ('fonts' in document) {
     await document.fonts.ready;
   }
   
-  // Small delay for any CSS transitions
+  // Small delay for stability
   await new Promise(resolve => setTimeout(resolve, 100));
 };
 
+// Keep the existing chart preparation (but simpler)
+export const prepareChartsForCapture = (container: HTMLElement): void => {
+  const charts = container.querySelectorAll('.recharts-wrapper, .recharts-responsive-container');
+  
+  charts.forEach((chart, index) => {
+    const chartElement = chart as HTMLElement;
+    chartElement.dataset.chartId = `chart-${index}`;
+    chartElement.style.visibility = 'visible';
+    chartElement.style.opacity = '1';
+    chartElement.offsetHeight; // Trigger reflow
+  });
+};
+
 // Chart detection and conversion functionality
+// Simple chart detection and conversion
 export const detectAndConvertCharts = async (element: HTMLElement): Promise<string[]> => {
   const chartImages: string[] = [];
   
-  // Wait for any React re-renders
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  // Force a resize event to trigger chart rerender
-  window.dispatchEvent(new Event('resize'));
-  
-  // Wait a bit more for charts to re-render after resize
+  // Simple wait for charts to render
   await new Promise(resolve => setTimeout(resolve, 500));
   
-  // Enhanced chart selectors for better detection
   const chartSelectors = [
-    'svg.recharts-surface', // Direct SVG selection
+    'svg.recharts-surface',
     '.recharts-wrapper',
     '.recharts-responsive-container',
-    '[class*="trend-chart"]', // Any trend chart sections
-    '.chart-container canvas', // For Chart.js
-    '.spending-trend-chart', // Budget visuals specific
-    '.monthly-trend-chart', // Monthly trend charts
-    '.spending-chart-container', // Spending charts
-    '.variance-chart' // Variance charts
+    '[class*="trend-chart"]',
+    '.chart-container canvas',
+    '.spending-trend-chart',
+    '.monthly-trend-chart',
+    '.spending-chart-container',
+    '.variance-chart'
   ];
   
   for (const selector of chartSelectors) {
@@ -981,48 +892,23 @@ export const detectAndConvertCharts = async (element: HTMLElement): Promise<stri
       const chart = charts[i];
       const chartElement = chart as HTMLElement;
       
-      // Ensure chart is visible
       if (chartElement.offsetWidth === 0 || chartElement.offsetHeight === 0) {
         console.warn('Chart has no dimensions:', selector);
         continue;
       }
       
       try {
-        // Find the SVG element within the chart container
-        const svg = chartElement.querySelector('svg.recharts-surface');
-        if (svg) {
-          // Clone the SVG to ensure we capture it properly
-          const svgClone = svg.cloneNode(true) as SVGElement;
-          
-          // Create a temporary container
-          const tempContainer = document.createElement('div');
-          tempContainer.style.position = 'absolute';
-          tempContainer.style.left = '-9999px';
-          tempContainer.style.width = `${svg.clientWidth}px`;
-          tempContainer.style.height = `${svg.clientHeight}px`;
-          tempContainer.appendChild(svgClone);
-          document.body.appendChild(tempContainer);
-          
-          // Capture the cloned SVG
-          const canvas = await html2canvas(tempContainer, {
-            backgroundColor: '#ffffff',
-            scale: 2,
-            logging: false
-          });
-          
-          // Clean up
-          document.body.removeChild(tempContainer);
-          
-          const imageData = canvas.toDataURL('image/png');
-          if (imageData && imageData.length > 1000) {
-            chartImages.push(imageData);
-          }
-        } else {
-          // Fallback to capturing the container
-          const imageData = await convertChartToImage(chartElement);
-          if (imageData) {
-            chartImages.push(imageData);
-          }
+        console.log(`Capturing chart: ${selector}`);
+        
+        // Simple capture - let html-to-image handle the complexity
+        const imageData = await htmlToImage.toPng(chartElement, {
+          quality: 0.95,
+          pixelRatio: 2,
+          backgroundColor: '#ffffff'
+        });
+        
+        if (imageData && imageData.length > 1000) {
+          chartImages.push(imageData);
         }
       } catch (error) {
         console.error('Failed to convert chart:', error);
@@ -1033,54 +919,31 @@ export const detectAndConvertCharts = async (element: HTMLElement): Promise<stri
   return chartImages;
 };
 
+// Simple, reliable chart capture - no more cutoff issues
 export const convertChartToImage = async (
   chartElement: HTMLElement,
   scale: number = 2
 ): Promise<string | null> => {
   try {
-    // Ensure the chart is visible and rendered
+    console.log('Capturing chart with simple method...');
+    
+    // Ensure element is visible and has dimensions
     if (!chartElement || chartElement.offsetWidth === 0 || chartElement.offsetHeight === 0) {
       console.warn('Chart element is not visible or has no dimensions');
       return null;
     }
 
-    // Configure html2canvas for high-quality chart capture
-    const canvas = await html2canvas(chartElement, {
-      scale: scale, // High resolution
+    // Simple capture with html-to-image (no complex configuration needed)
+    const dataUrl = await htmlToImage.toPng(chartElement, {
+      quality: 0.95,
+      pixelRatio: scale,
       backgroundColor: '#ffffff',
-      useCORS: true,
-      allowTaint: true,
-      logging: false,
+      // Simple dimensions - use actual element size
       width: chartElement.offsetWidth,
-      height: chartElement.offsetHeight,
-      scrollX: 0,
-      scrollY: 0,
-      windowWidth: window.innerWidth,
-      windowHeight: window.innerHeight,
-      // Optimize for charts
-      onclone: (clonedDoc) => {
-        // Ensure styles are preserved in the clone
-        const clonedElement = clonedDoc.querySelector(`[data-chart-id="${chartElement.dataset.chartId || ''}"]`) ||
-                             clonedDoc.querySelector(getElementSelector(chartElement));
-        
-        if (clonedElement) {
-          // Force visibility and styling
-          (clonedElement as HTMLElement).style.visibility = 'visible';
-          (clonedElement as HTMLElement).style.opacity = '1';
-        }
-      }
+      height: chartElement.offsetHeight
     });
 
-    // Convert canvas to base64 image
-    const imageData = canvas.toDataURL('image/png', 0.9);
-    
-    // Validate the image data
-    if (imageData && imageData.length > 1000) { // Reasonable minimum size
-      return imageData;
-    } else {
-      console.warn('Generated chart image appears to be empty or too small');
-      return null;
-    }
+    return dataUrl;
     
   } catch (error) {
     console.error('Error converting chart to image:', error);
@@ -1104,30 +967,56 @@ const getElementSelector = (element: HTMLElement): string => {
   return element.tagName.toLowerCase();
 };
 
-// Enhanced chart detection with pre-processing
-export const prepareChartsForCapture = (container: HTMLElement): void => {
-  // Find all chart elements
-  const charts = container.querySelectorAll('.recharts-wrapper, .recharts-responsive-container');
+
+// Enhanced overall budget content extraction
+async function extractOverallBudgetContent(tabElement: HTMLElement): Promise<{ content: string[], styledSections: { type: string, image: string }[] }> {
+  const content: string[] = [];
+  const styledSections: { type: string, image: string }[] = [];
   
-  charts.forEach((chart, index) => {
-    const chartElement = chart as HTMLElement;
+  const kpiSectionElements = tabElement.querySelectorAll('.kpi-section');
+  
+  for (let i = 0; i < kpiSectionElements.length; i++) {
+    const section = kpiSectionElements[i] as HTMLElement;
     
-    // Add unique identifier for cloning
-    chartElement.dataset.chartId = `chart-${index}`;
+    // Get the section header
+    const sectionHeader = section.querySelector('.section-header h4, .section-title');
+    let sectionTitle = '';
+    if (sectionHeader) {
+      const title = sectionHeader.textContent?.trim();
+      if (title) {
+        const cleanTitle = title.replace(/[−+]\s*/g, '').replace(/\s+/g, ' ').trim();
+        if (cleanTitle && cleanTitle.length > 0 && !cleanTitle.includes('Expand') && !cleanTitle.includes('Collapse')) {
+          sectionTitle = cleanTitle;
+          content.push(`**${cleanTitle}**`);
+        }
+      }
+    }
     
-    // Ensure chart is fully rendered
-    chartElement.style.visibility = 'visible';
-    chartElement.style.opacity = '1';
-    
-    // Force a repaint to ensure SVG is fully rendered
-    chartElement.offsetHeight; // Trigger reflow
-    
-    // Wait for any animations to complete
-    setTimeout(() => {
-      // Additional processing if needed
-    }, 100);
-  });
-};
+    // Capture just this section's KPI cards as an image
+    const sectionKpiCards = section.querySelector('.kpi-cards');
+    if (sectionKpiCards && (sectionKpiCards as HTMLElement).offsetHeight > 0) {
+      try {
+        // Enhanced preparation
+        await prepareElementForCapture(sectionKpiCards as HTMLElement);
+        
+        const imageData = await htmlToImage.toPng(sectionKpiCards as HTMLElement, {
+          quality: 0.95,
+          pixelRatio: 2,
+          backgroundColor: '#ffffff'
+        });
+        // Add as styled section to maintain order with headers
+        styledSections.push({
+          type: `overall-budget-section-${sectionTitle.toLowerCase().replace(/\s+/g, '-')}`,
+          image: imageData
+        });
+      } catch (error) {
+        console.error(`Failed to capture KPI section for ${sectionTitle}:`, error);
+      }
+    }
+  }
+  
+  return { content, styledSections };
+}
 
 // Update the extractTabContent function to include chart conversion
 export const extractTabContentWithCharts = async (tabId: string, tabLabel: string): Promise<SlideData | null> => {
@@ -1142,113 +1031,68 @@ export const extractTabContentWithCharts = async (tabId: string, tabLabel: strin
 
   const tabElement = tabPanel as HTMLElement;
   
-  // Prepare element for capture
-  await prepareElementForCapture(tabElement);
-  
-  // Prepare charts for capture
-  prepareChartsForCapture(tabElement);
-  
-  // Prepare element for capture
-  await prepareElementForCapture(tabElement);
-  
-  // For Overall Budget, we need special handling to maintain section structure
-  let kpiCardImages: string[] = [];
-  let kpiLayout: 'full' | 'half' | 'third' | 'quarter' = 'third';
-  let content: string[] = [];
-  let styledSections: { type: string, image: string }[] = [];
-  
-  if (tabId === 'overall-budget') {
-    // For Overall Budget, we create structured content that interleaves headers with KPI images
-    const kpiSectionElements = tabElement.querySelectorAll('.kpi-section');
+  try {
+    // Enhanced preparation with proper sequencing
+    console.log(`Preparing ${tabId} for content extraction...`);
     
-    // Clear content array to ensure we only have our structured content
-    content = [];
+    // 1. Prepare element for capture
+    await prepareElementForCapture(tabElement);
     
-    // We'll use styled sections to maintain the header-image relationship
-    for (let i = 0; i < kpiSectionElements.length; i++) {
-      const section = kpiSectionElements[i] as HTMLElement;
+    // 2. Prepare charts for capture
+    prepareChartsForCapture(tabElement);
+    
+    // 3. Wait for everything to settle
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    // 4. Extract content based on tab type
+    let kpiCardImages: string[] = [];
+    let kpiLayout: 'full' | 'half' | 'third' | 'quarter' = 'third';
+    let content: string[] = [];
+    let styledSections: { type: string, image: string }[] = [];
+    
+    if (tabId === 'overall-budget') {
+      // Special handling for overall budget
+      ({ content, styledSections } = await extractOverallBudgetContent(tabElement));
+      kpiCardImages = [];
+      kpiLayout = 'full';
+    } else {
+      // Regular flow for other tabs
+      const kpiSections = await captureKPICards(tabElement);
+      kpiCardImages = kpiSections.flatMap(section => section.images);
+      kpiLayout = (kpiSections[0]?.layout || 'third') as 'full' | 'half' | 'third' | 'quarter';
       
-      // Get the section header
-      const sectionHeader = section.querySelector('.section-header h4, .section-title');
-      let sectionTitle = '';
-      if (sectionHeader) {
-        const title = sectionHeader.textContent?.trim();
-        if (title) {
-          const cleanTitle = title.replace(/[−+]\s*/g, '').replace(/\s+/g, ' ').trim();
-          if (cleanTitle && cleanTitle.length > 0 && !cleanTitle.includes('Expand') && !cleanTitle.includes('Collapse')) {
-            sectionTitle = cleanTitle;
-            content.push(`**${cleanTitle}**`);
-          }
-        }
-      }
+      styledSections = await captureStyledSections(tabElement);
       
-      // Capture just this section's KPI cards as an image
-      const sectionKpiCards = section.querySelector('.kpi-cards');
-      if (sectionKpiCards && (sectionKpiCards as HTMLElement).offsetHeight > 0) {
-        try {
-          // Ensure the element is visible
-          await prepareElementForCapture(sectionKpiCards as HTMLElement);
-          
-          const canvas = await html2canvas(sectionKpiCards as HTMLElement, {
-            backgroundColor: '#ffffff',
-            scale: 2,
-            logging: false,
-            useCORS: true,
-            allowTaint: true
-          });
-          
-          const imageData = canvas.toDataURL('image/png', 0.95);
-          // Add as styled section to maintain order with headers
-          styledSections.push({
-            type: `overall-budget-section-${sectionTitle.toLowerCase().replace(/\s+/g, '-')}`,
-            image: imageData
-          });
-        } catch (error) {
-          console.error(`Failed to capture KPI section for ${sectionTitle}:`, error);
-        }
-      } else {
-        console.warn(`No KPI cards found for section: ${sectionTitle}`);
-      }
+      const skipKPIText = kpiCardImages.length > 0;
+      content = extractTextContentSelectively(tabElement, tabId, skipKPIText);
     }
     
-    // Don't use regular KPI cards for Overall Budget
-    kpiCardImages = [];
-    kpiLayout = 'full';
-  } else {
-    // Regular flow for other tabs
-    const kpiSections = await captureKPICards(tabElement);
-    kpiCardImages = kpiSections.flatMap(section => section.images);
-    kpiLayout = (kpiSections[0]?.layout || 'third') as 'full' | 'half' | 'third' | 'quarter';
+    // 5. Extract tables and charts
+    const tables = extractTables(tabElement);
+    const chartImages = await detectAndConvertCharts(tabElement);
     
-    // Capture other styled sections
-    styledSections = await captureStyledSections(tabElement);
+    // 6. Content extraction complete
     
-    // Extract text content, but skip if we have KPI images
-    const skipKPIText = kpiCardImages.length > 0;
-    content = extractTextContentSelectively(tabElement, tabId, skipKPIText);
+    return {
+      id: tabId,
+      title: tabLabel,
+      content: content,
+      charts: chartImages,
+      kpiCards: kpiCardImages,
+      kpiLayout: kpiLayout,
+      styledSections: styledSections,
+      tables: tables,
+      metadata: {
+        tabId: tabId,
+        tabLabel: tabLabel,
+        extractedAt: new Date().toISOString()
+      }
+    };
+    
+  } catch (error) {
+    console.error(`Failed to extract content for ${tabId}:`, error);
+    return null;
   }
-  
-  // Extract tables (but not if they're already captured as styled sections)
-  const tables = extractTables(tabElement);
-  
-  // Convert charts to images
-  const chartImages = await detectAndConvertCharts(tabElement);
-  
-  return {
-    id: tabId,
-    title: tabLabel,
-    content: content,
-    charts: chartImages,
-    kpiCards: kpiCardImages,
-    kpiLayout: kpiLayout,
-    styledSections: styledSections,
-    tables: tables,
-    metadata: {
-      tabId: tabId,
-      tabLabel: tabLabel,
-      extractedAt: new Date().toISOString()
-    }
-  };
 };
 
 // Enhanced function to extract all tabs with charts
@@ -1405,20 +1249,16 @@ export const convertChartToImageWithLayout = async (
     // Wait for chart to re-render
     await new Promise(resolve => setTimeout(resolve, 300));
     
-    const canvas = await html2canvas(chartElement, {
-      scale: config.chartScale,
+    const imageData = await htmlToImage.toPng(chartElement, {
+      quality: 0.9,
+      pixelRatio: config.chartScale,
       backgroundColor: '#ffffff',
-      useCORS: true,
-      allowTaint: true,
-      logging: false,
       width: dimensions.width,
       height: dimensions.height
     });
     
     // Restore original styling
     Object.assign(chartElement.style, originalStyle);
-    
-    const imageData = canvas.toDataURL('image/png', 0.9);
     return imageData && imageData.length > 1000 ? imageData : null;
     
   } catch (error) {

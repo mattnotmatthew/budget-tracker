@@ -1342,11 +1342,11 @@ const ExecutiveSummary = () => {
       </div>
 
       {/* Monthly Spending KPIs */}
-      <div className="monthly-spending-container">
+      <div className="section-container">
         <h4 className="monthly-spending-header">
           Monthly Spending Analysis
         </h4>
-        <div className="monthly-spending-grid">
+        <div className="kpi-row">
           {(() => {
             // Calculate Average Monthly Spend YTD (Regular and Adjusted)
             const finalMonths = trend.filter((data) => data.isFinalMonth);
@@ -1415,6 +1415,7 @@ const ExecutiveSummary = () => {
 
             return (
               <>
+              <div className="kpi-cards">
                 <div className="kpi-card">
                   <span>Avg Monthly Spend YTD</span>
                   <strong>{formatCurrencyFull(avgMonthlyAdjustedYTD)}</strong>
@@ -1436,6 +1437,7 @@ const ExecutiveSummary = () => {
                     Q{lastCompletedQuarter} average ({quarterData.length}{" "}
                     months)
                   </div>
+                </div>
                 </div>
               </>
             );
