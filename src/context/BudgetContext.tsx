@@ -152,10 +152,6 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
     try {
       const fileManager = await import("../utils/fileManager");
       
-      // Debug logging
-      console.log("SaveToFile - Functional Allocations:", state.functionalAllocations);
-      console.log("SaveToFile - Full state:", state);
-      
       // Use smartAutoSave with enhanced handle validation
       const result = await fileManager.smartAutoSave(
         {

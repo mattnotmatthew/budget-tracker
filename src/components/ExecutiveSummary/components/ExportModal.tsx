@@ -491,9 +491,9 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, onExport, sl
                     fontSize: '0.875rem',
                     fontWeight: '500'
                   }}
-                  title="Exports as HTML file that can be imported into PowerPoint"
+                  title="Exports as native PowerPoint (.pptx) file"
                 >
-                  📊 PowerPoint (HTML)
+                  📊 PowerPoint
                 </button>
               </div>
               <div style={{
@@ -502,7 +502,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, onExport, sl
                 marginTop: '0.5rem',
                 fontStyle: 'italic'
               }}>
-                💡 PDF exports directly. PowerPoint exports as HTML that can be imported into PowerPoint (Insert → Object → Create from File).
+                💡 PDF exports directly. PowerPoint exports as native .pptx files that open directly in PowerPoint.
               </div>
             </div>
             

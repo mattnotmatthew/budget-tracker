@@ -372,10 +372,6 @@ export const saveToFileHandle = async (
     );
     const categories = Array.from(categorySet);
     
-    // Debug logging
-    console.log("SaveToFileHandle - functionalAllocations:", functionalAllocations);
-    console.log("SaveToFileHandle - yearFunctionalAllocations:", yearFunctionalAllocations);
-    
     const dataToSave: BudgetDataFile = {
       version: "1.0.0",
       exportDate: new Date().toISOString(),
@@ -475,7 +471,6 @@ export const smartAutoSave = async (
     hasCurrentFile: !!currentFile,
     hasHandle: !!currentFile?.handle,
     supportsFileSystemAccess: supportsFileSystemAccess(),
-    functionalAllocations: state.functionalAllocations,
   });
 
   // Check if we have a file handle and browser supports File System Access API
@@ -599,11 +594,16 @@ export const smartAutoSave = async (
       }
       
       // Prepare the data to save
-      const { entries, allocations, selectedYear, vendorData, vendorTrackingData, teams } = state;
+      const { entries, allocations, selectedYear, vendorData, vendorTrackingData, teams, functionalAllocations } = state;
       const yearEntries = entries.filter((entry) => entry.year === selectedYear);
       const yearAllocations = allocations?.filter((allocation) => allocation.year === selectedYear) || [];
       const yearVendorData = vendorData?.filter((vendor) => vendor.year === selectedYear) || [];
       const yearVendorTrackingData = vendorTrackingData?.filter((tracking) => tracking.year === selectedYear) || [];
+      
+      // Filter functional allocations for the selected year
+      const yearFunctionalAllocations = functionalAllocations?.filter(
+        (allocation) => allocation.year === selectedYear
+      ) || [];
 
       const dates = yearEntries.map((entry) => entry.createdAt);
       const categorySet = new Set(yearEntries.map((entry) => entry.categoryId));
@@ -620,6 +620,7 @@ export const smartAutoSave = async (
         vendorData: yearVendorData,
         vendorTrackingData: yearVendorTrackingData,
         teams: teams || [],
+        functionalAllocations: yearFunctionalAllocations,
         metadata: {
           totalEntries: yearEntries.length,
           dateRange: {

@@ -1,3 +1,62 @@
+# Claude Code Implementation Guide - CDN PptxGenJS Solution
+
+## Problem Summary
+The current PowerPoint export is broken due to:
+1. HTML export approach that doesn't create real PowerPoint files
+2. Webpack bundling errors with Node.js modules (`node:fs`, `node:https`)
+3. Content cutoff and formatting issues
+
+## Solution Overview
+Replace the broken HTML approach with CDN-based PptxGenJS that creates real .pptx files.
+
+---
+
+## File Changes Required
+
+### Change 1: Update `public/index.html`
+
+**Action**: Add CDN script tag to the `<head>` section
+
+**Location**: `public/index.html`
+
+**Find this section**:
+```html
+<head>
+  <meta charset="utf-8" />
+  <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+  <!-- other meta tags -->
+</head>
+```
+
+**Add this line before the closing `</head>` tag**:
+```html
+<!-- Add PptxGenJS CDN for PowerPoint export -->
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+```
+
+**Result should look like**:
+```html
+<head>
+  <meta charset="utf-8" />
+  <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#000000" />
+  
+  <!-- Add PptxGenJS CDN for PowerPoint export -->
+  <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+  
+  <title>Budget Tracker</title>
+</head>
+```
+
+### Change 2: Replace `src/utils/pptxGenerator.ts`
+
+**Action**: Replace entire file content
+
+**Location**: `src/utils/pptxGenerator.ts`
+
+**Replace with**:
+```typescript
 // CDN-based PowerPoint generation using PptxGenJS
 import { SlideData, ExportResult, TableData } from '../components/ExportModal';
 import { getLayoutConfig } from './exportUtils';
@@ -480,7 +539,7 @@ async function addContentSlide(pptx: any, slide: PptxSlide, layout: SlideLayout)
   
   // Add content text
   if (slide.content.length > 0 && currentY < layout.height - layout.margin - 1) {
-    slide.content.forEach((text) => {
+    slide.content.forEach((text, index) => {
       if (currentY >= layout.height - layout.margin - 0.5) return;
       
       if (text.startsWith('**') && text.endsWith('**')) {
@@ -603,3 +662,83 @@ async function addContentSlide(pptx: any, slide: PptxSlide, layout: SlideLayout)
     align: 'right'
   });
 }
+```
+
+### Change 3: Clean Up npm Package (Optional)
+
+**Action**: Remove the npm package since we're using CDN
+
+**Command**:
+```bash
+npm uninstall pptxgenjs
+```
+
+---
+
+## Implementation Steps
+
+1. **Add CDN script** to `public/index.html`
+2. **Replace entire content** of `src/utils/pptxGenerator.ts` 
+3. **Remove npm package** (optional)
+4. **Restart development server** (`npm start`)
+5. **Test PowerPoint export**
+
+---
+
+## Testing Checklist
+
+After implementation, verify:
+
+✅ **App loads without errors** (no more `node:fs` webpack errors)
+✅ **Export modal opens** and loads content normally
+✅ **PowerPoint export downloads .pptx file** (not .html file)
+✅ **File opens directly in PowerPoint** (no import needed)
+✅ **Content appears properly** with professional formatting
+✅ **Multiple slides created** for large content (no cutoff)
+✅ **Images display correctly** in slides
+✅ **Tables are properly formatted**
+
+---
+
+## Expected Behavior Changes
+
+### Before (Broken HTML Export):
+- ❌ Downloads .html file
+- ❌ Requires manual import to PowerPoint  
+- ❌ Content gets cut off
+- ❌ Poor formatting and layout
+- ❌ Webpack bundling errors
+
+### After (CDN PptxGenJS):
+- ✅ Downloads .pptx file
+- ✅ Opens directly in PowerPoint
+- ✅ Intelligent content pagination (no cutoff)
+- ✅ Professional slide formatting
+- ✅ No bundling errors
+- ✅ Real PowerPoint elements (not HTML/CSS)
+
+---
+
+## Key Features of New Implementation
+
+1. **Professional Title Slide**: Gradient background with company branding
+2. **Smart Content Splitting**: 
+   - Executive Commentary splits by paragraphs
+   - Overall Budget maintains header-image relationships
+   - Large tables split across multiple slides
+   - Content-heavy slides distribute bullets intelligently
+3. **Native PowerPoint Elements**: Text, images, tables, shapes
+4. **Proper Slide Layouts**: Respects different aspect ratios (16:9, 16:10, 4:3)
+5. **Error Handling**: Graceful fallbacks if images or tables fail
+
+---
+
+## Why This Solution Works
+
+- **CDN Loading**: Bypasses webpack bundling issues entirely
+- **Browser-Optimized**: Uses browser-specific version of PptxGenJS
+- **Real PPTX Files**: Creates actual PowerPoint files using OOXML format
+- **No Import Required**: Files open directly in PowerPoint/Keynote/LibreOffice
+- **Professional Output**: Native PowerPoint formatting and features
+
+This solution completely replaces the broken HTML approach with a proper PowerPoint generation system.
