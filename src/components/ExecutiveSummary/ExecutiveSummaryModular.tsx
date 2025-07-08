@@ -105,6 +105,7 @@ const ExecutiveSummary = () => {
     totalCompCapitalizationCollapsed,
     setTotalCompCapitalizationCollapsed,
   ] = useState(true);
+  const [isTeamCompositionExpanded, setIsTeamCompositionExpanded] = useState(false);
 
   // Resources tab state for collapsible cost centers
   const [costCenterExpanded, setCostCenterExpanded] = useState<Record<string, boolean>>({});
@@ -132,9 +133,9 @@ const ExecutiveSummary = () => {
     { id: "executive-commentary", label: "Executive Commentary" },
     { id: "overall-budget", label: "Overall Budget" },
     { id: "budget-visuals", label: "Budget Visuals" },
-    { id: "resource-allocation", label: "Resource Spend" },
+    { id: "resource-spend", label: "Resource Spend" },
     { id: "vendor-info", label: "Vendor Info" },
-    { id: "resources", label: "Resource Allocation" }
+    { id: "resource-allocation", label: "Resource Allocation" }
   ];
 
   // Load active tab from localStorage
@@ -432,6 +433,82 @@ const ExecutiveSummary = () => {
     setIsExportModalOpen(true);
   };
 
+  // Print current tab handler
+  const handlePrint = () => {
+    // Add print mode class to body
+    document.body.classList.add('print-mode');
+    
+    // Set the current tab for CSS targeting
+    document.body.setAttribute('data-print-tab', activeTab);
+    
+    // Store current section states
+    const currentStates = {
+      isStrategicContextExpanded,
+      isYTDPerformanceExpanded,
+      isForwardLookingExpanded,
+      isRiskVelocityExpanded,
+      isVendorSpendingExpanded,
+      isVendorPortfolioExpanded,
+      trendTableCollapsed,
+      monthlyTrendTableCollapsed,
+      rollingTrendTableCollapsed,
+      totalCompCapitalizationCollapsed,
+      costCenterExpanded
+    };
+    
+    // Expand all sections for the current tab
+    if (activeTab === 'executive-commentary') {
+      setIsStrategicContextExpanded(true);
+      setIsYTDPerformanceExpanded(true);
+      setIsForwardLookingExpanded(true);
+      setIsRiskVelocityExpanded(true);
+    } else if (activeTab === 'overall-budget' || activeTab === 'budget-visuals') {
+      setTrendTableCollapsed(false);
+      setMonthlyTrendTableCollapsed(false);
+      setRollingTrendTableCollapsed(false);
+    } else if (activeTab === 'resource-spend') {
+      setTotalCompCapitalizationCollapsed(false);
+      setCostCenterExpanded(Object.keys(costCenterExpanded).reduce((acc, key) => ({
+        ...acc,
+        [key]: true
+      }), {}));
+    } else if (activeTab === 'vendor-info') {
+      setIsVendorSpendingExpanded(true);
+      setIsVendorPortfolioExpanded(true);
+    }
+    
+    // Add afterprint event listener for cleanup
+    const handleAfterPrint = () => {
+      // Remove print mode class
+      document.body.classList.remove('print-mode');
+      document.body.removeAttribute('data-print-tab');
+      
+      // Restore original states
+      setIsStrategicContextExpanded(currentStates.isStrategicContextExpanded);
+      setIsYTDPerformanceExpanded(currentStates.isYTDPerformanceExpanded);
+      setIsForwardLookingExpanded(currentStates.isForwardLookingExpanded);
+      setIsRiskVelocityExpanded(currentStates.isRiskVelocityExpanded);
+      setIsVendorSpendingExpanded(currentStates.isVendorSpendingExpanded);
+      setIsVendorPortfolioExpanded(currentStates.isVendorPortfolioExpanded);
+      setTrendTableCollapsed(currentStates.trendTableCollapsed);
+      setMonthlyTrendTableCollapsed(currentStates.monthlyTrendTableCollapsed);
+      setRollingTrendTableCollapsed(currentStates.rollingTrendTableCollapsed);
+      setTotalCompCapitalizationCollapsed(currentStates.totalCompCapitalizationCollapsed);
+      setCostCenterExpanded(currentStates.costCenterExpanded);
+      
+      // Remove event listener
+      window.removeEventListener('afterprint', handleAfterPrint);
+    };
+    
+    // Add event listener for after print
+    window.addEventListener('afterprint', handleAfterPrint);
+    
+    // Trigger print after DOM updates
+    setTimeout(() => {
+      window.print();
+    }, 100);
+  };
+
   // Export modal handlers
   const handleCloseExportModal = () => {
     setIsExportModalOpen(false);
@@ -662,6 +739,9 @@ const ExecutiveSummary = () => {
         </div>
 
         <div className="header-buttons">
+          <button onClick={handlePrint} className="btn-primary">
+            🖨️ Print Current Tab
+          </button>
           <button onClick={handleExportPresentation} className="btn-primary">
             📊 Export Presentation
           </button>
@@ -685,7 +765,7 @@ const ExecutiveSummary = () => {
       <div className="tab-content">
         {/* Executive Commentary Tab */}
         {(activeTab === "executive-commentary" || isExportMode) && (
-          <div className="tab-panel" role="tabpanel" aria-labelledby="tab-executive-commentary">
+          <div className="tab-panel" role="tabpanel" aria-labelledby="tab-executive-commentary" data-tab-title="Executive Commentary">
             {/* Executive Commentary Section */}
             <div className="section-container">
               <h2 className="section-heading">Executive Commentary</h2>
@@ -731,7 +811,7 @@ const ExecutiveSummary = () => {
 
         {/* Overall Budget Tab */}
         {(activeTab === "overall-budget" || isExportMode) && (
-          <div className="tab-panel" role="tabpanel" aria-labelledby="tab-overall-budget">
+          <div className="tab-panel" role="tabpanel" aria-labelledby="tab-overall-budget" data-tab-title="Overall Budget">
             {/* Strategic Context Section */}
 
       <div className="kpi-section strategic-context">
@@ -1086,7 +1166,7 @@ const ExecutiveSummary = () => {
 
         {/* Budget Visuals Tab */}
         {(activeTab === "budget-visuals" || isExportMode) && (
-          <div className="tab-panel" role="tabpanel" aria-labelledby="tab-budget-visuals">
+          <div className="tab-panel" role="tabpanel" aria-labelledby="tab-budget-visuals" data-tab-title="Budget Visuals">
             {/* Budget vs Actual Trend Chart - Rolling */}
       <div className="trend-chart-section">
         <h2 className="section-heading">Budget vs Actual Trend, Rolling</h2>
@@ -1450,7 +1530,7 @@ const ExecutiveSummary = () => {
 
         {/* Resource Allocation and Spend Tab */}
         {(activeTab === "resource-allocation" || isExportMode) && (
-          <div className="tab-panel" role="tabpanel" aria-labelledby="tab-resource-allocation">
+          <div className="tab-panel" role="tabpanel" aria-labelledby="tab-resource-allocation" data-tab-title="Resource Allocation">
  
 
             {/* Resource Allocation & Hiring Capacity - Detailed Analysis */}
@@ -1750,8 +1830,8 @@ const ExecutiveSummary = () => {
         </div>
       </div>
 
-      {/* Total Comp & Capitalization Section */}
-      <div className="kpi-section total-comp-capitalization">
+            {/* Total Comp & Capitalization Section */}
+            <div className="kpi-section total-comp-capitalization">
         <div
           className="section-header"
           onClick={() =>
@@ -1784,175 +1864,59 @@ const ExecutiveSummary = () => {
           )}
         </div>
 
-        {!totalCompCapitalizationCollapsed && (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "2rem",
-              margin: "2rem 0",
-            }}
-          >
-            <div
-              style={{
-                backgroundColor: "#ffffff",
-                borderRadius: "12px",
-                padding: "1.5rem",
-                border: "2px solid #e1e8ed",
-                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
-              }}
-            >
-              <h3
-                style={{
-                  color: "#2d3a4a",
-                  marginBottom: "1rem",
-                  fontSize: "1.2rem",
-                }}
-              >
-                Total Compensation
-              </h3>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "0.75rem",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "0.5rem 0",
-                    borderBottom: "1px solid #f0f0f0",
-                  }}
-                >
-                  <span style={{ color: "#6b7a8f", fontWeight: "500" }}>
-                    YTD Actual
-                  </span>
-                  <span style={{ fontWeight: "700", color: "#2d3a4a" }}>
-                    {formatCurrencyFull(
-                      resourceData.totalCompensation.ytdActual
-                    )}
-                  </span>
+        {(!totalCompCapitalizationCollapsed || isExportMode) && (
+          <>
+            <div className="kpi-row">
+              <div className="kpi-cards" style={{ gridTemplateColumns: "1fr 1fr" }}>
+                <div className="kpi-subsection">
+                  <h5 className="kpi-subsection-title">Total Compensation</h5>
+                  <div className="kpi-cards">
+                    <KPICard
+                      title="YTD Actual"
+                      value={resourceData.totalCompensation.ytdActual}
+                      isCurrency={true}
+                      kpiType="neutral"
+                    />
+                    <KPICard
+                      title="Annual Budget"
+                      value={resourceData.totalCompensation.annualBudget}
+                      isCurrency={true}
+                      kpiType="neutral"
+                    />
+                    <KPICard
+                      title="Remaining"
+                      value={resourceData.totalCompensation.remaining}
+                      isCurrency={true}
+                      kpiType="neutral"
+                    />
+                  </div>
                 </div>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "0.5rem 0",
-                    borderBottom: "1px solid #f0f0f0",
-                  }}
-                >
-                  <span style={{ color: "#6b7a8f", fontWeight: "500" }}>
-                    Annual Budget
-                  </span>
-                  <span style={{ fontWeight: "700", color: "#2d3a4a" }}>
-                    {formatCurrencyFull(
-                      resourceData.totalCompensation.annualBudget
-                    )}
-                  </span>
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "0.5rem 0",
-                  }}
-                >
-                  <span style={{ color: "#6b7a8f", fontWeight: "500" }}>
-                    Remaining
-                  </span>
-                  <span style={{ fontWeight: "700", color: "#3498db" }}>
-                    {formatCurrencyFull(
-                      resourceData.totalCompensation.remaining
-                    )}
-                  </span>
+                <div className="kpi-subsection">
+                  <h5 className="kpi-subsection-title">Capitalized Salaries</h5>
+                  <div className="kpi-cards">
+                    <KPICard
+                      title="YTD Actual"
+                      value={Math.abs(resourceData.capitalizedSalaries.ytdActual)}
+                      isCurrency={true}
+                      kpiType="neutral"
+                    />
+                    <KPICard
+                      title="Monthly Avg"
+                      value={Math.abs(resourceData.capitalizedSalaries.monthlyAverage)}
+                      isCurrency={true}
+                      kpiType="neutral"
+                    />
+                    <KPICard
+                      title="Offset Rate"
+                      value={resourceData.capitalizedSalaries.offsetRate}
+                      isPercentage={true}
+                      kpiType="neutral"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
-
-            <div
-              style={{
-                backgroundColor: "#ffffff",
-                borderRadius: "12px",
-                padding: "1.5rem",
-                border: "2px solid #e1e8ed",
-                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
-              }}
-            >
-              <h3
-                style={{
-                  color: "#2d3a4a",
-                  marginBottom: "1rem",
-                  fontSize: "1.2rem",
-                }}
-              >
-                Capitalized Salaries
-              </h3>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "0.75rem",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "0.5rem 0",
-                    borderBottom: "1px solid #f0f0f0",
-                  }}
-                >
-                  <span style={{ color: "#6b7a8f", fontWeight: "500" }}>
-                    YTD Actual
-                  </span>
-                  <span style={{ fontWeight: "700", color: "#2d3a4a" }}>
-                    {formatCurrencyFull(
-                      Math.abs(resourceData.capitalizedSalaries.ytdActual)
-                    )}
-                  </span>
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "0.5rem 0",
-                    borderBottom: "1px solid #f0f0f0",
-                  }}
-                >
-                  <span style={{ color: "#6b7a8f", fontWeight: "500" }}>
-                    Monthly Avg
-                  </span>
-                  <span style={{ fontWeight: "700", color: "#2d3a4a" }}>
-                    {formatCurrencyFull(
-                      Math.abs(resourceData.capitalizedSalaries.monthlyAverage)
-                    )}
-                  </span>
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "0.5rem 0",
-                  }}
-                >
-                  <span style={{ color: "#6b7a8f", fontWeight: "500" }}>
-                    Offset Rate
-                  </span>
-                  <span style={{ fontWeight: "700", color: "#2d3a4a" }}>
-                    {resourceData.capitalizedSalaries.offsetRate.toFixed(1)}%
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
+          </>
         )}
             </div>
           </div>
@@ -1960,7 +1924,7 @@ const ExecutiveSummary = () => {
 
         {/* Vendor Info Tab */}
         {(activeTab === "vendor-info" || isExportMode) && (
-          <div className="tab-panel" role="tabpanel" aria-labelledby="tab-vendor-info">
+          <div className="tab-panel" role="tabpanel" aria-labelledby="tab-vendor-info" data-tab-title="Vendor Info">
             {/* Vendor Tracking Section with Variance Analysis */}
             <div className="section-container">
               <h2 className="section-heading">Vendor Tracking</h2>
@@ -2048,8 +2012,8 @@ const ExecutiveSummary = () => {
         )}
 
         {/* Resources Tab */}
-        {(activeTab === "resources" || isExportMode) && (
-          <div className="tab-panel" role="tabpanel" aria-labelledby="tab-resources">
+        {(activeTab === "resource-spend" || isExportMode) && (
+          <div className="tab-panel" role="tabpanel" aria-labelledby="tab-resource-spend" data-tab-title="Resource Spend">
             
             {/* Empty state check */}
             {state.teams.length === 0 ? (
@@ -2061,40 +2025,65 @@ const ExecutiveSummary = () => {
             ) : (
                 <>
                   {/* Summary Cards Section */}
-                  <div className="section-container">
-                    <h2 className="section-heading">Team Composition Summary</h2>
-                    <div className="kpi-row">
-                      <div className="kpi-cards">
-                        <KPICard
-                          title="Total Teams"
-                          value={teamMetrics.totalTeams}
-                          isCurrency={false}
-                          kpiType="neutral"
-                          className="kpi-card neutral"
-                        />
-                        <KPICard
-                          title="Total Headcount"
-                          value={teamMetrics.totalHeadcount}
-                          isCurrency={false}
-                          kpiType="neutral"
-                          className="kpi-card neutral"
-                        />
-                        <KPICard
-                          title="Total Cost"
-                          value={teamMetrics.totalCost}
-                          isCurrency={true}
-                          kpiType="neutral"
-                          className="kpi-card neutral"
-                        />
-                        <KPICard
-                          title="Average Cost per Head"
-                          value={teamMetrics.averageCostPerHead}
-                          isCurrency={true}
-                          kpiType="neutral"
-                          className="kpi-card neutral"
-                        />
-                      </div>
+                  <div className="kpi-section team-composition-summary">
+                    <div
+                      className="section-header"
+                      onClick={() =>
+                        setIsTeamCompositionExpanded(!isTeamCompositionExpanded)
+                      }
+                    >
+                      <h4 className="section-title">
+                        <span className="expand-icon">
+                          {isTeamCompositionExpanded ? "−" : "+"}
+                        </span>
+                        Team Composition Summary
+                      </h4>
+                      {!isTeamCompositionExpanded && (
+                        <div className="compact-summary">
+                          <span className="compact-metric">
+                            Teams: <strong>{teamMetrics.totalTeams}</strong>
+                          </span>
+                          <span className="compact-metric">
+                            Headcount: <strong>{teamMetrics.totalHeadcount}</strong>
+                          </span>
+                        </div>
+                      )}
                     </div>
+                    
+                    {(isTeamCompositionExpanded || isExportMode) && (
+                      <div className="kpi-row">
+                        <div className="kpi-cards">
+                          <KPICard
+                            title="Total Teams"
+                            value={teamMetrics.totalTeams}
+                            isCurrency={false}
+                            kpiType="neutral"
+                            className="kpi-card neutral"
+                          />
+                          <KPICard
+                            title="Total Headcount"
+                            value={teamMetrics.totalHeadcount}
+                            isCurrency={false}
+                            kpiType="neutral"
+                            className="kpi-card neutral"
+                          />
+                          <KPICard
+                            title="Total Cost"
+                            value={teamMetrics.totalCost}
+                            isCurrency={true}
+                            kpiType="neutral"
+                            className="kpi-card neutral"
+                          />
+                          <KPICard
+                            title="Average Cost per Head"
+                            value={teamMetrics.averageCostPerHead}
+                            isCurrency={true}
+                            kpiType="neutral"
+                            className="kpi-card neutral"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* All Teams Table Section */}

@@ -41,6 +41,9 @@
   display: flex;
   gap: 1.5rem;
   flex-wrap: wrap;
+  margin-top: 2em;
+  margin-left: 2em;
+  margin-right:2em;
 }
 
 /* Base KPI Card Styles */
@@ -405,6 +408,30 @@
   gap: 2rem;
 }
 
+/* KPI Subsection Styles */
+.kpi-subsection {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 2px solid #e1e8ed;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.kpi-subsection-title {
+  margin: 0 0 1rem 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2d3a4a;
+  border-bottom: 2px solid #e1e8ed;
+  padding-bottom: 0.5rem;
+}
+
+.kpi-subsection .kpi-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
 .resource-summary-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -656,6 +683,21 @@
 .strategic-context .kpi-row:last-child {
   margin-bottom: 1.5rem;
 }
+
+
+.team-composition-summaryt .kpi-row {
+  margin-bottom: 1rem;
+  padding: 0 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.team-composition-summary .kpi-row:first-child {
+  margin-top: 1.5rem;
+}
+
+.team-composition-summary .kpi-row:last-child {
+  margin-bottom: 1.5rem;
+}team-composition-summary
 
 .ytd-performance .kpi-row,
 .forward-looking .kpi-row {
@@ -1861,6 +1903,76 @@ body.printing .section-heading {
   font-size: 1.2rem !important;
   color: black !important;
   page-break-after: avoid;
+}
+
+/* Print mode styles for tab-specific printing */
+body.print-mode .tab-panel {
+  display: none !important;
+}
+
+/* Show only the active tab during print */
+body.print-mode[data-print-tab="executive-commentary"] .tab-panel[aria-labelledby="tab-executive-commentary"] {
+  display: block !important;
+}
+
+body.print-mode[data-print-tab="overall-budget"] .tab-panel[aria-labelledby="tab-overall-budget"] {
+  display: block !important;
+}
+
+body.print-mode[data-print-tab="budget-visuals"] .tab-panel[aria-labelledby="tab-budget-visuals"] {
+  display: block !important;
+}
+
+body.print-mode[data-print-tab="resource-spend"] .tab-panel[aria-labelledby="tab-resource-spend"] {
+  display: block !important;
+}
+
+body.print-mode[data-print-tab="vendor-info"] .tab-panel[aria-labelledby="tab-vendor-info"] {
+  display: block !important;
+}
+
+body.print-mode[data-print-tab="resource-allocation"] .tab-panel[aria-labelledby="tab-resource-allocation"] {
+  display: block !important;
+}
+
+/* Print-specific overrides in @media print */
+@media print {
+  /* Add tab name as header */
+  body.print-mode .tab-panel::before {
+    content: attr(data-tab-title);
+    display: block;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #ccc;
+  }
+  
+  /* Hide tab navigation during print */
+  body.print-mode .tab-navigation {
+    display: none !important;
+  }
+  
+  /* Hide print and export buttons during print */
+  body.print-mode .header-buttons {
+    display: none !important;
+  }
+  
+  /* Ensure sections are expanded during print */
+  body.print-mode .collapsed {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  
+  body.print-mode .section-collapsed {
+    display: block !important;
+  }
+  
+  body.print-mode [data-collapsed="true"] {
+    display: block !important;
+    height: auto !important;
+  }
 }
 
 /* Vendor Spending KPI for formatting */
