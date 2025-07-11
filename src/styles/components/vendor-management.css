@@ -106,11 +106,11 @@
    SHARED TABLE CONTAINER STYLES
    ================================================================= */
 .vendor-table-container {
-  overflow-x: auto;
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-lg);
-  background: var(--background-card);
-  margin-bottom: var(--spacing-xl);
+  background: white;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: var(--spacing-md);
 }
 
 /* =================================================================
@@ -119,45 +119,30 @@
 .budget-management-table {
   width: 100%;
   border-collapse: collapse;
-  max-width: 1200px;
-  table-layout: auto;
 }
 
 .budget-management-table th {
-  background: linear-gradient(
-    135deg,
-    var(--primary-green) 0%,
-    var(--primary-green-light) 100%
-  );
-  color: white;
-  padding: var(--spacing-md) 0.75rem;
-  text-align: left;
+  background: var(--background-light);
+  color: var(--text-primary);
   font-weight: 600;
-  border: none;
+  padding: var(--spacing-md);
+  text-align: left;
+  border-bottom: 2px solid var(--border-color);
   position: sticky;
   top: 0;
   z-index: 10;
 }
 
-.budget-management-table th:first-child {
-  border-top-left-radius: var(--radius-xl);
-}
-
-.budget-management-table th:last-child {
-  border-top-right-radius: var(--radius-xl);
-}
-
 .budget-management-table td {
-  padding: 0.75rem;
+  padding: var(--spacing-md);
   border-bottom: 1px solid var(--border-light);
-  vertical-align: top;
 }
 
-.budget-management-table tbody tr:hover {
-  background-color: var(--background-grey);
+.budget-management-table tr:hover td {
+  background: var(--background-hover);
 }
 
-.budget-management-table tbody tr:last-child td {
+.budget-management-table tr:last-child td {
   border-bottom: none;
 }
 
@@ -279,16 +264,12 @@
 }
 
 .monthly-breakdown-table th {
-  background: linear-gradient(
-    135deg,
-    var(--primary-green) 0%,
-    var(--primary-green-light) 100%
-  );
-  color: white;
-  padding: var(--spacing-sm) 0.5rem;
-  text-align: center;
+  background: var(--background-light);
+  color: var(--text-primary);
   font-weight: 600;
-  border: none;
+  padding: var(--spacing-md);
+  text-align: center;
+  border-bottom: 2px solid var(--border-color);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -296,7 +277,6 @@
 }
 
 .monthly-breakdown-table th:first-child {
-  border-top-left-radius: var(--radius-xl);
   text-align: left;
   width: 300px;
   overflow: hidden;
@@ -319,8 +299,8 @@
 }
 
 .monthly-breakdown-table th:last-child {
-  border-top-right-radius: var(--radius-xl);
-  background: var(--primary-green-dark);
+  background: var(--primary-green);
+  color: white;
   font-weight: 700;
   text-align: left;
   width: 145px;
@@ -330,17 +310,17 @@
 }
 
 .monthly-breakdown-table td {
-  padding: 0.5rem;
+  padding: var(--spacing-md);
   border-bottom: 1px solid var(--border-light);
   vertical-align: top;
   font-size: 0.85rem;
 }
 
-.monthly-breakdown-table tbody tr:hover {
-  background-color: var(--background-grey);
+.monthly-breakdown-table tr:hover td {
+  background: var(--background-hover);
 }
 
-.monthly-breakdown-table tbody tr:last-child td {
+.monthly-breakdown-table tr:last-child td {
   border-bottom: none;
 }
 
@@ -392,10 +372,10 @@
 .vendor-textarea {
   width: 100%;
   padding: var(--spacing-sm);
-  border: 1px solid #ced4da;
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
   font-size: 0.9rem;
-  transition: border-color var(--transition-fast);
+  transition: var(--transition-fast);
 }
 
 .vendor-input:focus,
@@ -403,7 +383,7 @@
 .vendor-textarea:focus {
   outline: none;
   border-color: var(--primary-green);
-  box-shadow: 0 0 0 2px rgba(51, 73, 21, 0.1);
+  box-shadow: 0 0 0 3px rgba(68, 136, 68, 0.1);
 }
 
 .currency-input {
@@ -423,16 +403,16 @@
 
 /* Row State Styles */
 .vendor-row-complete {
-  background-color: #f8fffe;
+  background-color: var(--background-light);
   border-left: 3px solid var(--success-color);
 }
 
 .vendor-row-complete:hover {
-  background-color: #e8f7e6;
+  background-color: var(--background-grey);
 }
 
 .vendor-row-editing {
-  background-color: #fffef8;
+  background-color: var(--background-light);
   border-left: 3px solid var(--warning-color);
 }
 
@@ -461,7 +441,7 @@
   width: 100%;
   padding: 0.3rem 0.5rem;
   font-size: 0.9rem;
-  color: #495057;
+  color: var(--text-primary);
   background-color: transparent;
   border-radius: 4px;
   white-space: nowrap;
