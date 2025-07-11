@@ -43,7 +43,7 @@
   flex-wrap: wrap;
   margin-top: 2em;
   margin-left: 2em;
-  margin-right:2em;
+  margin-right: 2em;
 }
 
 /* Base KPI Card Styles */
@@ -684,7 +684,6 @@
   margin-bottom: 1.5rem;
 }
 
-
 .team-composition-summaryt .kpi-row {
   margin-bottom: 1rem;
   padding: 0 1.5rem;
@@ -697,9 +696,8 @@
 
 .team-composition-summary .kpi-row:last-child {
   margin-bottom: 1.5rem;
-}team-composition-summary
-
-.ytd-performance .kpi-row,
+}
+team-composition-summary .ytd-performance .kpi-row,
 .forward-looking .kpi-row {
   margin-bottom: 1rem;
   padding: 0 1.5rem;
@@ -912,7 +910,7 @@
     flex-direction: column;
     gap: 0.25rem;
   }
-  
+
   .view-btn {
     padding: 0.5rem 1rem;
     font-size: 0.85rem;
@@ -925,17 +923,17 @@
   .tab-navigation {
     display: none !important;
   }
-  
+
   /* Show all tab content when printing */
   .tab-content > div {
     display: block !important;
   }
-  
+
   /* Ensure tab content is visible */
   .tab-content {
     min-height: auto;
   }
-  
+
   /* Add page breaks between major sections */
   .kpi-section,
   .trend-chart-section,
@@ -1581,14 +1579,14 @@
 /* Print Styles for Executive Summary */
 @media print {
   /* Remove shadows and background colors for better printing */
-  .executive-summary {
+  /* .executive-summary {
     box-shadow: none !important;
     background: white !important;
     margin: 0 !important;
     max-width: none !important;
     padding: 1rem !important;
     border-radius: 0 !important;
-  }
+  } 
   /* Hide floating buttons */
   .floating-back-button,
   .floating-export-button,
@@ -1911,32 +1909,50 @@ body.print-mode .tab-panel {
 }
 
 /* Show only the active tab during print */
-body.print-mode[data-print-tab="executive-commentary"] .tab-panel[aria-labelledby="tab-executive-commentary"] {
+body.print-mode[data-print-tab="executive-commentary"]
+  .tab-panel[aria-labelledby="tab-executive-commentary"] {
   display: block !important;
 }
 
-body.print-mode[data-print-tab="overall-budget"] .tab-panel[aria-labelledby="tab-overall-budget"] {
+body.print-mode[data-print-tab="overall-budget"]
+  .tab-panel[aria-labelledby="tab-overall-budget"] {
   display: block !important;
 }
 
-body.print-mode[data-print-tab="budget-visuals"] .tab-panel[aria-labelledby="tab-budget-visuals"] {
+body.print-mode[data-print-tab="budget-visuals"]
+  .tab-panel[aria-labelledby="tab-budget-visuals"] {
   display: block !important;
 }
 
-body.print-mode[data-print-tab="resource-spend"] .tab-panel[aria-labelledby="tab-resource-spend"] {
+body.print-mode[data-print-tab="resource-spend"]
+  .tab-panel[aria-labelledby="tab-resource-spend"] {
   display: block !important;
 }
 
-body.print-mode[data-print-tab="vendor-info"] .tab-panel[aria-labelledby="tab-vendor-info"] {
+body.print-mode[data-print-tab="vendor-info"]
+  .tab-panel[aria-labelledby="tab-vendor-info"] {
   display: block !important;
 }
 
-body.print-mode[data-print-tab="resource-allocation"] .tab-panel[aria-labelledby="tab-resource-allocation"] {
+body.print-mode[data-print-tab="resource-allocation"]
+  .tab-panel[aria-labelledby="tab-resource-allocation"] {
   display: block !important;
 }
 
 /* Print-specific overrides in @media print */
 @media print {
+  /* Remove page margins for maximum space usage */
+  @page {
+    margin: 0;
+    size: auto;
+  }
+
+  /* Ensure body and html have no margins/padding in print */
+  body.print-mode {
+    margin: 0 !important;
+    padding-top: 0 !important;
+  }
+
   /* Add tab name as header */
   body.print-mode .tab-panel::before {
     content: attr(data-tab-title);
@@ -1947,28 +1963,45 @@ body.print-mode[data-print-tab="resource-allocation"] .tab-panel[aria-labelledby
     padding-bottom: 0.5rem;
     border-bottom: 2px solid #ccc;
   }
-  
+
   /* Hide tab navigation during print */
+  body.print-mode .executive-summary {
+    position: relative;
+    background: #fff;
+    box-shadow: none !important;
+    font-family: "Segoe UI", Arial, sans-serif;
+  }
+
+  body.print-mode .logout-button {
+    display: none !important;
+  }
+  body.print-mode .app-header {
+    display: none !important;
+  }
+  body.print-mode .dashboard {
+    box-shadow: none !important;
+  }
+
   body.print-mode .tab-navigation {
     display: none !important;
   }
-  
+
   /* Hide print and export buttons during print */
   body.print-mode .header-buttons {
     display: none !important;
   }
-  
+
   /* Ensure sections are expanded during print */
   body.print-mode .collapsed {
     display: block !important;
     height: auto !important;
     overflow: visible !important;
   }
-  
+
   body.print-mode .section-collapsed {
     display: block !important;
   }
-  
+
   body.print-mode [data-collapsed="true"] {
     display: block !important;
     height: auto !important;
@@ -2140,23 +2173,23 @@ body.print-mode[data-print-tab="resource-allocation"] .tab-panel[aria-labelledby
 
 /* Table Color Utility Classes */
 .text-blue {
-  color: #2D78FB;
+  color: #2d78fb;
 }
 
 .text-green {
-  color: #33CA7F;
+  color: #33ca7f;
 }
 
 .text-orange {
-  color: #FF8C00;
+  color: #ff8c00;
 }
 
 .text-purple {
-  color: #9932CC;
+  color: #9932cc;
 }
 
 .text-dark-red {
-  color: #8B0000;
+  color: #8b0000;
 }
 
 /* Table Row Conditional Styling */
@@ -2433,7 +2466,6 @@ body.print-mode[data-print-tab="resource-allocation"] .tab-panel[aria-labelledby
   margin: 0 0 var(--section-header-margin) 0;
 }
 
-
 /* Resources Tab Styles */
 .cost-center-group {
   margin-bottom: 1.5rem;
@@ -2444,7 +2476,7 @@ body.print-mode[data-print-tab="resource-allocation"] .tab-panel[aria-labelledby
 
 .cost-center-title {
   font-size: 1.1rem;
-  color: #3B82F6;
+  color: #3b82f6;
   margin: 0;
   padding: 1rem;
   background: #f9fafb;
@@ -2539,22 +2571,22 @@ body.print-mode[data-print-tab="resource-allocation"] .tab-panel[aria-labelledby
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .cost-center-summary {
     margin-left: 0;
     padding-left: 0;
     margin-top: 0.5rem;
   }
-  
+
   .team-details-table {
     font-size: 0.8rem;
   }
-  
+
   .team-details-table th,
   .team-details-table td {
     padding: 0.5rem;
   }
-  
+
   /* Make table responsive with horizontal scroll */
   .cost-center-content {
     overflow-x: auto;

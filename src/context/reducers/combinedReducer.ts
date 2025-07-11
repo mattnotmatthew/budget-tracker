@@ -1,22 +1,55 @@
-import { budgetReducer, BudgetState, BudgetAction, initialBudgetState } from "./budgetReducer";
-import { vendorReducer, VendorState, VendorAction, initialVendorState } from "./vendorReducer";
-import { planningReducer, PlanningState, PlanningAction, initialPlanningState } from "./planningReducer";
-import { persistenceReducer, PersistenceState, PersistenceAction } from "./persistenceReducer";
-import { teamReducer, TeamState, TeamAction, initialTeamState } from "./teamReducer";
-import { functionalAllocationReducer, FunctionalAllocationState, FunctionalAllocationAction } from "./functionalAllocationReducer";
+import {
+  budgetReducer,
+  BudgetState,
+  BudgetAction,
+  initialBudgetState,
+} from "./budgetReducer";
+import {
+  vendorReducer,
+  VendorState,
+  VendorAction,
+  initialVendorState,
+} from "./vendorReducer";
+import {
+  planningReducer,
+  PlanningState,
+  PlanningAction,
+  initialPlanningState,
+} from "./planningReducer";
+import {
+  persistenceReducer,
+  PersistenceState,
+  PersistenceAction,
+} from "./persistenceReducer";
+import {
+  teamReducer,
+  TeamState,
+  TeamAction,
+  initialTeamState,
+} from "./teamReducer";
+import {
+  functionalAllocationReducer,
+  FunctionalAllocationState,
+  FunctionalAllocationAction,
+} from "./functionalAllocationReducer";
 import { FunctionalAllocation } from "../../types";
 import { PersistenceManager } from "../../services/persistenceManager";
 
 // Combined state interface
-export interface CombinedState extends BudgetState, VendorState, PlanningState, PersistenceState, TeamState {
+export interface CombinedState
+  extends BudgetState,
+    VendorState,
+    PlanningState,
+    PersistenceState,
+    TeamState {
   functionalAllocations: FunctionalAllocation[];
 }
 
 // Combined action type
-export type CombinedAction = 
-  | BudgetAction 
-  | VendorAction 
-  | PlanningAction 
+export type CombinedAction =
+  | BudgetAction
+  | VendorAction
+  | PlanningAction
   | PersistenceAction
   | TeamAction
   | FunctionalAllocationAction
@@ -59,19 +92,19 @@ export const getInitialCombinedState = (): CombinedState => {
   return {
     // Budget state
     ...initialBudgetState,
-    
+
     // Vendor state
     ...initialVendorState,
-    
+
     // Planning state
     ...initialPlanningState,
-    
+
     // Team state
     ...initialTeamState,
-    
+
     // Functional Allocation state
     functionalAllocations: [],
-    
+
     // Persistence state
     currentFile: cachedFileInfo
       ? {
@@ -95,7 +128,7 @@ export const getInitialCombinedState = (): CombinedState => {
 const shouldMarkUnsaved = (action: CombinedAction): boolean => {
   const unsavedActions = [
     "ADD_ENTRY",
-    "UPDATE_ENTRY", 
+    "UPDATE_ENTRY",
     "DELETE_ENTRY",
     "SET_YEARLY_BUDGET_TARGET",
     "SET_MONTHLY_FORECAST_MODE",
@@ -119,7 +152,7 @@ const shouldMarkUnsaved = (action: CombinedAction): boolean => {
     "DELETE_FUNCTIONAL_ALLOCATION",
     "SET_FUNCTIONAL_ALLOCATIONS",
   ];
-  
+
   return unsavedActions.includes(action.type);
 };
 
@@ -132,6 +165,11 @@ export const combinedReducer = (
 
   // Handle special case: LOAD_FROM_CACHE
   if (action.type === "LOAD_FROM_CACHE") {
+    // Filter teams to only include new format teams (with year and month)
+    const validTeams = (action.payload.teams || []).filter(
+      (team: any) => team.year !== undefined && team.month !== undefined
+    );
+
     return {
       ...state,
       // Budget data
@@ -143,8 +181,8 @@ export const combinedReducer = (
       // Vendor data
       vendorData: action.payload.vendorData || [],
       vendorTrackingData: action.payload.vendorTrackingData || [],
-      // Team data
-      teams: action.payload.teams || [],
+      // Team data - only keep teams with year and month
+      teams: validTeams,
       // Functional Allocation data
       functionalAllocations: action.payload.functionalAllocations || [],
       // Persistence state
@@ -163,7 +201,7 @@ export const combinedReducer = (
     } catch (error) {
       console.warn("Failed to clear file info from cache:", error);
     }
-    
+
     return {
       ...state,
       // Reset budget state
@@ -187,34 +225,56 @@ export const combinedReducer = (
 
   // Route actions to appropriate reducers
   const budgetActions = [
-    "ADD_ENTRY", "UPDATE_ENTRY", "DELETE_ENTRY", "SET_VIEW_MODE",
-    "SET_SELECTED_PERIOD", "ADD_CATEGORY", "LOAD_ENTRIES", "CLEAR_ALL_DATA",
-    "SET_YEARLY_BUDGET_TARGET", "SET_MONTHLY_FORECAST_MODE",
-    "ADD_ALLOCATION", "UPDATE_ALLOCATION", "DELETE_ALLOCATION"
+    "ADD_ENTRY",
+    "UPDATE_ENTRY",
+    "DELETE_ENTRY",
+    "SET_VIEW_MODE",
+    "SET_SELECTED_PERIOD",
+    "ADD_CATEGORY",
+    "LOAD_ENTRIES",
+    "CLEAR_ALL_DATA",
+    "SET_YEARLY_BUDGET_TARGET",
+    "SET_MONTHLY_FORECAST_MODE",
+    "ADD_ALLOCATION",
+    "UPDATE_ALLOCATION",
+    "DELETE_ALLOCATION",
   ];
 
   const vendorActions = [
-    "ADD_VENDOR_DATA", "UPDATE_VENDOR_DATA", "DELETE_VENDOR_DATA", "LOAD_VENDOR_DATA",
-    "ADD_VENDOR_TRACKING", "UPDATE_VENDOR_TRACKING", "DELETE_VENDOR_TRACKING", "LOAD_VENDOR_TRACKING"
+    "ADD_VENDOR_DATA",
+    "UPDATE_VENDOR_DATA",
+    "DELETE_VENDOR_DATA",
+    "LOAD_VENDOR_DATA",
+    "ADD_VENDOR_TRACKING",
+    "UPDATE_VENDOR_TRACKING",
+    "DELETE_VENDOR_TRACKING",
+    "LOAD_VENDOR_TRACKING",
   ];
 
   const planningActions = [
-    "SET_PLANNING_MODE", "SET_PLANNING_DATA", "UPDATE_PLANNING_DATA", 
-    "DELETE_PLANNING_DATA", "SET_SELECTED_SCENARIO", "SET_HISTORICAL_ANALYSIS"
+    "SET_PLANNING_MODE",
+    "SET_PLANNING_DATA",
+    "UPDATE_PLANNING_DATA",
+    "DELETE_PLANNING_DATA",
+    "SET_SELECTED_SCENARIO",
+    "SET_HISTORICAL_ANALYSIS",
   ];
 
   const persistenceActions = [
-    "SET_CURRENT_FILE", "MARK_UNSAVED_CHANGES", "MARK_SAVED_TO_FILE",
-    "UPDATE_CACHE_TIMESTAMP", "SET_FIRST_TIME_USER"
+    "SET_CURRENT_FILE",
+    "MARK_UNSAVED_CHANGES",
+    "MARK_SAVED_TO_FILE",
+    "UPDATE_CACHE_TIMESTAMP",
+    "SET_FIRST_TIME_USER",
   ];
 
-  const teamActions = [
-    "ADD_TEAM", "UPDATE_TEAM", "DELETE_TEAM", "LOAD_TEAMS"
-  ];
+  const teamActions = ["ADD_TEAM", "UPDATE_TEAM", "DELETE_TEAM", "LOAD_TEAMS"];
 
   const functionalAllocationActions = [
-    "ADD_FUNCTIONAL_ALLOCATION", "UPDATE_FUNCTIONAL_ALLOCATION", 
-    "DELETE_FUNCTIONAL_ALLOCATION", "SET_FUNCTIONAL_ALLOCATIONS"
+    "ADD_FUNCTIONAL_ALLOCATION",
+    "UPDATE_FUNCTIONAL_ALLOCATION",
+    "DELETE_FUNCTIONAL_ALLOCATION",
+    "SET_FUNCTIONAL_ALLOCATIONS",
   ];
 
   // Apply budget reducer
@@ -294,7 +354,10 @@ export const combinedReducer = (
       action as FunctionalAllocationAction
     );
     // Map the allocations to functionalAllocations to avoid property conflict
-    newState = { ...newState, functionalAllocations: functionalAllocationState.allocations };
+    newState = {
+      ...newState,
+      functionalAllocations: functionalAllocationState.allocations,
+    };
   }
 
   // Auto-mark unsaved changes for data-modifying actions

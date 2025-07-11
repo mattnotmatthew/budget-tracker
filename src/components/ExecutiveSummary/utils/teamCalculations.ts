@@ -22,7 +22,8 @@ export const getTeamMetrics = (teams: TeamData[]): TeamMetrics => {
   const totalTeams = teams.length;
   const totalHeadcount = teams.reduce((sum, team) => sum + team.headcount, 0);
   const totalCost = teams.reduce((sum, team) => sum + team.cost, 0);
-  const averageCostPerHead = totalHeadcount > 0 ? totalCost / totalHeadcount : 0;
+  const averageCostPerHead =
+    totalHeadcount > 0 ? totalCost / totalHeadcount : 0;
 
   const costCenterGroups = groupTeamsByCostCenter(teams);
 
@@ -36,7 +37,9 @@ export const getTeamMetrics = (teams: TeamData[]): TeamMetrics => {
 };
 
 // Group teams by cost center
-export const groupTeamsByCostCenter = (teams: TeamData[]): CostCenterGroup[] => {
+export const groupTeamsByCostCenter = (
+  teams: TeamData[]
+): CostCenterGroup[] => {
   // Group teams by cost center
   const groupedMap = teams.reduce((acc, team) => {
     const costCenter = team.currentCostCenter || "Unassigned";
@@ -50,14 +53,16 @@ export const groupTeamsByCostCenter = (teams: TeamData[]): CostCenterGroup[] => 
   // Convert to array and calculate totals for each group
   const groups: CostCenterGroup[] = Object.entries(groupedMap).map(
     ([costCenter, teams]) => {
-      const totalHeadcount = teams.reduce((sum, team) => sum + team.headcount, 0);
-      const totalCost = teams.reduce((sum, team) => sum + team.cost, 0);
-      const averageCostPerHead = totalHeadcount > 0 ? totalCost / totalHeadcount : 0;
-
-      // Sort teams alphabetically by name within each group
-      const sortedTeams = [...teams].sort((a, b) =>
-        a.teamName.localeCompare(b.teamName)
+      const totalHeadcount = teams.reduce(
+        (sum, team) => sum + team.headcount,
+        0
       );
+      const totalCost = teams.reduce((sum, team) => sum + team.cost, 0);
+      const averageCostPerHead =
+        totalHeadcount > 0 ? totalCost / totalHeadcount : 0;
+
+      // Sort teams by total cost descending within each group
+      const sortedTeams = [...teams].sort((a, b) => b.cost - a.cost);
 
       return {
         costCenter,
@@ -87,8 +92,9 @@ export const calculateTeamEfficiency = (team: TeamData): number | null => {
 
 // Get chart data for headcount distribution
 export const getHeadcountChartData = (costCenterGroups: CostCenterGroup[]) => {
-  const data: Array<{ name: string; headcount: number; costCenter: string }> = [];
-  
+  const data: Array<{ name: string; headcount: number; costCenter: string }> =
+    [];
+
   costCenterGroups.forEach((group) => {
     group.teams.forEach((team) => {
       data.push({
@@ -103,7 +109,9 @@ export const getHeadcountChartData = (costCenterGroups: CostCenterGroup[]) => {
 };
 
 // Get chart data for cost distribution by cost center
-export const getCostDistributionChartData = (costCenterGroups: CostCenterGroup[]) => {
+export const getCostDistributionChartData = (
+  costCenterGroups: CostCenterGroup[]
+) => {
   return costCenterGroups.map((group) => ({
     name: group.costCenter,
     value: group.totalCost,

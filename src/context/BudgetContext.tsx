@@ -6,23 +6,18 @@ import React, {
   ReactNode,
   useCallback,
 } from "react";
-import {
-  BudgetState,
-  PlanningData,
-  HistoricalAnalysis,
-} from "../types";
+import { BudgetState, PlanningData, HistoricalAnalysis } from "../types";
 import { PersistenceManager } from "../services/persistenceManager";
 import { isFeatureEnabled } from "../utils/featureFlags";
-import { 
-  combinedReducer, 
-  CombinedAction, 
-  CombinedState, 
-  getInitialCombinedState 
+import {
+  combinedReducer,
+  CombinedAction,
+  CombinedState,
+  getInitialCombinedState,
 } from "./reducers/combinedReducer";
 import { useDebouncedAutoSave } from "../hooks/useDebouncedAutoSave";
 
 const initialState: CombinedState = getInitialCombinedState();
-
 
 const BudgetContext = createContext<{
   state: CombinedState;
@@ -106,17 +101,20 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
   //     persistenceManager.stopAutoSave();
   //   };
   // }, [state.persistence.cacheAutoSaveInterval]);  // Debounced auto-save to cache to prevent excessive writes
-  const debouncedCacheSave = useCallback((stateToSave: CombinedState) => {
-    // Removed console.log for cache save
+  const debouncedCacheSave = useCallback(
+    (stateToSave: CombinedState) => {
+      // Removed console.log for cache save
 
-    persistenceManager.saveToCache(stateToSave);
+      persistenceManager.saveToCache(stateToSave);
 
-    // Only mark as unsaved if this is not triggered by loading from cache
-    if (stateToSave.persistence.hasUnsavedChanges) {
-      persistenceManager.markDataChanged();
-    }
-    dispatch({ type: "UPDATE_CACHE_TIMESTAMP" });
-  }, [persistenceManager]);
+      // Only mark as unsaved if this is not triggered by loading from cache
+      if (stateToSave.persistence.hasUnsavedChanges) {
+        persistenceManager.markDataChanged();
+      }
+      dispatch({ type: "UPDATE_CACHE_TIMESTAMP" });
+    },
+    [persistenceManager]
+  );
 
   const shouldSkipCacheSave = useCallback((stateToCheck: CombinedState) => {
     // Skip if it's the initial state
@@ -151,7 +149,12 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
   const saveToFile = async (): Promise<boolean> => {
     try {
       const fileManager = await import("../utils/fileManager");
-      
+
+      // Filter teams to only include new format teams (with year and month)
+      const validTeams = state.teams.filter(
+        (team) => team.year !== undefined && team.month !== undefined
+      );
+
       // Use smartAutoSave with enhanced handle validation
       const result = await fileManager.smartAutoSave(
         {
@@ -162,7 +165,7 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
           monthlyForecastModes: state.monthlyForecastModes,
           vendorData: state.vendorData,
           vendorTrackingData: state.vendorTrackingData,
-          teams: state.teams,
+          teams: validTeams, // Only save teams with year and month
           functionalAllocations: state.functionalAllocations,
         },
         state.currentFile
@@ -238,10 +241,19 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
       console.log("📦 File manager imported");
 
       console.log("🔍 Checking File System Access API support:");
-      console.log("- showSaveFilePicker available:", "showSaveFilePicker" in window);
-      console.log("- showOpenFilePicker available:", "showOpenFilePicker" in window);
-      console.log("- supportsFileSystemAccess():", fileManager.supportsFileSystemAccess());
-      
+      console.log(
+        "- showSaveFilePicker available:",
+        "showSaveFilePicker" in window
+      );
+      console.log(
+        "- showOpenFilePicker available:",
+        "showOpenFilePicker" in window
+      );
+      console.log(
+        "- supportsFileSystemAccess():",
+        fileManager.supportsFileSystemAccess()
+      );
+
       if (fileManager.supportsFileSystemAccess()) {
         console.log("✅ File System Access API supported, opening file picker");
         const fileHandles = await window.showOpenFilePicker?.({
@@ -291,11 +303,13 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
 
         // Load allocations (CategoryAllocation)
         if (loadedData.allocations) {
-          const allocationsWithDates = loadedData.allocations.map((allocation: any) => ({
-            ...allocation,
-            createdAt: new Date(allocation.createdAt),
-            updatedAt: new Date(allocation.updatedAt),
-          }));
+          const allocationsWithDates = loadedData.allocations.map(
+            (allocation: any) => ({
+              ...allocation,
+              createdAt: new Date(allocation.createdAt),
+              updatedAt: new Date(allocation.updatedAt),
+            })
+          );
           // We need to dispatch each allocation individually since there's no LOAD_ALLOCATIONS action
           allocationsWithDates.forEach((allocation: any) => {
             dispatch({
@@ -389,13 +403,15 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
 
         // Load team data
         if (loadedData.teams) {
-          const teamsWithDates = loadedData.teams.map(
-            (team: any) => ({
+          const teamsWithDates = loadedData.teams
+            .filter(
+              (team: any) => team.year !== undefined && team.month !== undefined
+            ) // Only keep new format teams
+            .map((team: any) => ({
               ...team,
               createdAt: new Date(team.createdAt),
               updatedAt: new Date(team.updatedAt),
-            })
-          );
+            }));
           dispatch({
             type: "LOAD_TEAMS",
             payload: teamsWithDates,
@@ -404,13 +420,12 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
 
         // Load functional allocations
         if (loadedData.functionalAllocations) {
-          const functionalAllocationsWithDates = loadedData.functionalAllocations.map(
-            (allocation: any) => ({
+          const functionalAllocationsWithDates =
+            loadedData.functionalAllocations.map((allocation: any) => ({
               ...allocation,
               createdAt: new Date(allocation.createdAt),
               updatedAt: new Date(allocation.updatedAt),
-            })
-          );
+            }));
           dispatch({
             type: "SET_FUNCTIONAL_ALLOCATIONS",
             payload: functionalAllocationsWithDates,
@@ -470,50 +485,55 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
             ...state.monthlyForecastModes,
             ...loadedData.monthlyForecastModes,
           },
-          vendorData: loadedData.vendorData ? loadedData.vendorData.map(
-            (vendor: any) => ({
-              id: vendor.id,
-              vendorName: vendor.vendorName || "",
-              category: vendor.category || "",
-              financeMappedCategory:
-                vendor.financeMappedCategory || vendor.mapsTo || "",
-              billingType: vendor.billingType || "",
-              budget: vendor.budget || 0,
-              description: vendor.description || "",
-              month: vendor.month || "N/A",
-              inBudget:
-                vendor.inBudget !== undefined
-                  ? vendor.inBudget
-                  : !vendor.notInBudget,
-              notes: vendor.notes || "",
-              year: vendor.year,
-              createdAt: new Date(vendor.createdAt),
-              updatedAt: new Date(vendor.updatedAt),
-            })
-          ) : state.vendorData,
-          vendorTrackingData: loadedData.vendorTrackingData ? loadedData.vendorTrackingData.map(
-            (tracking: any) => ({
-              ...tracking,
-              createdAt: new Date(tracking.createdAt),
-              updatedAt: new Date(tracking.updatedAt),
-            })
-          ) : state.vendorTrackingData,
-          teams: loadedData.teams ? loadedData.teams.map(
-            (team: any) => ({
-              ...team,
-              createdAt: new Date(team.createdAt),
-              updatedAt: new Date(team.updatedAt),
-            })
-          ) : state.teams,
-          functionalAllocations: loadedData.functionalAllocations ? loadedData.functionalAllocations.map(
-            (allocation: any) => ({
-              ...allocation,
-              createdAt: new Date(allocation.createdAt),
-              updatedAt: new Date(allocation.updatedAt),
-            })
-          ) : state.functionalAllocations,
+          vendorData: loadedData.vendorData
+            ? loadedData.vendorData.map((vendor: any) => ({
+                id: vendor.id,
+                vendorName: vendor.vendorName || "",
+                category: vendor.category || "",
+                financeMappedCategory:
+                  vendor.financeMappedCategory || vendor.mapsTo || "",
+                billingType: vendor.billingType || "",
+                budget: vendor.budget || 0,
+                description: vendor.description || "",
+                month: vendor.month || "N/A",
+                inBudget:
+                  vendor.inBudget !== undefined
+                    ? vendor.inBudget
+                    : !vendor.notInBudget,
+                notes: vendor.notes || "",
+                year: vendor.year,
+                createdAt: new Date(vendor.createdAt),
+                updatedAt: new Date(vendor.updatedAt),
+              }))
+            : state.vendorData,
+          vendorTrackingData: loadedData.vendorTrackingData
+            ? loadedData.vendorTrackingData.map((tracking: any) => ({
+                ...tracking,
+                createdAt: new Date(tracking.createdAt),
+                updatedAt: new Date(tracking.updatedAt),
+              }))
+            : state.vendorTrackingData,
+          teams: loadedData.teams
+            ? loadedData.teams
+                .filter(
+                  (team: any) =>
+                    team.year !== undefined && team.month !== undefined
+                ) // Only keep new format teams
+                .map((team: any) => ({
+                  ...team,
+                  createdAt: new Date(team.createdAt),
+                  updatedAt: new Date(team.updatedAt),
+                }))
+            : state.teams,
+          functionalAllocations: loadedData.functionalAllocations
+            ? loadedData.functionalAllocations.map((allocation: any) => ({
+                ...allocation,
+                createdAt: new Date(allocation.createdAt),
+                updatedAt: new Date(allocation.updatedAt),
+              }))
+            : state.functionalAllocations,
         };
-        
+
         persistenceManager.saveToCache(updatedState);
         dispatch({ type: "MARK_SAVED_TO_FILE" });
 
@@ -522,18 +542,21 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
         console.log("❌ File System Access API not supported, trying fallback");
         // Fallback to traditional file input
         const fileManager = await import("../utils/fileManager");
-        const { data: loadedData, fileName } = await fileManager.loadBudgetData();
-        
+        const { data: loadedData, fileName } =
+          await fileManager.loadBudgetData();
+
         // Process the loaded data similar to the File System Access API path
         dispatch({ type: "LOAD_ENTRIES", payload: loadedData.entries });
-        
+
         // Load allocations (CategoryAllocation)
         if (loadedData.allocations) {
-          const allocationsWithDates = loadedData.allocations.map((allocation: any) => ({
-            ...allocation,
-            createdAt: new Date(allocation.createdAt),
-            updatedAt: new Date(allocation.updatedAt),
-          }));
+          const allocationsWithDates = loadedData.allocations.map(
+            (allocation: any) => ({
+              ...allocation,
+              createdAt: new Date(allocation.createdAt),
+              updatedAt: new Date(allocation.updatedAt),
+            })
+          );
           allocationsWithDates.forEach((allocation: any) => {
             dispatch({
               type: "ADD_ALLOCATION",
@@ -541,7 +564,7 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
             });
           });
         }
-        
+
         if (loadedData.yearlyBudgetTargets) {
           Object.entries(loadedData.yearlyBudgetTargets).forEach(
             ([year, amount]) => {
@@ -552,7 +575,7 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
             }
           );
         }
-        
+
         if (loadedData.monthlyForecastModes) {
           Object.entries(loadedData.monthlyForecastModes).forEach(
             ([year, monthModes]) => {
@@ -573,7 +596,7 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
             }
           );
         }
-        
+
         if (loadedData.vendorData) {
           const vendorDataWithDates = loadedData.vendorData.map(
             (vendor: any) => ({
@@ -601,7 +624,7 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
             payload: vendorDataWithDates,
           });
         }
-        
+
         if (loadedData.vendorTrackingData) {
           const vendorTrackingWithDates = loadedData.vendorTrackingData.map(
             (tracking: any) => ({
@@ -615,40 +638,41 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
             payload: vendorTrackingWithDates,
           });
         }
-        
+
         if (loadedData.teams) {
-          const teamsWithDates = loadedData.teams.map(
-            (team: any) => ({
+          const teamsWithDates = loadedData.teams
+            .filter(
+              (team: any) => team.year !== undefined && team.month !== undefined
+            ) // Only keep new format teams
+            .map((team: any) => ({
               ...team,
               createdAt: new Date(team.createdAt),
               updatedAt: new Date(team.updatedAt),
-            })
-          );
+            }));
           dispatch({
             type: "LOAD_TEAMS",
             payload: teamsWithDates,
           });
         }
-        
+
         if (loadedData.functionalAllocations) {
-          const functionalAllocationsWithDates = loadedData.functionalAllocations.map(
-            (allocation: any) => ({
+          const functionalAllocationsWithDates =
+            loadedData.functionalAllocations.map((allocation: any) => ({
               ...allocation,
               createdAt: new Date(allocation.createdAt),
               updatedAt: new Date(allocation.updatedAt),
-            })
-          );
+            }));
           dispatch({
             type: "SET_FUNCTIONAL_ALLOCATIONS",
             payload: functionalAllocationsWithDates,
           });
         }
-        
+
         dispatch({
           type: "SET_SELECTED_PERIOD",
           payload: { year: loadedData.year as number },
         });
-        
+
         // For fallback, we don't have a file handle
         dispatch({
           type: "SET_CURRENT_FILE",
@@ -658,10 +682,10 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
             userLastSaved: undefined,
           },
         });
-        
+
         persistenceManager.markUserAsReturning();
         dispatch({ type: "SET_FIRST_TIME_USER", payload: false });
-        
+
         const updatedState = {
           ...state,
           currentFile: {
@@ -684,14 +708,16 @@ export const BudgetProvider: React.FC<{ children: ReactNode }> = ({
             ...loadedData.monthlyForecastModes,
           },
           vendorData: loadedData.vendorData || state.vendorData,
-          vendorTrackingData: loadedData.vendorTrackingData || state.vendorTrackingData,
+          vendorTrackingData:
+            loadedData.vendorTrackingData || state.vendorTrackingData,
           teams: loadedData.teams || state.teams,
-          functionalAllocations: loadedData.functionalAllocations || state.functionalAllocations,
+          functionalAllocations:
+            loadedData.functionalAllocations || state.functionalAllocations,
         };
-        
+
         persistenceManager.saveToCache(updatedState);
         dispatch({ type: "MARK_SAVED_TO_FILE" });
-        
+
         return true;
       }
     } catch (error) {

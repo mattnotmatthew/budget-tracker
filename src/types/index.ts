@@ -197,6 +197,8 @@ export interface TeamData {
   headcount: number;
   cost: number;
   notes?: string;
+  year: number;
+  month: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -209,13 +211,13 @@ export interface TeamState {
 export interface FunctionalAllocation {
   id: string;
   year: number;
-  month: number;              // 1-12
-  teamName: string;           // Must match Resources teams
-  function: 'Development' | 'Infrastructure' | 'Revenue' | 'Support';
+  month: number; // 1-12
+  teamName: string; // Must match Resources teams
+  function: "Development" | "Infrastructure" | "Revenue" | "Support";
   currentCostCenter: string;
   product: string;
-  cost: number;               // In thousands
-  percentOfWork: number;      // 0-100
+  cost: number; // In thousands
+  percentOfWork: number; // 0-100
   createdAt: Date;
   updatedAt: Date;
 }
