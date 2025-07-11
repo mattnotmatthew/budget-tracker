@@ -308,6 +308,68 @@ const ExecutiveSummary = () => {
     );
   }, [state.teams, state.selectedYear, getLastFinalMonthNumber]);
 
+  // Get vendor breakdown data
+  const vendorBreakdownData = useMemo(() => {
+    const currentYearTrackingData =
+      state.vendorTrackingData?.filter(
+        (tracking) => tracking.year === state.selectedYear
+      ) || [];
+
+    return currentYearTrackingData
+      .map((vendor) => {
+        // Calculate YTD sum for this vendor
+        const monthlyAmounts = [
+          vendor.jan,
+          vendor.feb,
+          vendor.mar,
+          vendor.apr,
+          vendor.may,
+          vendor.jun,
+          vendor.jul,
+          vendor.aug,
+          vendor.sep,
+          vendor.oct,
+          vendor.nov,
+          vendor.dec,
+        ];
+
+        const ytdTotal = monthlyAmounts.reduce((sum, amount) => {
+          return sum + (parseFloat(amount) || 0);
+        }, 0);
+
+        // Get current month amount based on getLastFinalMonthNumber
+        const monthNames = [
+          "jan",
+          "feb",
+          "mar",
+          "apr",
+          "may",
+          "jun",
+          "jul",
+          "aug",
+          "sep",
+          "oct",
+          "nov",
+          "dec",
+        ];
+        const currentMonthIndex = getLastFinalMonthNumber - 1;
+        const currentMonthKey = monthNames[
+          currentMonthIndex
+        ] as keyof typeof vendor;
+        const currentMonthAmount =
+          parseFloat(vendor[currentMonthKey] as string) || 0;
+
+        return {
+          id: vendor.id,
+          vendor: vendor.financeMappedCategory || "Unknown Vendor",
+          vendorCategory: vendor.vendorName || "Unknown Category",
+          currentMonthSpend: currentMonthAmount,
+          ytdSpend: ytdTotal,
+        };
+      })
+      .filter((vendor) => vendor.ytdSpend > 0); // Only show vendors with actual spending
+  }, [state.vendorTrackingData, state.selectedYear, getLastFinalMonthNumber]);
+
   // Tooltip event handlers
   const handleMouseEnter = (event: React.MouseEvent, kpiType: string) => {
     const content = getKPITooltipContent(kpiType, kpis, state);
@@ -958,7 +1020,7 @@ const ExecutiveSummary = () => {
                       </strong>
                     </span>
                   </div>
-                )}{" "}
+                )}
               </div>
 
               {/* Expandable content */}
@@ -2235,6 +2297,88 @@ const ExecutiveSummary = () => {
               onMouseMove={handleVendorMouseMove}
               onMouseLeave={handleVendorMouseLeave}
             />
+
+            {/* Vendor Breakdown Section */}
+            <div className="section-container">
+              <h2 className="section-heading">Vendor Breakdown</h2>
+
+              <div className="vendor-breakdown-subtitle">
+                Detailed vendor spending breakdown by category and month.
+              </div>
+
+              <div style={{ overflowX: "auto" }}>
+                <table className="team-details-table">
+                  <thead>
+                    <tr>
+                      <th>Vendor</th>
+                      <th>Vendor Category</th>
+                      <th>Spend ({getLastFinalMonthName(state)})</th>
+                      <th>Spend YTD</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {vendorBreakdownData.length > 0 ? (
+                      <>
+                        {vendorBreakdownData
+                          .sort(
+                            (a, b) => b.currentMonthSpend - a.currentMonthSpend
+                          ) // Sort by current month spend descending
+                          .map((vendor) => (
+                            <tr key={vendor.id}>
+                              <td>{vendor.vendor}</td>
+                              <td>{vendor.vendorCategory}</td>
+                              <td>
+                                {formatCurrencyFull(vendor.currentMonthSpend)}
+                              </td>
+                              <td>{formatCurrencyFull(vendor.ytdSpend)}</td>
+                            </tr>
+                          ))}
+                        {/* Totals row */}
+                        <tr
+                          style={{
+                            fontWeight: "bold",
+                            backgroundColor: "#f8f9fa",
+                            borderTop: "2px solid #dee2e6",
+                          }}
+                        >
+                          <td>Total</td>
+                          <td>-</td>
+                          <td>
+                            {formatCurrencyFull(
+                              vendorBreakdownData.reduce(
+                                (sum, vendor) => sum + vendor.currentMonthSpend,
+                                0
+                              )
+                            )}
+                          </td>
+                          <td>
+                            {formatCurrencyFull(
+                              vendorBreakdownData.reduce(
+                                (sum, vendor) => sum + vendor.ytdSpend,
+                                0
+                              )
+                            )}
+                          </td>
+                        </tr>
+                      </>
+                    ) : (
+                      <tr>
+                        <td
+                          colSpan={4}
+                          style={{
+                            textAlign: "center",
+                            fontStyle: "italic",
+                            color: "#666",
+                          }}
+                        >
+                          No vendor data available
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         )}
 
