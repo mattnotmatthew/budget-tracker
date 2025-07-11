@@ -4,9 +4,13 @@ import {
   calculateMonthlyData,
 } from "../../../utils/budgetCalculations";
 import { formatCurrencyFull } from "../../../utils/currencyFormatter";
+import {
+  getLastFinalMonthNumber,
+  getLastFinalMonthName,
+} from "../../../utils/monthUtils";
 
 // Re-export for backward compatibility
-export { formatCurrencyFull };
+export { formatCurrencyFull, getLastFinalMonthName };
 
 export interface SectionMetadata {
   id: string;
@@ -53,7 +57,6 @@ export interface VarianceCategory {
   variance: number;
 }
 
-
 export const getKPIData = (state: any): KPIData => {
   // Use proper YTD calculation that matches the rest of the application
   const ytdResult = calculateYTDData(
@@ -80,7 +83,7 @@ export const getKPIData = (state: any): KPIData => {
 
     // Generate monthly data for all 12 months
     const allMonths = Array.from({ length: 12 }, (_, i) => i + 1);
-    
+
     allMonths.forEach((month) => {
       const monthData = calculateMonthlyData(
         state.entries,
@@ -265,58 +268,9 @@ export const getTopVarianceCategories = (
   return arr.slice(0, count);
 };
 
-export const getLastFinalMonthName = (state: any) => {
-  const monthNames = [
-    "",
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
-
-  // Find the last month that is marked as "Final" (true) in monthlyForecastModes
-  let lastFinalMonth = 0;
-  const currentYear = state.selectedYear;
-
-  if (state.monthlyForecastModes[currentYear]) {
-    for (let month = 12; month >= 1; month--) {
-      if (state.monthlyForecastModes[currentYear][month] === true) {
-        lastFinalMonth = month;
-        break;
-      }
-    }
-  }
-
-  // If no final months found, check for actual data
-  if (lastFinalMonth === 0) {
-    for (let month = 12; month >= 1; month--) {
-      const hasActualData = state.entries.some(
-        (entry: any) =>
-          entry.year === currentYear &&
-          entry.month === month &&
-          entry.actualAmount !== null &&
-          entry.actualAmount !== undefined &&
-          entry.actualAmount !== 0
-      );
-      if (hasActualData) {
-        lastFinalMonth = month;
-        break;
-      }
-    }
-  }
-
-  return lastFinalMonth > 0 ? monthNames[lastFinalMonth] : "Current";
-};
-
-export const getTargetAchievementSubtitle = (targetAchievement: number): string => {
+export const getTargetAchievementSubtitle = (
+  targetAchievement: number
+): string => {
   if (targetAchievement >= 110) {
     return "Spending faster than planned";
   } else if (targetAchievement >= 105) {

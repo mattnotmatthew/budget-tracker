@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useBudget } from "../context/BudgetContext";
 import { FunctionalAllocation as FunctionalAllocationType } from "../types";
+import { getLastFinalMonthNumber } from "../utils/monthUtils";
 import TableActionButtons from "./shared/TableActionButtons";
 import "../styles/components/functional-allocation.css";
 
 const FunctionalAllocation: React.FC = () => {
   const { state, dispatch } = useBudget();
   const [selectedMonth, setSelectedMonth] = useState<number>(
-    new Date().getMonth() + 1
+    getLastFinalMonthNumber(state)
   );
   // Track which rows are in edit mode (changed from single editingId to Set)
   const [editingRows, setEditingRows] = useState<Set<string>>(new Set());
@@ -94,13 +95,18 @@ const FunctionalAllocation: React.FC = () => {
       payload: newAllocation,
     });
 
-    setEditingRows(new Set([newAllocation.id]));
+    // Add the new allocation to existing editing rows instead of replacing them
+    setEditingRows((prev) => {
+      const newSet = new Set(prev);
+      newSet.add(newAllocation.id);
+      return newSet;
+    });
 
     // Auto-focus on the new row - first field
     setTimeout(() => {
       const firstInput = document.querySelector(
-        `select[data-allocation-id="${newAllocation.id}"][data-field="teamName"]`
-      ) as HTMLSelectElement;
+        `input[data-allocation-id="${newAllocation.id}"][data-field="product"]`
+      ) as HTMLInputElement;
       if (firstInput) {
         firstInput.focus();
       }
@@ -180,12 +186,12 @@ const FunctionalAllocation: React.FC = () => {
     rows.forEach((row, index) => {
       const cells = row.split("\t");
 
-      // Expected columns: Team, Function, Cost Center, Product, Cost, % of Work
+      // Expected columns: Product, Team, Function, Cost Center, Cost, % of Work
       if (cells.length >= 6) {
-        const teamName = cells[0].trim();
-        const functionValue = cells[1].trim();
-        const costCenter = cells[2].trim();
-        const product = cells[3].trim();
+        const product = cells[0].trim();
+        const teamName = cells[1].trim();
+        const functionValue = cells[2].trim();
+        const costCenter = cells[3].trim();
         // Cost will be automatically set from Resources component
         const percentOfWork =
           parseFloat(cells[5].replace(/[^0-9.-]/g, "")) || 0;
@@ -243,19 +249,19 @@ const FunctionalAllocation: React.FC = () => {
   // Export to CSV
   const handleExportCSV = () => {
     const headers = [
+      "Product",
       "Team",
       "Function",
       "Current Cost Center",
-      "Product",
       "Cost ($k)",
       "% of Work",
       "Cost Per ($k)",
     ];
     const rows = monthAllocations.map((allocation) => [
+      allocation.product,
       allocation.teamName,
       allocation.function,
       allocation.currentCostCenter,
-      allocation.product,
       allocation.cost.toString(),
       allocation.percentOfWork.toString(),
       calculateCostPer(allocation).toFixed(2),
@@ -475,10 +481,10 @@ const FunctionalAllocation: React.FC = () => {
   ) => {
     // Field order for navigation
     const fieldTypes: (keyof FunctionalAllocationType)[] = [
+      "product",
       "teamName",
       "function",
       "currentCostCenter",
-      "product",
       "percentOfWork",
     ];
 
@@ -586,7 +592,6 @@ const FunctionalAllocation: React.FC = () => {
   return (
     <div className="functional-allocation-container">
       <div className="functional-allocation-header">
-        <h2>Product Allocation</h2>
         <div className="header-controls">
           <div className="month-selector">
             <label>Month:</label>
@@ -606,9 +611,6 @@ const FunctionalAllocation: React.FC = () => {
       </div>
 
       <div className="functional-allocation-actions">
-        <button onClick={handleAddAllocation} className="add-btn">
-          Add Allocation
-        </button>
         <button onClick={handleExportCSV} className="export-btn">
           Export to CSV
         </button>
@@ -617,264 +619,272 @@ const FunctionalAllocation: React.FC = () => {
         )}
       </div>
 
-      <div className="table-container" onPaste={handlePaste}>
-        <table ref={tableRef} className="functional-allocation-table">
-          <thead>
-            <tr>
-              <th>Team</th>
-              <th>Function</th>
-              <th>Current Cost Center</th>
-              <th>Product</th>
-              <th>Team Cost ({monthNames[selectedMonth - 1]})</th>
-              <th>% of Work</th>
-              <th>Cost Per Product ({monthNames[selectedMonth - 1]})</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {monthAllocations.length === 0 ? (
+      <div className="table-section">
+        <div className="table-section-header">
+          <h2>Product Allocation</h2>
+          <button onClick={handleAddAllocation} className="add-btn">
+            Add Allocation
+          </button>
+        </div>
+        <div className="table-container" onPaste={handlePaste}>
+          <table ref={tableRef} className="functional-allocation-table">
+            <thead>
               <tr>
-                <td colSpan={8} className="no-data">
-                  No allocations for {monthNames[selectedMonth - 1]}{" "}
-                  {state.selectedYear}
-                </td>
+                <th>Product</th>
+                <th>Team</th>
+                <th>Function</th>
+                <th>Current Cost Center</th>
+                <th>Team Cost ({monthNames[selectedMonth - 1]})</th>
+                <th>% of Work</th>
+                <th>Cost Per Product ({monthNames[selectedMonth - 1]})</th>
+                <th>Actions</th>
               </tr>
-            ) : (
-              monthAllocations.map((allocation) => (
-                <tr key={allocation.id}>
-                  <td>
-                    {editingRows.has(allocation.id) ? (
-                      <select
-                        value={allocation.teamName}
-                        data-allocation-id={allocation.id}
-                        data-field="teamName"
-                        onChange={(e) =>
-                          handleFieldChange(
-                            allocation.id,
-                            "teamName",
-                            e.target.value
-                          )
-                        }
-                        onKeyDown={(e) =>
-                          handleKeyDown(e, allocation.id, "teamName")
-                        }
-                        onPaste={(e) =>
-                          handleMultiRowPaste(e, allocation.id, "teamName")
-                        }
-                        className="form-select"
-                      >
-                        <option value="">Select Team</option>
-                        {uniqueTeams.map((team) => (
-                          <option key={team} value={team}>
-                            {team}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <span onClick={() => toggleEditMode(allocation.id)}>
-                        {allocation.teamName || "-"}
-                      </span>
-                    )}
+            </thead>
+            <tbody>
+              {monthAllocations.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="no-data">
+                    No allocations for {monthNames[selectedMonth - 1]}{" "}
+                    {state.selectedYear}
                   </td>
-                  <td>
-                    {editingRows.has(allocation.id) ? (
-                      <select
-                        value={allocation.function}
-                        data-allocation-id={allocation.id}
-                        data-field="function"
-                        onChange={(e) =>
-                          handleFieldChange(
-                            allocation.id,
-                            "function",
-                            e.target.value
-                          )
-                        }
-                        onKeyDown={(e) =>
-                          handleKeyDown(e, allocation.id, "function")
-                        }
-                        onPaste={(e) =>
-                          handleMultiRowPaste(e, allocation.id, "function")
-                        }
-                        className="form-select"
-                      >
-                        <option value="Development">Development</option>
-                        <option value="Infrastructure">Infrastructure</option>
-                        <option value="Revenue">Revenue</option>
-                        <option value="Support">Support</option>
-                      </select>
-                    ) : (
-                      <span onClick={() => toggleEditMode(allocation.id)}>
-                        {allocation.function}
-                      </span>
-                    )}
-                  </td>
-                  <td>
-                    {editingRows.has(allocation.id) ? (
-                      <select
-                        value={allocation.currentCostCenter}
-                        data-allocation-id={allocation.id}
-                        data-field="currentCostCenter"
-                        onChange={(e) =>
-                          handleFieldChange(
-                            allocation.id,
-                            "currentCostCenter",
-                            e.target.value
-                          )
-                        }
-                        onKeyDown={(e) =>
-                          handleKeyDown(e, allocation.id, "currentCostCenter")
-                        }
-                        onPaste={(e) =>
-                          handleMultiRowPaste(
-                            e,
-                            allocation.id,
-                            "currentCostCenter"
-                          )
-                        }
-                        className="form-select"
-                      >
-                        <option value="">Select Cost Center</option>
-                        {uniqueCostCenters.map((cc) => (
-                          <option key={cc} value={cc}>
-                            {cc}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <span onClick={() => toggleEditMode(allocation.id)}>
-                        {allocation.currentCostCenter || "-"}
-                      </span>
-                    )}
-                  </td>
-                  <td>
-                    {editingRows.has(allocation.id) ? (
-                      <input
-                        type="text"
-                        value={allocation.product}
-                        data-allocation-id={allocation.id}
-                        data-field="product"
-                        onChange={(e) =>
-                          handleFieldChange(
-                            allocation.id,
-                            "product",
-                            e.target.value
-                          )
-                        }
-                        onKeyDown={(e) =>
-                          handleKeyDown(e, allocation.id, "product")
-                        }
-                        onPaste={(e) =>
-                          handleMultiRowPaste(e, allocation.id, "product")
-                        }
-                        className="form-input"
-                      />
-                    ) : (
-                      <span onClick={() => toggleEditMode(allocation.id)}>
-                        {allocation.product || "-"}
-                      </span>
-                    )}
-                  </td>
-                  <td className="calculated-field">
-                    $
-                    {allocation.cost.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </td>
-                  <td>
-                    {editingRows.has(allocation.id) ? (
-                      <div className="input-with-suffix">
+                </tr>
+              ) : (
+                monthAllocations.map((allocation) => (
+                  <tr key={allocation.id}>
+                    <td>
+                      {editingRows.has(allocation.id) ? (
                         <input
-                          type="number"
-                          value={allocation.percentOfWork}
+                          type="text"
+                          value={allocation.product}
                           data-allocation-id={allocation.id}
-                          data-field="percentOfWork"
+                          data-field="product"
                           onChange={(e) =>
                             handleFieldChange(
                               allocation.id,
-                              "percentOfWork",
-                              Number(e.target.value)
+                              "product",
+                              e.target.value
                             )
                           }
                           onKeyDown={(e) =>
-                            handleKeyDown(e, allocation.id, "percentOfWork")
+                            handleKeyDown(e, allocation.id, "product")
+                          }
+                          onPaste={(e) =>
+                            handleMultiRowPaste(e, allocation.id, "product")
+                          }
+                          className="form-input"
+                        />
+                      ) : (
+                        <span onClick={() => toggleEditMode(allocation.id)}>
+                          {allocation.product || "-"}
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      {editingRows.has(allocation.id) ? (
+                        <select
+                          value={allocation.teamName}
+                          data-allocation-id={allocation.id}
+                          data-field="teamName"
+                          onChange={(e) =>
+                            handleFieldChange(
+                              allocation.id,
+                              "teamName",
+                              e.target.value
+                            )
+                          }
+                          onKeyDown={(e) =>
+                            handleKeyDown(e, allocation.id, "teamName")
+                          }
+                          onPaste={(e) =>
+                            handleMultiRowPaste(e, allocation.id, "teamName")
+                          }
+                          className="form-select"
+                        >
+                          <option value="">Select Team</option>
+                          {uniqueTeams.map((team) => (
+                            <option key={team} value={team}>
+                              {team}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span onClick={() => toggleEditMode(allocation.id)}>
+                          {allocation.teamName || "-"}
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      {editingRows.has(allocation.id) ? (
+                        <select
+                          value={allocation.function}
+                          data-allocation-id={allocation.id}
+                          data-field="function"
+                          onChange={(e) =>
+                            handleFieldChange(
+                              allocation.id,
+                              "function",
+                              e.target.value
+                            )
+                          }
+                          onKeyDown={(e) =>
+                            handleKeyDown(e, allocation.id, "function")
+                          }
+                          onPaste={(e) =>
+                            handleMultiRowPaste(e, allocation.id, "function")
+                          }
+                          className="form-select"
+                        >
+                          <option value="Development">Development</option>
+                          <option value="Infrastructure">Infrastructure</option>
+                          <option value="Revenue">Revenue</option>
+                          <option value="Support">Support</option>
+                        </select>
+                      ) : (
+                        <span onClick={() => toggleEditMode(allocation.id)}>
+                          {allocation.function}
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      {editingRows.has(allocation.id) ? (
+                        <select
+                          value={allocation.currentCostCenter}
+                          data-allocation-id={allocation.id}
+                          data-field="currentCostCenter"
+                          onChange={(e) =>
+                            handleFieldChange(
+                              allocation.id,
+                              "currentCostCenter",
+                              e.target.value
+                            )
+                          }
+                          onKeyDown={(e) =>
+                            handleKeyDown(e, allocation.id, "currentCostCenter")
                           }
                           onPaste={(e) =>
                             handleMultiRowPaste(
                               e,
                               allocation.id,
-                              "percentOfWork"
+                              "currentCostCenter"
                             )
                           }
-                          className={`form-input ${
-                            errors[`${allocation.id}-percentOfWork`]
-                              ? "error"
-                              : ""
-                          }`}
-                          min="0"
-                          max="100"
-                          step="0.01"
-                        />
-                        <span className="suffix">%</span>
-                      </div>
-                    ) : (
-                      <span onClick={() => toggleEditMode(allocation.id)}>
-                        {allocation.percentOfWork}%
-                      </span>
-                    )}
-                  </td>
-                  <td className="calculated-field">
-                    $
-                    {calculateCostPer(allocation).toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </td>
-                  <td>
-                    <TableActionButtons
-                      isEditing={editingRows.has(allocation.id)}
-                      onEdit={() => toggleEditMode(allocation.id)}
-                      onDelete={() => handleDeleteAllocation(allocation.id)}
-                      editTooltip={
-                        editingRows.has(allocation.id)
-                          ? "Save allocation"
-                          : "Edit allocation"
-                      }
-                      deleteTooltip="Delete allocation"
-                    />
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+                          className="form-select"
+                        >
+                          <option value="">Select Cost Center</option>
+                          {uniqueCostCenters.map((cc) => (
+                            <option key={cc} value={cc}>
+                              {cc}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span onClick={() => toggleEditMode(allocation.id)}>
+                          {allocation.currentCostCenter || "-"}
+                        </span>
+                      )}
+                    </td>
+                    <td className="calculated-field">
+                      $
+                      {allocation.cost.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </td>
+                    <td>
+                      {editingRows.has(allocation.id) ? (
+                        <div className="input-with-suffix">
+                          <input
+                            type="number"
+                            value={allocation.percentOfWork}
+                            data-allocation-id={allocation.id}
+                            data-field="percentOfWork"
+                            onChange={(e) =>
+                              handleFieldChange(
+                                allocation.id,
+                                "percentOfWork",
+                                Number(e.target.value)
+                              )
+                            }
+                            onKeyDown={(e) =>
+                              handleKeyDown(e, allocation.id, "percentOfWork")
+                            }
+                            onPaste={(e) =>
+                              handleMultiRowPaste(
+                                e,
+                                allocation.id,
+                                "percentOfWork"
+                              )
+                            }
+                            className={`form-input ${
+                              errors[`${allocation.id}-percentOfWork`]
+                                ? "error"
+                                : ""
+                            }`}
+                            min="0"
+                            max="100"
+                            step="0.01"
+                          />
+                          <span className="suffix">%</span>
+                        </div>
+                      ) : (
+                        <span onClick={() => toggleEditMode(allocation.id)}>
+                          {allocation.percentOfWork}%
+                        </span>
+                      )}
+                    </td>
+                    <td className="calculated-field">
+                      $
+                      {calculateCostPer(allocation).toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </td>
+                    <td>
+                      <TableActionButtons
+                        isEditing={editingRows.has(allocation.id)}
+                        onEdit={() => toggleEditMode(allocation.id)}
+                        onDelete={() => handleDeleteAllocation(allocation.id)}
+                        editTooltip={
+                          editingRows.has(allocation.id)
+                            ? "Save allocation"
+                            : "Edit allocation"
+                        }
+                        deleteTooltip="Delete allocation"
+                      />
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
 
-      <div className="functional-allocation-help">
-        <p>
-          <strong>Tip:</strong> Product allocations are tracked by month. You
-          can paste data from Excel in two ways:
-        </p>
-        <ul>
-          <li>
-            <strong>Full rows:</strong> Copy rows with columns: Team, Function,
-            Cost Center, Product, Cost, % of Work
-          </li>
-          <li>
-            <strong>Column values:</strong> Copy a column of values (A1, A2, A3,
-            A4) and paste into any field to fill multiple rows vertically
-          </li>
-        </ul>
-        <p>
-          <strong>Keyboard Navigation:</strong> Use Tab/Shift+Tab to move
-          between fields, Enter/↓ to move to next row, ↑ to move to previous
-          row, ←→ to move between columns.
-        </p>
-        <p>
-          <strong>Team Cost:</strong> The Team Cost column is automatically
-          populated from the Resources section based on the selected team and
-          month.
-        </p>
+        <div className="functional-allocation-help">
+          <p>
+            <strong>Tip:</strong> Product allocations are tracked by month. You
+            can paste data from Excel in two ways:
+          </p>
+          <ul>
+            <li>
+              <strong>Full rows:</strong> Copy rows with columns: Product, Team,
+              Function, Cost Center, Cost, % of Work
+            </li>
+            <li>
+              <strong>Column values:</strong> Copy a column of values (A1, A2,
+              A3, A4) and paste into any field to fill multiple rows vertically
+            </li>
+          </ul>
+          <p>
+            <strong>Keyboard Navigation:</strong> Use Tab/Shift+Tab to move
+            between fields, Enter/↓ to move to next row, ↑ to move to previous
+            row, ←→ to move between columns.
+          </p>
+          <p>
+            <strong>Team Cost:</strong> The Team Cost column is automatically
+            populated from the Resources section based on the selected team and
+            month.
+          </p>
+        </div>
       </div>
     </div>
   );

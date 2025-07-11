@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useBudget } from "../context/BudgetContext";
 import { TeamData } from "../types";
 import { formatCurrencyFull } from "../utils/currencyFormatter";
+import { getLastFinalMonthNumber } from "../utils/monthUtils";
 import { TableActionButtons } from "./shared";
 import "../styles/App-new.css";
 
@@ -17,9 +18,9 @@ const Resources: React.FC = () => {
   // State for paste messages
   const [pasteMessage, setPasteMessage] = useState<string | null>(null);
 
-  // Month selection state
+  // Month selection state - default to last final month
   const [selectedMonth, setSelectedMonth] = useState<number>(
-    new Date().getMonth() + 1
+    getLastFinalMonthNumber(state)
   );
 
   // Sort configuration
