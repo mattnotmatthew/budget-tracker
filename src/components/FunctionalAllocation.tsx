@@ -189,34 +189,27 @@ const FunctionalAllocation: React.FC = () => {
       // Expected columns: Product, Team, Function, Cost Center, Cost, % of Work
       if (cells.length >= 6) {
         const product = cells[0].trim();
-        const teamName = cells[1].trim();
-        const functionValue = cells[2].trim();
-        const costCenter = cells[3].trim();
+        const teamNameRaw = cells[1].trim();
+        const functionValueRaw = cells[2].trim();
+        const costCenterRaw = cells[3].trim();
         // Cost will be automatically set from Resources component
         const percentOfWork =
           parseFloat(cells[5].replace(/[^0-9.-]/g, "")) || 0;
 
+        // Use helper functions to find matching dropdown values
+        const teamName = findMatchingTeam(teamNameRaw);
+        const functionValue = findMatchingFunction(functionValueRaw);
+        const costCenter = findMatchingCostCenter(costCenterRaw);
+
         // Get the monthly cost from Resources component
         const monthlyCost = getTeamMonthlyCost(teamName);
-
-        // Validate function value
-        const validFunctions = [
-          "Development",
-          "Infrastructure",
-          "Revenue",
-          "Support",
-        ];
-        const normalizedFunction =
-          validFunctions.find(
-            (f) => f.toLowerCase() === functionValue.toLowerCase()
-          ) || "Development";
 
         const newAllocation: FunctionalAllocationType = {
           id: `fa-${Date.now()}-${index}`,
           year: state.selectedYear,
           month: selectedMonth,
           teamName,
-          function: normalizedFunction as
+          function: functionValue as
             | "Development"
             | "Infrastructure"
             | "Revenue"
@@ -343,6 +336,99 @@ const FunctionalAllocation: React.FC = () => {
     return isNaN(num) ? 0 : num;
   };
 
+  // Helper function to find matching team name (case-insensitive, partial match)
+  const findMatchingTeam = (pastedValue: string): string => {
+    if (!pastedValue || !pastedValue.trim()) return "";
+
+    const trimmedValue = pastedValue.trim().toLowerCase();
+
+    // Try exact match first
+    const exactMatch = uniqueTeams.find(
+      (team) => team.toLowerCase() === trimmedValue
+    );
+    if (exactMatch) return exactMatch;
+
+    // Try partial match (contains)
+    const partialMatch = uniqueTeams.find(
+      (team) =>
+        team.toLowerCase().includes(trimmedValue) ||
+        trimmedValue.includes(team.toLowerCase())
+    );
+    if (partialMatch) return partialMatch;
+
+    // If no match found, return empty string (will show as "Select Team")
+    return "";
+  };
+
+  // Helper function to find matching function (case-insensitive)
+  const findMatchingFunction = (pastedValue: string): string => {
+    if (!pastedValue || !pastedValue.trim()) return "Development"; // Default
+
+    const trimmedValue = pastedValue.trim().toLowerCase();
+    const validFunctions = [
+      "Development",
+      "Infrastructure",
+      "Revenue",
+      "Support",
+    ];
+
+    // Try exact match first
+    const exactMatch = validFunctions.find(
+      (func) => func.toLowerCase() === trimmedValue
+    );
+    if (exactMatch) return exactMatch;
+
+    // Try partial match (starts with)
+    const partialMatch = validFunctions.find(
+      (func) =>
+        func.toLowerCase().startsWith(trimmedValue) ||
+        trimmedValue.startsWith(func.toLowerCase())
+    );
+    if (partialMatch) return partialMatch;
+
+    // Common abbreviations/aliases
+    const aliases: { [key: string]: string } = {
+      dev: "Development",
+      develop: "Development",
+      infra: "Infrastructure",
+      infrastructure: "Infrastructure",
+      rev: "Revenue",
+      revenue: "Revenue",
+      sup: "Support",
+      support: "Support",
+    };
+
+    const aliasMatch = aliases[trimmedValue];
+    if (aliasMatch) return aliasMatch;
+
+    // Default to Development if no match
+    return "Development";
+  };
+
+  // Helper function to find matching cost center (case-insensitive, partial match)
+  const findMatchingCostCenter = (pastedValue: string): string => {
+    if (!pastedValue || !pastedValue.trim()) return "";
+
+    const trimmedValue = pastedValue.trim().toLowerCase();
+
+    // Try exact match first
+    const exactMatch = uniqueCostCenters.find(
+      (cc) => cc.toLowerCase() === trimmedValue
+    );
+    if (exactMatch) return exactMatch;
+
+    // Try partial match (contains)
+    const partialMatch = uniqueCostCenters.find(
+      (cc) =>
+        cc.toLowerCase().includes(trimmedValue) ||
+        trimmedValue.includes(cc.toLowerCase())
+    );
+    if (partialMatch) return partialMatch;
+
+    // If no match found, return empty string (will show as "Select Cost Center")
+    return "";
+  };
+
   // Handle multi-row paste from Excel (for vertical column pasting)
   const handleMultiRowPaste = async (
     e: React.ClipboardEvent<HTMLInputElement | HTMLSelectElement>,
@@ -379,13 +465,14 @@ const FunctionalAllocation: React.FC = () => {
           if (field === "percentOfWork") {
             processedValue =
               parseFloat(cleanExcelNumber(value).toString()) || 0;
-          } else if (
-            field === "teamName" ||
-            field === "function" ||
-            field === "currentCostCenter" ||
-            field === "product"
-          ) {
-            // For text fields, use the text as-is
+          } else if (field === "teamName") {
+            processedValue = findMatchingTeam(value);
+          } else if (field === "function") {
+            processedValue = findMatchingFunction(value);
+          } else if (field === "currentCostCenter") {
+            processedValue = findMatchingCostCenter(value);
+          } else if (field === "product") {
+            // For product field, use the text as-is
             processedValue = value;
           }
 
@@ -416,13 +503,14 @@ const FunctionalAllocation: React.FC = () => {
             if (field === "percentOfWork") {
               processedValue =
                 parseFloat(cleanExcelNumber(value).toString()) || 0;
-            } else if (
-              field === "teamName" ||
-              field === "function" ||
-              field === "currentCostCenter" ||
-              field === "product"
-            ) {
-              // For text fields, use the text as-is
+            } else if (field === "teamName") {
+              processedValue = findMatchingTeam(value);
+            } else if (field === "function") {
+              processedValue = findMatchingFunction(value);
+            } else if (field === "currentCostCenter") {
+              processedValue = findMatchingCostCenter(value);
+            } else if (field === "product") {
+              // For product field, use the text as-is
               processedValue = value;
             }
 
@@ -463,6 +551,15 @@ const FunctionalAllocation: React.FC = () => {
     // Process based on field type
     if (field === "percentOfWork") {
       processedValue = parseFloat(cleanExcelNumber(pastedData).toString()) || 0;
+    } else if (field === "teamName") {
+      processedValue = findMatchingTeam(pastedData);
+    } else if (field === "function") {
+      processedValue = findMatchingFunction(pastedData);
+    } else if (field === "currentCostCenter") {
+      processedValue = findMatchingCostCenter(pastedData);
+    } else if (field === "product") {
+      // For product field, use the text as-is
+      processedValue = pastedData.trim();
     }
 
     // Update the allocation
@@ -874,6 +971,13 @@ const FunctionalAllocation: React.FC = () => {
               A3, A4) and paste into any field to fill multiple rows vertically
             </li>
           </ul>
+          <p>
+            <strong>Smart Dropdown Matching:</strong> When pasting into Team,
+            Function, or Cost Center columns, the system will automatically
+            match your pasted text to available options using case-insensitive
+            and partial matching. For Functions, you can use abbreviations like
+            "dev" for Development, "infra" for Infrastructure, etc.
+          </p>
           <p>
             <strong>Keyboard Navigation:</strong> Use Tab/Shift+Tab to move
             between fields, Enter/↓ to move to next row, ↑ to move to previous
