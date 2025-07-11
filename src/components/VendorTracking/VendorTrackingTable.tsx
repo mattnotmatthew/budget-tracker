@@ -115,9 +115,27 @@ const VendorTrackingTable: React.FC<VendorTrackingTableProps> = (props) => {
           : 1;
       }
 
-      // Handle numeric values (monthly columns)
-      if (typeof aValue === "string" && typeof bValue === "string") {
-        // Check if both are numeric strings
+      // Handle numeric values ONLY for monthly amount columns
+      const monthlyFields = [
+        "jan",
+        "feb",
+        "mar",
+        "apr",
+        "may",
+        "jun",
+        "jul",
+        "aug",
+        "sep",
+        "oct",
+        "nov",
+        "dec",
+      ];
+      if (
+        typeof aValue === "string" &&
+        typeof bValue === "string" &&
+        monthlyFields.includes(config.field!)
+      ) {
+        // Check if both are numeric strings (for monthly amount columns only)
         const aNum = parseFloat(aValue);
         const bNum = parseFloat(bValue);
         if (!isNaN(aNum) && !isNaN(bNum)) {
@@ -125,9 +143,19 @@ const VendorTrackingTable: React.FC<VendorTrackingTableProps> = (props) => {
         }
       }
 
-      // Handle string comparison
-      const aStr = String(aValue || "").toLowerCase();
-      const bStr = String(bValue || "").toLowerCase();
+      // Handle string comparison (including financeMappedCategory, vendorName, notes)
+      // Convert to strings and handle null/undefined values
+      const aStr = String(aValue || "")
+        .toLowerCase()
+        .trim();
+      const bStr = String(bValue || "")
+        .toLowerCase()
+        .trim();
+
+      // Handle empty values - empty strings should sort to the end
+      if (aStr === "" && bStr === "") return 0;
+      if (aStr === "") return config.direction === "asc" ? 1 : -1;
+      if (bStr === "") return config.direction === "asc" ? -1 : 1;
 
       return config.direction === "asc"
         ? aStr.localeCompare(bStr)
@@ -498,670 +526,724 @@ const VendorTrackingTable: React.FC<VendorTrackingTableProps> = (props) => {
   return (
     <div className="vendor-table-container">
       {pasteMessage && <div className="paste-message">{pasteMessage}</div>}
-      <button className="add-row-btn" onClick={addNewItem}>
-        + Add New Item
-      </button>
-      <table className="vendor-tracking-table">
-        <thead>
-          <tr>
-            <th>
-              <button
-                className="sort-header"
-                onClick={() => handleSort("financeMappedCategory")}
-              >
-                Finance Mapped Category/Vendor
-                {sortConfig.field === "financeMappedCategory" && (
-                  <span className="sort-indicator">
-                    {sortConfig.direction === "asc" ? " ↑" : " ↓"}
-                  </span>
-                )}
-              </button>
-            </th>
-            <th>
-              <button
-                className="sort-header"
-                onClick={() => handleSort("vendorName")}
-              >
-                Item/Vendor Name
-                {sortConfig.field === "vendorName" && (
-                  <span className="sort-indicator">
-                    {sortConfig.direction === "asc" ? " ↑" : " ↓"}
-                  </span>
-                )}
-              </button>
-            </th>
-            <th>
-              <button
-                className="sort-header"
-                onClick={() => handleSort("inBudget")}
-              >
-                In Budget
-                {sortConfig.field === "inBudget" && (
-                  <span className="sort-indicator">
-                    {sortConfig.direction === "asc" ? " ↑" : " ↓"}
-                  </span>
-                )}
-              </button>
-            </th>
-            <th>
-              <button className="sort-header" onClick={() => handleSort("jan")}>
-                Jan
-                {sortConfig.field === "jan" && (
-                  <span className="sort-indicator">
-                    {sortConfig.direction === "asc" ? " ↑" : " ↓"}
-                  </span>
-                )}
-              </button>
-            </th>
-            <th>
-              <button className="sort-header" onClick={() => handleSort("feb")}>
-                Feb
-                {sortConfig.field === "feb" && (
-                  <span className="sort-indicator">
-                    {sortConfig.direction === "asc" ? " ↑" : " ↓"}
-                  </span>
-                )}
-              </button>
-            </th>
-            <th>
-              <button className="sort-header" onClick={() => handleSort("mar")}>
-                Mar
-                {sortConfig.field === "mar" && (
-                  <span className="sort-indicator">
-                    {sortConfig.direction === "asc" ? " ↑" : " ↓"}
-                  </span>
-                )}
-              </button>
-            </th>
-            <th>
-              <button className="sort-header" onClick={() => handleSort("apr")}>
-                Apr
-                {sortConfig.field === "apr" && (
-                  <span className="sort-indicator">
-                    {sortConfig.direction === "asc" ? " ↑" : " ↓"}
-                  </span>
-                )}
-              </button>
-            </th>
-            <th>
-              <button className="sort-header" onClick={() => handleSort("may")}>
-                May
-                {sortConfig.field === "may" && (
-                  <span className="sort-indicator">
-                    {sortConfig.direction === "asc" ? " ↑" : " ↓"}
-                  </span>
-                )}
-              </button>
-            </th>
-            <th>
-              <button className="sort-header" onClick={() => handleSort("jun")}>
-                Jun
-                {sortConfig.field === "jun" && (
-                  <span className="sort-indicator">
-                    {sortConfig.direction === "asc" ? " ↑" : " ↓"}
-                  </span>
-                )}
-              </button>
-            </th>
-            <th>
-              <button className="sort-header" onClick={() => handleSort("jul")}>
-                Jul
-                {sortConfig.field === "jul" && (
-                  <span className="sort-indicator">
-                    {sortConfig.direction === "asc" ? " ↑" : " ↓"}
-                  </span>
-                )}
-              </button>
-            </th>
-            <th>
-              <button className="sort-header" onClick={() => handleSort("aug")}>
-                Aug
-                {sortConfig.field === "aug" && (
-                  <span className="sort-indicator">
-                    {sortConfig.direction === "asc" ? " ↑" : " ↓"}
-                  </span>
-                )}
-              </button>
-            </th>
-            <th>
-              <button className="sort-header" onClick={() => handleSort("sep")}>
-                Sep
-                {sortConfig.field === "sep" && (
-                  <span className="sort-indicator">
-                    {sortConfig.direction === "asc" ? " ↑" : " ↓"}
-                  </span>
-                )}
-              </button>
-            </th>
-            <th>
-              <button className="sort-header" onClick={() => handleSort("oct")}>
-                Oct
-                {sortConfig.field === "oct" && (
-                  <span className="sort-indicator">
-                    {sortConfig.direction === "asc" ? " ↑" : " ↓"}
-                  </span>
-                )}
-              </button>
-            </th>
-            <th>
-              <button className="sort-header" onClick={() => handleSort("nov")}>
-                Nov
-                {sortConfig.field === "nov" && (
-                  <span className="sort-indicator">
-                    {sortConfig.direction === "asc" ? " ↑" : " ↓"}
-                  </span>
-                )}
-              </button>
-            </th>
-            <th>
-              <button className="sort-header" onClick={() => handleSort("dec")}>
-                Dec
-                {sortConfig.field === "dec" && (
-                  <span className="sort-indicator">
-                    {sortConfig.direction === "asc" ? " ↑" : " ↓"}
-                  </span>
-                )}
-              </button>
-            </th>
-            <th>
-              <button
-                className="sort-header"
-                onClick={() => handleSort("notes")}
-              >
-                Notes
-                {sortConfig.field === "notes" && (
-                  <span className="sort-indicator">
-                    {sortConfig.direction === "asc" ? " ↑" : " ↓"}
-                  </span>
-                )}
-              </button>
-            </th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {getSortedTrackingData().map((item) => (
-            <tr
-              key={item.id}
-              className={
-                isRowInEditMode(item.id)
-                  ? "vendor-row-editing"
-                  : "vendor-row-complete"
-              }
-            >
-              <td className="vendor-col-finance-category">
-                {isRowInEditMode(item.id) ? (
-                  <input
-                    type="text"
-                    className="vendor-input"
-                    value={item.financeMappedCategory}
-                    data-tracking-id={item.id}
-                    data-field="financeMappedCategory"
-                    onChange={(e) =>
-                      handleInputChange(
-                        item.id,
-                        "financeMappedCategory",
-                        e.target.value
-                      )
-                    }
-                    onKeyDown={(e) =>
-                      handleKeyDown(e, item.id, "financeMappedCategory")
-                    }
-                    onPaste={(e) =>
-                      handlePaste(e, item.id, "financeMappedCategory")
-                    }
-                  />
-                ) : (
-                  <span className="vendor-label vendor-label-finance">
-                    {item.financeMappedCategory}
-                  </span>
-                )}
-              </td>
-              <td className="vendor-col-vendor-name">
-                {isRowInEditMode(item.id) ? (
-                  <input
-                    type="text"
-                    className="vendor-input"
-                    value={item.vendorName}
-                    data-tracking-id={item.id}
-                    data-field="vendorName"
-                    onChange={(e) =>
-                      handleInputChange(item.id, "vendorName", e.target.value)
-                    }
-                    onKeyDown={(e) => handleKeyDown(e, item.id, "vendorName")}
-                    onPaste={(e) => handlePaste(e, item.id, "vendorName")}
-                  />
-                ) : (
-                  <span className="vendor-label vendor-label-name">
-                    {item.vendorName}
-                  </span>
-                )}
-              </td>
-              <td className="vendor-col-in-budget">
-                {isRowInEditMode(item.id) ? (
-                  <div className="vendor-toggle-container">
-                    <label className="vendor-toggle-label">
+
+      <div className="table-section">
+        <div className="table-section-header">
+          <h2>Finance Vendor Input</h2>
+          <button className="add-btn" onClick={addNewItem}>
+            Add New Item
+          </button>
+        </div>
+        <div className="table-container">
+          <table className="vendor-tracking-table">
+            <thead>
+              <tr>
+                <th>
+                  <button
+                    className="sort-header"
+                    onClick={() => handleSort("financeMappedCategory")}
+                  >
+                    Finance Mapped Category/Vendor
+                    {sortConfig.field === "financeMappedCategory" && (
+                      <span className="sort-indicator">
+                        {sortConfig.direction === "asc" ? " ↑" : " ↓"}
+                      </span>
+                    )}
+                  </button>
+                </th>
+                <th>
+                  <button
+                    className="sort-header"
+                    onClick={() => handleSort("vendorName")}
+                  >
+                    Vendor Category
+                    {sortConfig.field === "vendorName" && (
+                      <span className="sort-indicator">
+                        {sortConfig.direction === "asc" ? " ↑" : " ↓"}
+                      </span>
+                    )}
+                  </button>
+                </th>
+                <th>
+                  <button
+                    className="sort-header"
+                    onClick={() => handleSort("inBudget")}
+                  >
+                    In Budget
+                    {sortConfig.field === "inBudget" && (
+                      <span className="sort-indicator">
+                        {sortConfig.direction === "asc" ? " ↑" : " ↓"}
+                      </span>
+                    )}
+                  </button>
+                </th>
+                <th>
+                  <button
+                    className="sort-header"
+                    onClick={() => handleSort("jan")}
+                  >
+                    Jan
+                    {sortConfig.field === "jan" && (
+                      <span className="sort-indicator">
+                        {sortConfig.direction === "asc" ? " ↑" : " ↓"}
+                      </span>
+                    )}
+                  </button>
+                </th>
+                <th>
+                  <button
+                    className="sort-header"
+                    onClick={() => handleSort("feb")}
+                  >
+                    Feb
+                    {sortConfig.field === "feb" && (
+                      <span className="sort-indicator">
+                        {sortConfig.direction === "asc" ? " ↑" : " ↓"}
+                      </span>
+                    )}
+                  </button>
+                </th>
+                <th>
+                  <button
+                    className="sort-header"
+                    onClick={() => handleSort("mar")}
+                  >
+                    Mar
+                    {sortConfig.field === "mar" && (
+                      <span className="sort-indicator">
+                        {sortConfig.direction === "asc" ? " ↑" : " ↓"}
+                      </span>
+                    )}
+                  </button>
+                </th>
+                <th>
+                  <button
+                    className="sort-header"
+                    onClick={() => handleSort("apr")}
+                  >
+                    Apr
+                    {sortConfig.field === "apr" && (
+                      <span className="sort-indicator">
+                        {sortConfig.direction === "asc" ? " ↑" : " ↓"}
+                      </span>
+                    )}
+                  </button>
+                </th>
+                <th>
+                  <button
+                    className="sort-header"
+                    onClick={() => handleSort("may")}
+                  >
+                    May
+                    {sortConfig.field === "may" && (
+                      <span className="sort-indicator">
+                        {sortConfig.direction === "asc" ? " ↑" : " ↓"}
+                      </span>
+                    )}
+                  </button>
+                </th>
+                <th>
+                  <button
+                    className="sort-header"
+                    onClick={() => handleSort("jun")}
+                  >
+                    Jun
+                    {sortConfig.field === "jun" && (
+                      <span className="sort-indicator">
+                        {sortConfig.direction === "asc" ? " ↑" : " ↓"}
+                      </span>
+                    )}
+                  </button>
+                </th>
+                <th>
+                  <button
+                    className="sort-header"
+                    onClick={() => handleSort("jul")}
+                  >
+                    Jul
+                    {sortConfig.field === "jul" && (
+                      <span className="sort-indicator">
+                        {sortConfig.direction === "asc" ? " ↑" : " ↓"}
+                      </span>
+                    )}
+                  </button>
+                </th>
+                <th>
+                  <button
+                    className="sort-header"
+                    onClick={() => handleSort("aug")}
+                  >
+                    Aug
+                    {sortConfig.field === "aug" && (
+                      <span className="sort-indicator">
+                        {sortConfig.direction === "asc" ? " ↑" : " ↓"}
+                      </span>
+                    )}
+                  </button>
+                </th>
+                <th>
+                  <button
+                    className="sort-header"
+                    onClick={() => handleSort("sep")}
+                  >
+                    Sep
+                    {sortConfig.field === "sep" && (
+                      <span className="sort-indicator">
+                        {sortConfig.direction === "asc" ? " ↑" : " ↓"}
+                      </span>
+                    )}
+                  </button>
+                </th>
+                <th>
+                  <button
+                    className="sort-header"
+                    onClick={() => handleSort("oct")}
+                  >
+                    Oct
+                    {sortConfig.field === "oct" && (
+                      <span className="sort-indicator">
+                        {sortConfig.direction === "asc" ? " ↑" : " ↓"}
+                      </span>
+                    )}
+                  </button>
+                </th>
+                <th>
+                  <button
+                    className="sort-header"
+                    onClick={() => handleSort("nov")}
+                  >
+                    Nov
+                    {sortConfig.field === "nov" && (
+                      <span className="sort-indicator">
+                        {sortConfig.direction === "asc" ? " ↑" : " ↓"}
+                      </span>
+                    )}
+                  </button>
+                </th>
+                <th>
+                  <button
+                    className="sort-header"
+                    onClick={() => handleSort("dec")}
+                  >
+                    Dec
+                    {sortConfig.field === "dec" && (
+                      <span className="sort-indicator">
+                        {sortConfig.direction === "asc" ? " ↑" : " ↓"}
+                      </span>
+                    )}
+                  </button>
+                </th>
+                <th>
+                  <button
+                    className="sort-header"
+                    onClick={() => handleSort("notes")}
+                  >
+                    Notes
+                    {sortConfig.field === "notes" && (
+                      <span className="sort-indicator">
+                        {sortConfig.direction === "asc" ? " ↑" : " ↓"}
+                      </span>
+                    )}
+                  </button>
+                </th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {getSortedTrackingData().map((item) => (
+                <tr
+                  key={item.id}
+                  className={
+                    isRowInEditMode(item.id)
+                      ? "vendor-row-editing"
+                      : "vendor-row-complete"
+                  }
+                >
+                  <td className="vendor-col-finance-category">
+                    {isRowInEditMode(item.id) ? (
                       <input
-                        type="checkbox"
-                        checked={item.inBudget}
+                        type="text"
+                        className="vendor-input"
+                        value={item.financeMappedCategory}
                         data-tracking-id={item.id}
-                        data-field="inBudget"
+                        data-field="financeMappedCategory"
                         onChange={(e) =>
                           handleInputChange(
                             item.id,
-                            "inBudget",
-                            e.target.checked
+                            "financeMappedCategory",
+                            e.target.value
                           )
                         }
-                        onKeyDown={(e) => handleKeyDown(e, item.id, "inBudget")}
-                        className="vendor-toggle-input"
-                        aria-label={`In Budget: ${
-                          item.inBudget ? "Yes" : "No"
-                        }`}
-                        title={`Click or press Space to toggle. Currently: ${
-                          item.inBudget ? "Yes" : "No"
-                        }`}
+                        onKeyDown={(e) =>
+                          handleKeyDown(e, item.id, "financeMappedCategory")
+                        }
+                        onPaste={(e) =>
+                          handlePaste(e, item.id, "financeMappedCategory")
+                        }
                       />
-                      <span className="vendor-toggle-slider"></span>
-                    </label>
-                  </div>
-                ) : (
-                  <span
-                    className="vendor-label"
-                    title={item.inBudget ? "Yes" : "No"}
-                  >
-                    {item.inBudget ? "Yes" : "No"}
-                  </span>
-                )}
-              </td>
-
-              {/* Monthly columns */}
-              <td className="vendor-col-month">
-                {isRowInEditMode(item.id) ? (
-                  <input
-                    type="number"
-                    className="vendor-input currency-input"
-                    value={item.jan}
-                    data-tracking-id={item.id}
-                    data-field="jan"
-                    onChange={(e) =>
-                      handleInputChange(item.id, "jan", e.target.value)
-                    }
-                    onKeyDown={(e) => handleKeyDown(e, item.id, "jan")}
-                    onPaste={(e) => handlePaste(e, item.id, "jan")}
-                  />
-                ) : (
-                  <span className="vendor-label monthly-amount">
-                    {formatCurrencyExcelStyle(
-                      (parseFloat(item.jan) || 0) * 1000
+                    ) : (
+                      <span className="vendor-label vendor-label-finance">
+                        {item.financeMappedCategory}
+                      </span>
                     )}
-                  </span>
-                )}
-              </td>
-              <td className="vendor-col-month">
-                {isRowInEditMode(item.id) ? (
-                  <input
-                    type="number"
-                    className="vendor-input currency-input"
-                    value={item.feb}
-                    data-tracking-id={item.id}
-                    data-field="feb"
-                    onChange={(e) =>
-                      handleInputChange(item.id, "feb", e.target.value)
-                    }
-                    onKeyDown={(e) => handleKeyDown(e, item.id, "feb")}
-                    onPaste={(e) => handlePaste(e, item.id, "feb")}
-                  />
-                ) : (
-                  <span className="vendor-label monthly-amount">
-                    {formatCurrencyExcelStyle(
-                      (parseFloat(item.feb) || 0) * 1000
-                    )}
-                  </span>
-                )}
-              </td>
-              <td className="vendor-col-month">
-                {isRowInEditMode(item.id) ? (
-                  <input
-                    type="number"
-                    className="vendor-input currency-input"
-                    value={item.mar}
-                    data-tracking-id={item.id}
-                    data-field="mar"
-                    onChange={(e) =>
-                      handleInputChange(item.id, "mar", e.target.value)
-                    }
-                    onKeyDown={(e) => handleKeyDown(e, item.id, "mar")}
-                    onPaste={(e) => handlePaste(e, item.id, "mar")}
-                  />
-                ) : (
-                  <span className="vendor-label monthly-amount">
-                    {formatCurrencyExcelStyle(
-                      (parseFloat(item.mar) || 0) * 1000
-                    )}
-                  </span>
-                )}
-              </td>
-              <td className="vendor-col-month">
-                {isRowInEditMode(item.id) ? (
-                  <input
-                    type="number"
-                    className="vendor-input currency-input"
-                    value={item.apr}
-                    data-tracking-id={item.id}
-                    data-field="apr"
-                    onChange={(e) =>
-                      handleInputChange(item.id, "apr", e.target.value)
-                    }
-                    onKeyDown={(e) => handleKeyDown(e, item.id, "apr")}
-                    onPaste={(e) => handlePaste(e, item.id, "apr")}
-                  />
-                ) : (
-                  <span className="vendor-label monthly-amount">
-                    {formatCurrencyExcelStyle(
-                      (parseFloat(item.apr) || 0) * 1000
-                    )}
-                  </span>
-                )}
-              </td>
-              <td className="vendor-col-month">
-                {isRowInEditMode(item.id) ? (
-                  <input
-                    type="number"
-                    className="vendor-input currency-input"
-                    value={item.may}
-                    data-tracking-id={item.id}
-                    data-field="may"
-                    onChange={(e) =>
-                      handleInputChange(item.id, "may", e.target.value)
-                    }
-                    onKeyDown={(e) => handleKeyDown(e, item.id, "may")}
-                    onPaste={(e) => handlePaste(e, item.id, "may")}
-                  />
-                ) : (
-                  <span className="vendor-label monthly-amount">
-                    {formatCurrencyExcelStyle(
-                      (parseFloat(item.may) || 0) * 1000
-                    )}
-                  </span>
-                )}
-              </td>
-              <td className="vendor-col-month">
-                {isRowInEditMode(item.id) ? (
-                  <input
-                    type="number"
-                    className="vendor-input currency-input"
-                    value={item.jun}
-                    data-tracking-id={item.id}
-                    data-field="jun"
-                    onChange={(e) =>
-                      handleInputChange(item.id, "jun", e.target.value)
-                    }
-                    onKeyDown={(e) => handleKeyDown(e, item.id, "jun")}
-                    onPaste={(e) => handlePaste(e, item.id, "jun")}
-                  />
-                ) : (
-                  <span className="vendor-label monthly-amount">
-                    {formatCurrencyExcelStyle(
-                      (parseFloat(item.jun) || 0) * 1000
-                    )}
-                  </span>
-                )}
-              </td>
-              <td className="vendor-col-month">
-                {isRowInEditMode(item.id) ? (
-                  <input
-                    type="number"
-                    className="vendor-input currency-input"
-                    value={item.jul}
-                    data-tracking-id={item.id}
-                    data-field="jul"
-                    onChange={(e) =>
-                      handleInputChange(item.id, "jul", e.target.value)
-                    }
-                    onKeyDown={(e) => handleKeyDown(e, item.id, "jul")}
-                    onPaste={(e) => handlePaste(e, item.id, "jul")}
-                  />
-                ) : (
-                  <span className="vendor-label monthly-amount">
-                    {formatCurrencyExcelStyle(
-                      (parseFloat(item.jul) || 0) * 1000
-                    )}
-                  </span>
-                )}
-              </td>
-              <td className="vendor-col-month">
-                {isRowInEditMode(item.id) ? (
-                  <input
-                    type="number"
-                    className="vendor-input currency-input"
-                    value={item.aug}
-                    data-tracking-id={item.id}
-                    data-field="aug"
-                    onChange={(e) =>
-                      handleInputChange(item.id, "aug", e.target.value)
-                    }
-                    onKeyDown={(e) => handleKeyDown(e, item.id, "aug")}
-                    onPaste={(e) => handlePaste(e, item.id, "aug")}
-                  />
-                ) : (
-                  <span className="vendor-label monthly-amount">
-                    {formatCurrencyExcelStyle(
-                      (parseFloat(item.aug) || 0) * 1000
-                    )}
-                  </span>
-                )}
-              </td>
-              <td className="vendor-col-month">
-                {isRowInEditMode(item.id) ? (
-                  <input
-                    type="number"
-                    className="vendor-input currency-input"
-                    value={item.sep}
-                    data-tracking-id={item.id}
-                    data-field="sep"
-                    onChange={(e) =>
-                      handleInputChange(item.id, "sep", e.target.value)
-                    }
-                    onKeyDown={(e) => handleKeyDown(e, item.id, "sep")}
-                    onPaste={(e) => handlePaste(e, item.id, "sep")}
-                  />
-                ) : (
-                  <span className="vendor-label monthly-amount">
-                    {formatCurrencyExcelStyle(
-                      (parseFloat(item.sep) || 0) * 1000
-                    )}
-                  </span>
-                )}
-              </td>
-              <td className="vendor-col-month">
-                {isRowInEditMode(item.id) ? (
-                  <input
-                    type="number"
-                    className="vendor-input currency-input"
-                    value={item.oct}
-                    data-tracking-id={item.id}
-                    data-field="oct"
-                    onChange={(e) =>
-                      handleInputChange(item.id, "oct", e.target.value)
-                    }
-                    onKeyDown={(e) => handleKeyDown(e, item.id, "oct")}
-                    onPaste={(e) => handlePaste(e, item.id, "oct")}
-                  />
-                ) : (
-                  <span className="vendor-label monthly-amount">
-                    {formatCurrencyExcelStyle(
-                      (parseFloat(item.oct) || 0) * 1000
-                    )}
-                  </span>
-                )}
-              </td>
-              <td className="vendor-col-month">
-                {isRowInEditMode(item.id) ? (
-                  <input
-                    type="number"
-                    className="vendor-input currency-input"
-                    value={item.nov}
-                    data-tracking-id={item.id}
-                    data-field="nov"
-                    onChange={(e) =>
-                      handleInputChange(item.id, "nov", e.target.value)
-                    }
-                    onKeyDown={(e) => handleKeyDown(e, item.id, "nov")}
-                    onPaste={(e) => handlePaste(e, item.id, "nov")}
-                  />
-                ) : (
-                  <span className="vendor-label monthly-amount">
-                    {formatCurrencyExcelStyle(
-                      (parseFloat(item.nov) || 0) * 1000
-                    )}
-                  </span>
-                )}
-              </td>
-              <td className="vendor-col-month">
-                {isRowInEditMode(item.id) ? (
-                  <input
-                    type="number"
-                    className="vendor-input currency-input"
-                    value={item.dec}
-                    data-tracking-id={item.id}
-                    data-field="dec"
-                    onChange={(e) =>
-                      handleInputChange(item.id, "dec", e.target.value)
-                    }
-                    onKeyDown={(e) => handleKeyDown(e, item.id, "dec")}
-                    onPaste={(e) => handlePaste(e, item.id, "dec")}
-                  />
-                ) : (
-                  <span className="vendor-label monthly-amount">
-                    {formatCurrencyExcelStyle(
-                      (parseFloat(item.dec) || 0) * 1000
-                    )}
-                  </span>
-                )}
-              </td>
-
-              <td className="vendor-col-notes">
-                {isRowInEditMode(item.id) ? (
-                  <input
-                    type="text"
-                    className="vendor-input"
-                    value={item.notes}
-                    data-tracking-id={item.id}
-                    data-field="notes"
-                    onChange={(e) =>
-                      handleInputChange(item.id, "notes", e.target.value)
-                    }
-                    onKeyDown={(e) => handleKeyDown(e, item.id, "notes")}
-                    onPaste={(e) => handlePaste(e, item.id, "notes")}
-                  />
-                ) : (
-                  <span className="vendor-label vendor-label-notes">
-                    {item.notes}
-                  </span>
-                )}
-              </td>
-              <td>
-                <TableActionButtons
-                  isEditing={isRowInEditMode(item.id)}
-                  onEdit={() => handleEdit(item.id)}
-                  onDelete={() => handleDelete(item.id)}
-                  editTooltip={isRowInEditMode(item.id) ? "Save Row" : "Edit Row"}
-                  deleteTooltip="Delete Row"
-                />
-              </td>
-            </tr>
-          ))}
-
-          {/* Total Row */}
-          {currentYearTrackingData.length > 0 &&
-            (() => {
-              const monthlyTotals = calculateMonthlyTotals();
-              return (
-                <tr className="vendor-totals-row">
-                  <td className="vendor-col-finance-category">
-                    <strong>TOTALS</strong>
                   </td>
                   <td className="vendor-col-vendor-name">
-                    <span className="vendor-label">-</span>
+                    {isRowInEditMode(item.id) ? (
+                      <input
+                        type="text"
+                        className="vendor-input"
+                        value={item.vendorName}
+                        data-tracking-id={item.id}
+                        data-field="vendorName"
+                        onChange={(e) =>
+                          handleInputChange(
+                            item.id,
+                            "vendorName",
+                            e.target.value
+                          )
+                        }
+                        onKeyDown={(e) =>
+                          handleKeyDown(e, item.id, "vendorName")
+                        }
+                        onPaste={(e) => handlePaste(e, item.id, "vendorName")}
+                      />
+                    ) : (
+                      <span className="vendor-label vendor-label-name">
+                        {item.vendorName}
+                      </span>
+                    )}
                   </td>
                   <td className="vendor-col-in-budget">
-                    <span className="vendor-label">-</span>
+                    {isRowInEditMode(item.id) ? (
+                      <div className="vendor-toggle-container">
+                        <label className="vendor-toggle-label">
+                          <input
+                            type="checkbox"
+                            checked={item.inBudget}
+                            data-tracking-id={item.id}
+                            data-field="inBudget"
+                            onChange={(e) =>
+                              handleInputChange(
+                                item.id,
+                                "inBudget",
+                                e.target.checked
+                              )
+                            }
+                            onKeyDown={(e) =>
+                              handleKeyDown(e, item.id, "inBudget")
+                            }
+                            className="vendor-toggle-input"
+                            aria-label={`In Budget: ${
+                              item.inBudget ? "Yes" : "No"
+                            }`}
+                            title={`Click or press Space to toggle. Currently: ${
+                              item.inBudget ? "Yes" : "No"
+                            }`}
+                          />
+                          <span className="vendor-toggle-slider"></span>
+                        </label>
+                      </div>
+                    ) : (
+                      <span
+                        className="vendor-label"
+                        title={item.inBudget ? "Yes" : "No"}
+                      >
+                        {item.inBudget ? "Yes" : "No"}
+                      </span>
+                    )}
                   </td>
 
-                  {/* Monthly total columns */}
+                  {/* Monthly columns */}
                   <td className="vendor-col-month">
-                    <strong className="vendor-label monthly-amount">
-                      {formatCurrencyExcelStyle(monthlyTotals.jan * 1000)}
-                    </strong>
+                    {isRowInEditMode(item.id) ? (
+                      <input
+                        type="number"
+                        className="vendor-input currency-input"
+                        value={item.jan}
+                        data-tracking-id={item.id}
+                        data-field="jan"
+                        onChange={(e) =>
+                          handleInputChange(item.id, "jan", e.target.value)
+                        }
+                        onKeyDown={(e) => handleKeyDown(e, item.id, "jan")}
+                        onPaste={(e) => handlePaste(e, item.id, "jan")}
+                      />
+                    ) : (
+                      <span className="vendor-label monthly-amount">
+                        {formatCurrencyExcelStyle(
+                          (parseFloat(item.jan) || 0) * 1000
+                        )}
+                      </span>
+                    )}
                   </td>
                   <td className="vendor-col-month">
-                    <strong className="vendor-label monthly-amount">
-                      {formatCurrencyExcelStyle(monthlyTotals.feb * 1000)}
-                    </strong>
+                    {isRowInEditMode(item.id) ? (
+                      <input
+                        type="number"
+                        className="vendor-input currency-input"
+                        value={item.feb}
+                        data-tracking-id={item.id}
+                        data-field="feb"
+                        onChange={(e) =>
+                          handleInputChange(item.id, "feb", e.target.value)
+                        }
+                        onKeyDown={(e) => handleKeyDown(e, item.id, "feb")}
+                        onPaste={(e) => handlePaste(e, item.id, "feb")}
+                      />
+                    ) : (
+                      <span className="vendor-label monthly-amount">
+                        {formatCurrencyExcelStyle(
+                          (parseFloat(item.feb) || 0) * 1000
+                        )}
+                      </span>
+                    )}
                   </td>
                   <td className="vendor-col-month">
-                    <strong className="vendor-label monthly-amount">
-                      {formatCurrencyExcelStyle(monthlyTotals.mar * 1000)}
-                    </strong>
+                    {isRowInEditMode(item.id) ? (
+                      <input
+                        type="number"
+                        className="vendor-input currency-input"
+                        value={item.mar}
+                        data-tracking-id={item.id}
+                        data-field="mar"
+                        onChange={(e) =>
+                          handleInputChange(item.id, "mar", e.target.value)
+                        }
+                        onKeyDown={(e) => handleKeyDown(e, item.id, "mar")}
+                        onPaste={(e) => handlePaste(e, item.id, "mar")}
+                      />
+                    ) : (
+                      <span className="vendor-label monthly-amount">
+                        {formatCurrencyExcelStyle(
+                          (parseFloat(item.mar) || 0) * 1000
+                        )}
+                      </span>
+                    )}
                   </td>
                   <td className="vendor-col-month">
-                    <strong className="vendor-label monthly-amount">
-                      {formatCurrencyExcelStyle(monthlyTotals.apr * 1000)}
-                    </strong>
+                    {isRowInEditMode(item.id) ? (
+                      <input
+                        type="number"
+                        className="vendor-input currency-input"
+                        value={item.apr}
+                        data-tracking-id={item.id}
+                        data-field="apr"
+                        onChange={(e) =>
+                          handleInputChange(item.id, "apr", e.target.value)
+                        }
+                        onKeyDown={(e) => handleKeyDown(e, item.id, "apr")}
+                        onPaste={(e) => handlePaste(e, item.id, "apr")}
+                      />
+                    ) : (
+                      <span className="vendor-label monthly-amount">
+                        {formatCurrencyExcelStyle(
+                          (parseFloat(item.apr) || 0) * 1000
+                        )}
+                      </span>
+                    )}
                   </td>
                   <td className="vendor-col-month">
-                    <strong className="vendor-label monthly-amount">
-                      {formatCurrencyExcelStyle(monthlyTotals.may * 1000)}
-                    </strong>
+                    {isRowInEditMode(item.id) ? (
+                      <input
+                        type="number"
+                        className="vendor-input currency-input"
+                        value={item.may}
+                        data-tracking-id={item.id}
+                        data-field="may"
+                        onChange={(e) =>
+                          handleInputChange(item.id, "may", e.target.value)
+                        }
+                        onKeyDown={(e) => handleKeyDown(e, item.id, "may")}
+                        onPaste={(e) => handlePaste(e, item.id, "may")}
+                      />
+                    ) : (
+                      <span className="vendor-label monthly-amount">
+                        {formatCurrencyExcelStyle(
+                          (parseFloat(item.may) || 0) * 1000
+                        )}
+                      </span>
+                    )}
                   </td>
                   <td className="vendor-col-month">
-                    <strong className="vendor-label monthly-amount">
-                      {formatCurrencyExcelStyle(monthlyTotals.jun * 1000)}
-                    </strong>
+                    {isRowInEditMode(item.id) ? (
+                      <input
+                        type="number"
+                        className="vendor-input currency-input"
+                        value={item.jun}
+                        data-tracking-id={item.id}
+                        data-field="jun"
+                        onChange={(e) =>
+                          handleInputChange(item.id, "jun", e.target.value)
+                        }
+                        onKeyDown={(e) => handleKeyDown(e, item.id, "jun")}
+                        onPaste={(e) => handlePaste(e, item.id, "jun")}
+                      />
+                    ) : (
+                      <span className="vendor-label monthly-amount">
+                        {formatCurrencyExcelStyle(
+                          (parseFloat(item.jun) || 0) * 1000
+                        )}
+                      </span>
+                    )}
                   </td>
                   <td className="vendor-col-month">
-                    <strong className="vendor-label monthly-amount">
-                      {formatCurrencyExcelStyle(monthlyTotals.jul * 1000)}
-                    </strong>
+                    {isRowInEditMode(item.id) ? (
+                      <input
+                        type="number"
+                        className="vendor-input currency-input"
+                        value={item.jul}
+                        data-tracking-id={item.id}
+                        data-field="jul"
+                        onChange={(e) =>
+                          handleInputChange(item.id, "jul", e.target.value)
+                        }
+                        onKeyDown={(e) => handleKeyDown(e, item.id, "jul")}
+                        onPaste={(e) => handlePaste(e, item.id, "jul")}
+                      />
+                    ) : (
+                      <span className="vendor-label monthly-amount">
+                        {formatCurrencyExcelStyle(
+                          (parseFloat(item.jul) || 0) * 1000
+                        )}
+                      </span>
+                    )}
                   </td>
                   <td className="vendor-col-month">
-                    <strong className="vendor-label monthly-amount">
-                      {formatCurrencyExcelStyle(monthlyTotals.aug * 1000)}
-                    </strong>
+                    {isRowInEditMode(item.id) ? (
+                      <input
+                        type="number"
+                        className="vendor-input currency-input"
+                        value={item.aug}
+                        data-tracking-id={item.id}
+                        data-field="aug"
+                        onChange={(e) =>
+                          handleInputChange(item.id, "aug", e.target.value)
+                        }
+                        onKeyDown={(e) => handleKeyDown(e, item.id, "aug")}
+                        onPaste={(e) => handlePaste(e, item.id, "aug")}
+                      />
+                    ) : (
+                      <span className="vendor-label monthly-amount">
+                        {formatCurrencyExcelStyle(
+                          (parseFloat(item.aug) || 0) * 1000
+                        )}
+                      </span>
+                    )}
                   </td>
                   <td className="vendor-col-month">
-                    <strong className="vendor-label monthly-amount">
-                      {formatCurrencyExcelStyle(monthlyTotals.sep * 1000)}
-                    </strong>
+                    {isRowInEditMode(item.id) ? (
+                      <input
+                        type="number"
+                        className="vendor-input currency-input"
+                        value={item.sep}
+                        data-tracking-id={item.id}
+                        data-field="sep"
+                        onChange={(e) =>
+                          handleInputChange(item.id, "sep", e.target.value)
+                        }
+                        onKeyDown={(e) => handleKeyDown(e, item.id, "sep")}
+                        onPaste={(e) => handlePaste(e, item.id, "sep")}
+                      />
+                    ) : (
+                      <span className="vendor-label monthly-amount">
+                        {formatCurrencyExcelStyle(
+                          (parseFloat(item.sep) || 0) * 1000
+                        )}
+                      </span>
+                    )}
                   </td>
                   <td className="vendor-col-month">
-                    <strong className="vendor-label monthly-amount">
-                      {formatCurrencyExcelStyle(monthlyTotals.oct * 1000)}
-                    </strong>
+                    {isRowInEditMode(item.id) ? (
+                      <input
+                        type="number"
+                        className="vendor-input currency-input"
+                        value={item.oct}
+                        data-tracking-id={item.id}
+                        data-field="oct"
+                        onChange={(e) =>
+                          handleInputChange(item.id, "oct", e.target.value)
+                        }
+                        onKeyDown={(e) => handleKeyDown(e, item.id, "oct")}
+                        onPaste={(e) => handlePaste(e, item.id, "oct")}
+                      />
+                    ) : (
+                      <span className="vendor-label monthly-amount">
+                        {formatCurrencyExcelStyle(
+                          (parseFloat(item.oct) || 0) * 1000
+                        )}
+                      </span>
+                    )}
                   </td>
                   <td className="vendor-col-month">
-                    <strong className="vendor-label monthly-amount">
-                      {formatCurrencyExcelStyle(monthlyTotals.nov * 1000)}
-                    </strong>
+                    {isRowInEditMode(item.id) ? (
+                      <input
+                        type="number"
+                        className="vendor-input currency-input"
+                        value={item.nov}
+                        data-tracking-id={item.id}
+                        data-field="nov"
+                        onChange={(e) =>
+                          handleInputChange(item.id, "nov", e.target.value)
+                        }
+                        onKeyDown={(e) => handleKeyDown(e, item.id, "nov")}
+                        onPaste={(e) => handlePaste(e, item.id, "nov")}
+                      />
+                    ) : (
+                      <span className="vendor-label monthly-amount">
+                        {formatCurrencyExcelStyle(
+                          (parseFloat(item.nov) || 0) * 1000
+                        )}
+                      </span>
+                    )}
                   </td>
                   <td className="vendor-col-month">
-                    <strong className="vendor-label monthly-amount">
-                      {formatCurrencyExcelStyle(monthlyTotals.dec * 1000)}
-                    </strong>
+                    {isRowInEditMode(item.id) ? (
+                      <input
+                        type="number"
+                        className="vendor-input currency-input"
+                        value={item.dec}
+                        data-tracking-id={item.id}
+                        data-field="dec"
+                        onChange={(e) =>
+                          handleInputChange(item.id, "dec", e.target.value)
+                        }
+                        onKeyDown={(e) => handleKeyDown(e, item.id, "dec")}
+                        onPaste={(e) => handlePaste(e, item.id, "dec")}
+                      />
+                    ) : (
+                      <span className="vendor-label monthly-amount">
+                        {formatCurrencyExcelStyle(
+                          (parseFloat(item.dec) || 0) * 1000
+                        )}
+                      </span>
+                    )}
                   </td>
 
                   <td className="vendor-col-notes">
-                    <span className="vendor-label">-</span>
+                    {isRowInEditMode(item.id) ? (
+                      <input
+                        type="text"
+                        className="vendor-input"
+                        value={item.notes}
+                        data-tracking-id={item.id}
+                        data-field="notes"
+                        onChange={(e) =>
+                          handleInputChange(item.id, "notes", e.target.value)
+                        }
+                        onKeyDown={(e) => handleKeyDown(e, item.id, "notes")}
+                        onPaste={(e) => handlePaste(e, item.id, "notes")}
+                      />
+                    ) : (
+                      <span className="vendor-label vendor-label-notes">
+                        {item.notes}
+                      </span>
+                    )}
                   </td>
                   <td>
-                    <span className="vendor-label">-</span>
+                    <TableActionButtons
+                      isEditing={isRowInEditMode(item.id)}
+                      onEdit={() => handleEdit(item.id)}
+                      onDelete={() => handleDelete(item.id)}
+                      editTooltip={
+                        isRowInEditMode(item.id) ? "Save Row" : "Edit Row"
+                      }
+                      deleteTooltip="Delete Row"
+                    />
                   </td>
                 </tr>
-              );
-            })()}
-        </tbody>
-      </table>
+              ))}
+
+              {/* Total Row */}
+              {currentYearTrackingData.length > 0 &&
+                (() => {
+                  const monthlyTotals = calculateMonthlyTotals();
+                  return (
+                    <tr className="vendor-totals-row">
+                      <td className="vendor-col-finance-category">
+                        <strong>TOTALS</strong>
+                      </td>
+                      <td className="vendor-col-vendor-name">
+                        <span className="vendor-label">-</span>
+                      </td>
+                      <td className="vendor-col-in-budget">
+                        <span className="vendor-label">-</span>
+                      </td>
+
+                      {/* Monthly total columns */}
+                      <td className="vendor-col-month">
+                        <strong className="vendor-label monthly-amount">
+                          {formatCurrencyExcelStyle(monthlyTotals.jan * 1000)}
+                        </strong>
+                      </td>
+                      <td className="vendor-col-month">
+                        <strong className="vendor-label monthly-amount">
+                          {formatCurrencyExcelStyle(monthlyTotals.feb * 1000)}
+                        </strong>
+                      </td>
+                      <td className="vendor-col-month">
+                        <strong className="vendor-label monthly-amount">
+                          {formatCurrencyExcelStyle(monthlyTotals.mar * 1000)}
+                        </strong>
+                      </td>
+                      <td className="vendor-col-month">
+                        <strong className="vendor-label monthly-amount">
+                          {formatCurrencyExcelStyle(monthlyTotals.apr * 1000)}
+                        </strong>
+                      </td>
+                      <td className="vendor-col-month">
+                        <strong className="vendor-label monthly-amount">
+                          {formatCurrencyExcelStyle(monthlyTotals.may * 1000)}
+                        </strong>
+                      </td>
+                      <td className="vendor-col-month">
+                        <strong className="vendor-label monthly-amount">
+                          {formatCurrencyExcelStyle(monthlyTotals.jun * 1000)}
+                        </strong>
+                      </td>
+                      <td className="vendor-col-month">
+                        <strong className="vendor-label monthly-amount">
+                          {formatCurrencyExcelStyle(monthlyTotals.jul * 1000)}
+                        </strong>
+                      </td>
+                      <td className="vendor-col-month">
+                        <strong className="vendor-label monthly-amount">
+                          {formatCurrencyExcelStyle(monthlyTotals.aug * 1000)}
+                        </strong>
+                      </td>
+                      <td className="vendor-col-month">
+                        <strong className="vendor-label monthly-amount">
+                          {formatCurrencyExcelStyle(monthlyTotals.sep * 1000)}
+                        </strong>
+                      </td>
+                      <td className="vendor-col-month">
+                        <strong className="vendor-label monthly-amount">
+                          {formatCurrencyExcelStyle(monthlyTotals.oct * 1000)}
+                        </strong>
+                      </td>
+                      <td className="vendor-col-month">
+                        <strong className="vendor-label monthly-amount">
+                          {formatCurrencyExcelStyle(monthlyTotals.nov * 1000)}
+                        </strong>
+                      </td>
+                      <td className="vendor-col-month">
+                        <strong className="vendor-label monthly-amount">
+                          {formatCurrencyExcelStyle(monthlyTotals.dec * 1000)}
+                        </strong>
+                      </td>
+
+                      <td className="vendor-col-notes">
+                        <span className="vendor-label">-</span>
+                      </td>
+                      <td>
+                        <span className="vendor-label">-</span>
+                      </td>
+                    </tr>
+                  );
+                })()}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       <div className="vendor-tracking-footer">
         <p className="keyboard-shortcuts">

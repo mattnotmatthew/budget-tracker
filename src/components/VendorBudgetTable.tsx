@@ -58,8 +58,16 @@ const VendorBudgetTable: React.FC<VendorBudgetTableProps> = ({
 
       if (typeof aValue === "boolean" && typeof bValue === "boolean") {
         return config.direction === "asc"
-          ? aValue === bValue ? 0 : aValue ? 1 : -1
-          : aValue === bValue ? 0 : aValue ? -1 : 1;
+          ? aValue === bValue
+            ? 0
+            : aValue
+            ? 1
+            : -1
+          : aValue === bValue
+          ? 0
+          : aValue
+          ? -1
+          : 1;
       }
 
       const aStr = String(aValue || "").toLowerCase();
@@ -267,7 +275,7 @@ const VendorBudgetTable: React.FC<VendorBudgetTableProps> = ({
           <div className="filter-content">
             <div className="filter-row">
               <div className="filter-group">
-                <label>Filter by Vendor Name:</label>
+                <label>Filter by Vendor Name2:</label>
                 <input
                   type="text"
                   value={filters.vendorName}
@@ -410,7 +418,8 @@ const VendorBudgetTable: React.FC<VendorBudgetTableProps> = ({
               displayedVendors.map((vendor) => {
                 const inEditMode = editingRows.has(vendor.id);
                 const isComplete = Object.values(vendor).every(
-                  (value) => value !== "" && value !== null && value !== undefined
+                  (value) =>
+                    value !== "" && value !== null && value !== undefined
                 );
 
                 return (
@@ -426,7 +435,11 @@ const VendorBudgetTable: React.FC<VendorBudgetTableProps> = ({
                           type="text"
                           value={vendor.vendorName}
                           onChange={(e) =>
-                            handleInputChange(vendor.id, "vendorName", e.target.value)
+                            handleInputChange(
+                              vendor.id,
+                              "vendorName",
+                              e.target.value
+                            )
                           }
                           onKeyDown={(e) =>
                             handleKeyDown(e, vendor.id, "vendorName")
@@ -438,7 +451,10 @@ const VendorBudgetTable: React.FC<VendorBudgetTableProps> = ({
                           className="vendor-input"
                         />
                       ) : (
-                        <span className="vendor-label" title={vendor.vendorName}>
+                        <span
+                          className="vendor-label"
+                          title={vendor.vendorName}
+                        >
                           {vendor.vendorName || "-"}
                         </span>
                       )}
@@ -449,7 +465,11 @@ const VendorBudgetTable: React.FC<VendorBudgetTableProps> = ({
                           type="text"
                           value={vendor.category || ""}
                           onChange={(e) =>
-                            handleInputChange(vendor.id, "category", e.target.value)
+                            handleInputChange(
+                              vendor.id,
+                              "category",
+                              e.target.value
+                            )
                           }
                           onKeyDown={(e) =>
                             handleKeyDown(e, vendor.id, "category")
@@ -515,7 +535,10 @@ const VendorBudgetTable: React.FC<VendorBudgetTableProps> = ({
                           <option value="project-based">Project-based</option>
                         </select>
                       ) : (
-                        <span className="vendor-label" title={vendor.billingType}>
+                        <span
+                          className="vendor-label"
+                          title={vendor.billingType}
+                        >
                           {vendor.billingType}
                         </span>
                       )}
@@ -532,7 +555,9 @@ const VendorBudgetTable: React.FC<VendorBudgetTableProps> = ({
                               parseFloat(e.target.value) || 0
                             )
                           }
-                          onKeyDown={(e) => handleKeyDown(e, vendor.id, "budget")}
+                          onKeyDown={(e) =>
+                            handleKeyDown(e, vendor.id, "budget")
+                          }
                           onPaste={(e) => handlePaste(e, vendor.id, "budget")}
                           placeholder="Enter budget"
                           className="vendor-input budget-input"
@@ -566,7 +591,10 @@ const VendorBudgetTable: React.FC<VendorBudgetTableProps> = ({
                           className="vendor-input"
                         />
                       ) : (
-                        <span className="vendor-label" title={vendor.description}>
+                        <span
+                          className="vendor-label"
+                          title={vendor.description}
+                        >
                           {vendor.description || "-"}
                         </span>
                       )}
@@ -576,7 +604,11 @@ const VendorBudgetTable: React.FC<VendorBudgetTableProps> = ({
                         <select
                           value={vendor.month || "N/A"}
                           onChange={(e) =>
-                            handleInputChange(vendor.id, "month", e.target.value)
+                            handleInputChange(
+                              vendor.id,
+                              "month",
+                              e.target.value
+                            )
                           }
                           className="vendor-select"
                         >
@@ -633,7 +665,11 @@ const VendorBudgetTable: React.FC<VendorBudgetTableProps> = ({
                         <textarea
                           value={vendor.notes || ""}
                           onChange={(e) =>
-                            handleInputChange(vendor.id, "notes", e.target.value)
+                            handleInputChange(
+                              vendor.id,
+                              "notes",
+                              e.target.value
+                            )
                           }
                           onKeyDown={(e) => handleNotesKeyDown(e, vendor.id)}
                           onPaste={(e) => handlePaste(e, vendor.id, "notes")}
@@ -642,7 +678,10 @@ const VendorBudgetTable: React.FC<VendorBudgetTableProps> = ({
                           rows={2}
                         />
                       ) : (
-                        <span className="budget-label-notes" title={vendor.notes}>
+                        <span
+                          className="budget-label-notes"
+                          title={vendor.notes}
+                        >
                           {vendor.notes || "-"}
                         </span>
                       )}
@@ -653,8 +692,14 @@ const VendorBudgetTable: React.FC<VendorBudgetTableProps> = ({
                           isEditing={inEditMode}
                           onEdit={() => toggleEditMode(vendor.id)}
                           onDelete={() => deleteVendor(vendor.id)}
-                          editTooltip={inEditMode ? "Finish editing" : "Edit vendor"}
-                          deleteTooltip={vendors.length === 1 ? "Cannot delete the last vendor" : "Remove vendor"}
+                          editTooltip={
+                            inEditMode ? "Finish editing" : "Edit vendor"
+                          }
+                          deleteTooltip={
+                            vendors.length === 1
+                              ? "Cannot delete the last vendor"
+                              : "Remove vendor"
+                          }
                         />
                       )}
                     </td>

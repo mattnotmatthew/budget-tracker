@@ -131,6 +131,7 @@
   position: sticky;
   top: 0;
   z-index: 10;
+  width: 100%;
 }
 
 .budget-management-table td {
@@ -167,10 +168,12 @@
 
 .budget-management-table .budget-col-description {
   width: auto;
-  max-width: 220px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  max-width: 220px !important;
+  min-width: 150px;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  position: relative;
 }
 
 .budget-management-table .budget-col-notes {
@@ -215,10 +218,13 @@
 }
 
 .budget-management-table .budget-label-description {
-  width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: inline-block !important;
+  width: 100% !important;
+  max-width: 220px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  box-sizing: border-box !important;
 }
 
 .budget-management-table .budget-label-notes {
@@ -240,9 +246,10 @@
 
 .budget-management-table .budget-col-description .vendor-input {
   width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  max-width: 220px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
 }
 
 .budget-management-table .budget-col-notes .vendor-input {
@@ -425,8 +432,8 @@
   padding: 0.4rem 0.75rem;
   vertical-align: middle;
   max-width: 300px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  /* overflow: hidden;
+  text-overflow: ellipsis; */
   white-space: nowrap;
 }
 
@@ -445,8 +452,8 @@
   background-color: transparent;
   border-radius: 4px;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+
+  /* text-overflow: ellipsis; */
   min-height: 1.2rem;
   line-height: 1.2;
 }
@@ -506,8 +513,10 @@
 .vendor-actions {
   display: flex;
   gap: var(--spacing-sm);
-  align-items: center;
-  justify-content: flex-start;
+  align-items: right;
+  justify-content: flex-end;
+  width: auto;
+  padding-left: 50px;
 }
 
 .edit-row-btn {
@@ -1362,6 +1371,7 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
+  justify-content: flex-end;
 }
 
 /* Edit All button styles */

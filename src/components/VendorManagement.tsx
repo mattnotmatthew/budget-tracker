@@ -246,22 +246,15 @@ const VendorManagement: React.FC = () => {
 
   // Check if a vendor row is complete (has all required fields filled)
   const isVendorComplete = (vendor: VendorData): boolean => {
-    return (
-      vendor.vendorName.trim() !== "" &&
-      vendor.billingType.trim() !== "" &&
-      vendor.budget > 0 &&
-      vendor.description.trim() !== "" // Also require description to be filled
-    );
+    // Only require vendor name to be filled for a row to be considered complete
+    return vendor.vendorName.trim() !== "";
   };
 
   // Check if a row should be in edit mode (incomplete or explicitly being edited)
   const isRowInEditMode = (vendor: VendorData): boolean => {
-    // If explicitly being edited, stay in edit mode regardless of completeness
-    if (editingRows.has(vendor.id)) {
-      return true;
-    }
-    // If not explicitly being edited, only show in edit mode if incomplete
-    return !isVendorComplete(vendor);
+    // Only show in edit mode if explicitly being edited
+    // No auto-editing for incomplete rows - everything starts read-only
+    return editingRows.has(vendor.id);
   };
   // Toggle edit mode for a specific row
   const toggleEditMode = (vendorId: string) => {
@@ -326,9 +319,8 @@ const VendorManagement: React.FC = () => {
   ) => {
     const vendor = currentYearVendors.find((v) => v.id === id);
     if (vendor) {
-      // Ensure the row stays in edit mode when any field is being changed
-      setEditingRows((prev) => new Set(prev).add(id));
-
+      // Don't automatically add to edit mode - only update data
+      // Rows must be explicitly put into edit mode via Edit button or Edit All
       const updatedVendor = {
         ...vendor,
         [field]: value,
@@ -1012,47 +1004,22 @@ const VendorManagement: React.FC = () => {
 
       {activeTab === "budget" && (
         <>
-          <div className="vendor-management-controls">
-            <div className="vendor-controls-left">
-              <button className="add-row-btn" onClick={addNewRow}>
-                + Add New Vendor
-              </button>
-              <button
-                className={`edit-all-btn ${
-                  areAllRowsInEditMode() ? "save-mode" : ""
-                }`}
-                onClick={areAllRowsInEditMode() ? saveAllRows : editAllRows}
-                disabled={currentYearVendors.length === 0}
-              >
-                {areAllRowsInEditMode() ? "✓ Save All" : "✏️ Edit All"}
-              </button>
-              <button
-                className="export-csv-btn"
-                onClick={exportBudgetToCSV}
-                disabled={currentYearVendors.length === 0}
-                title="Export current view to CSV"
-              >
-                📊 Export to CSV
-              </button>
+          <div className="budget-totals-container">
+            <div className="budget-total-display">
+              <span className="budget-total-label">Total Budget:</span>
+              <span className="budget-total-amount">
+                {formatCurrencyExcelStyle(calculateInBudgetTotal() * 1000)}
+              </span>
             </div>
-            <div className="budget-totals-container">
-              <div className="budget-total-display">
-                <span className="budget-total-label">Total Budget:</span>
-                <span className="budget-total-amount">
-                  {formatCurrencyExcelStyle(calculateInBudgetTotal() * 1000)}
-                </span>
-              </div>
-              <div className="budget-total-display not-in-budget">
-                <span className="budget-total-label">
-                  Not in original budget:
-                </span>
-                <span className="not-in-budget-total-amount ">
-                  {formatCurrencyExcelStyle(calculateNotInBudgetTotal() * 1000)}
-                </span>
-              </div>
+            <div className="budget-total-display not-in-budget">
+              <span className="budget-total-label">
+                Not in original budget:
+              </span>
+              <span className="not-in-budget-total-amount ">
+                {formatCurrencyExcelStyle(calculateNotInBudgetTotal() * 1000)}
+              </span>
             </div>
           </div>
-
           {/* Filter Controls for Budget Table */}
           <div className="vendor-filters">
             <div className="filter-row">
@@ -1131,6 +1098,32 @@ const VendorManagement: React.FC = () => {
                 >
                   Reset Filters
                 </button>
+              </div>
+
+              <div className="vendor-actions">
+                {" "}
+                <div className="vendor-controls-left">
+                  <button className="add-row-btn" onClick={addNewRow}>
+                    + Add New Vendor
+                  </button>
+                  <button
+                    className={`edit-all-btn ${
+                      areAllRowsInEditMode() ? "save-mode" : ""
+                    }`}
+                    onClick={areAllRowsInEditMode() ? saveAllRows : editAllRows}
+                    disabled={currentYearVendors.length === 0}
+                  >
+                    {areAllRowsInEditMode() ? "✓ Save All" : "✏️ Edit All"}
+                  </button>
+                  <button
+                    className="export-csv-btn"
+                    onClick={exportBudgetToCSV}
+                    disabled={currentYearVendors.length === 0}
+                    title="Export current view to CSV"
+                  >
+                    📊 Export to CSV
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -1557,8 +1550,14 @@ const VendorManagement: React.FC = () => {
                               isEditing={inEditMode}
                               onEdit={() => toggleEditMode(vendor.id)}
                               onDelete={() => deleteVendor(vendor.id)}
-                              editTooltip={inEditMode ? "Finish editing" : "Edit vendor"}
-                              deleteTooltip={currentYearVendors.length === 1 ? "Cannot delete the last vendor" : "Remove vendor"}
+                              editTooltip={
+                                inEditMode ? "Finish editing" : "Edit vendor"
+                              }
+                              deleteTooltip={
+                                currentYearVendors.length === 1
+                                  ? "Cannot delete the last vendor"
+                                  : "Remove vendor"
+                              }
                             />
                           )}
                         </td>
@@ -1572,10 +1571,10 @@ const VendorManagement: React.FC = () => {
           <div className="vendor-management-footer">
             <p className="keyboard-shortcuts">
               <small>
-                ⌨️ Press Enter in any field to add a new row | Tab out of Notes
-                to add a new row | 📋 Paste Excel data from clipboard (creates
-                new rows as needed) | ✏️ Edit completed vendors | ✓ Finish
-                editing
+                ✏️ Click "Edit" or "Edit All" to modify data | 📋 Paste Excel
+                data from clipboard (creates new rows as needed) | ⌨️ Press
+                Enter in edit mode to add a new row | 💾 Only "Item/Vendor Name"
+                is required to save
               </small>
             </p>
           </div>

@@ -1,204 +1,191 @@
-/* styles for Vendor Tracking Table */
+/* Table section header styles */
+.table-section {
+  margin-top: var(--spacing-md);
+}
+
+.table-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.table-section h2 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--primary-green);
+  padding-left: 0.4em;
+}
+
+.table-container {
+  background: white;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: var(--spacing-md);
+}
+
+.add-btn {
+  background: var(--primary-green);
+  color: white;
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.add-btn:hover {
+  background: var(--secondary-green);
+  transform: translateY(-1px);
+}
+
+/* Vendor Tracking Table - Updated to match FunctionalAllocation */
 .vendor-tracking-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 1400px;
-  table-layout: fixed;
-}
-
-.vendor-tracking-table th:first-child {
-  border-top-left-radius: var(--radius-xl);
+  min-width: 1400px; /* Reduced from 1600px */
+  table-layout: auto; /* Changed from fixed to auto for flexible column widths */
 }
 
 .vendor-tracking-table th {
   background: var(--background-light);
-  color: var(--text-dark);
-  padding: var(--spacing-md) 0.75rem;
-  text-align: left;
+  color: var(--text-primary);
   font-weight: 600;
-  border: 1px solid var(--border-color);
+  padding: var(--spacing-sm) var(--spacing-xs); /* Reduced padding */
+  text-align: left;
+  border-bottom: 2px solid var(--border-color);
   position: sticky;
   top: 0;
   z-index: 10;
+  font-size: 0.85rem; /* Reduced font size */
 }
 
-.vendor-tracking-table th:first-child {
-  border-top-left-radius: var(--radius-xl);
-  max-width: 300px;
-  min-width: 300px;
-  width: 300px;
+.vendor-tracking-table td {
+  padding: var(--spacing-sm) var(--spacing-xs); /* Reduced padding */
+  border-bottom: 1px solid var(--border-light);
+}
+
+/* General table cell styling - ensure full text display except for Notes and Actions */
+.vendor-tracking-table td:not(.vendor-col-notes):not(:last-child) {
+  overflow: visible;
+  white-space: nowrap;
+  text-overflow: initial;
+}
+
+/* Specifically ensure Notes column keeps its overflow behavior */
+.vendor-tracking-table .vendor-col-notes {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vendor-tracking-table tr:hover td {
+  background: var(--background-hover);
+}
+
+.vendor-tracking-table tr:last-child td {
+  border-bottom: none;
 }
 
 .vendor-tracking-table th:last-child {
   border-top-right-radius: var(--radius-xl);
 }
 
-.vendor-tracking-table td {
-  padding: 0.75rem;
-  border-bottom: 1px solid var(--border-light);
-  vertical-align: top;
-}
+/* Remove old column styling conflicts - now using FunctionalAllocation pattern */
 
-.vendor-tracking-table tbody tr:hover {
-  background-color: var(--background-grey);
-}
-
-.vendor-tracking-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-/* Vendor Tracking Table Column Styles */
-.vendor-tracking-table .vendor-col-vendor-name {
-  width: fit-content;
-  min-width: 120px;
-  max-width: 300px;
-}
-
-.vendor-tracking-table .vendor-col-finance-category {
-  width: fit-content;
-  min-width: 100px;
-  max-width: 250px;
-}
-
-.vendor-tracking-table .vendor-col-category {
-  width: fit-content;
-  min-width: 100px;
-  max-width: 250px;
-}
-
-.vendor-tracking-table .vendor-col-description {
-  width: auto;
-  max-width: 220px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.vendor-tracking-table .vendor-col-notes {
-  width: auto;
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Monthly columns styling for vendor tracking table */
-.vendor-tracking-table .vendor-col-month {
-  width: 85px;
-  min-width: 85px;
-  max-width: 85px;
-  padding: var(--spacing-xs) 4px;
-  text-align: center;
-  font-size: 0.75rem;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-.vendor-tracking-table .vendor-col-month .vendor-input {
+/* Form Elements - Match FunctionalAllocation */
+.vendor-input {
   width: 100%;
-  text-align: center;
-  font-size: 0.75rem;
-  padding: 0.25rem 2px;
-  box-sizing: border-box;
-}
-
-.vendor-tracking-table .vendor-col-month .monthly-amount {
-  text-align: center;
-  font-family: var(--font-mono);
-  font-weight: 500;
-  color: var(--text-primary);
-  font-size: 0.75rem;
-  display: block;
-  width: 100%;
-}
-
-/* Monthly header styling */
-.vendor-tracking-table th:nth-child(4),  /* Jan */
-.vendor-tracking-table th:nth-child(5),  /* Feb */
-.vendor-tracking-table th:nth-child(6),  /* Mar */
-.vendor-tracking-table th:nth-child(7),  /* Apr */
-.vendor-tracking-table th:nth-child(8),  /* May */
-.vendor-tracking-table th:nth-child(9),  /* Jun */
-.vendor-tracking-table th:nth-child(10), /* Jul */
-.vendor-tracking-table th:nth-child(11), /* Aug */
-.vendor-tracking-table th:nth-child(12), /* Sep */
-.vendor-tracking-table th:nth-child(13), /* Oct */
-.vendor-tracking-table th:nth-child(14), /* Nov */
-.vendor-tracking-table th:nth-child(15)  /* Dec */ {
-  text-align: center;
-  font-size: 0.85rem;
-  padding: var(--spacing-sm) 0.25rem;
-  min-width: 85px;
-  max-width: 85px;
-  width: 85px;
-}
-
-/* Form Elements for VendorTracking */
-.vendor-tracking-table .vendor-input,
-.vendor-tracking-table .vendor-select,
-.vendor-tracking-table .vendor-textarea {
-  width: 100%;
-  padding: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm); /* Reduced padding */
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
-  font-size: 0.9rem;
-  transition: border-color var(--transition-fast);
+  font-size: 0.8rem; /* Reduced font size */
+  transition: var(--transition-fast);
+  background: white;
 }
 
-.vendor-tracking-table .vendor-input:focus,
-.vendor-tracking-table .vendor-select:focus,
-.vendor-tracking-table .vendor-textarea:focus {
+.vendor-input:focus {
   outline: none;
   border-color: var(--primary-green);
-  box-shadow: 0 0 0 2px rgba(var(--primary-green-rgb), 0.1);
+  box-shadow: 0 0 0 3px rgba(68, 136, 68, 0.1);
 }
 
-/* Row State Styles for VendorTracking */
-.vendor-tracking-table .vendor-row-complete {
-  background-color: var(--background-light);
-  border-left: 3px solid var(--success-color);
+/* Sort header buttons - Match FunctionalAllocation */
+.sort-header {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  font-size: inherit;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  text-align: left;
 }
 
-.vendor-tracking-table .vendor-row-complete:hover {
-  background-color: var(--background-grey);
+.sort-header:hover {
+  color: var(--primary-green);
 }
 
-.vendor-tracking-table .vendor-row-editing {
-  background-color: var(--background-light);
-  border-left: 3px solid var(--warning-color);
+.sort-indicator {
+  margin-left: auto;
+  color: var(--primary-green);
+  font-weight: 700;
 }
 
-.vendor-tracking-table .vendor-row-editing:hover {
-  background-color: var(--background-grey);
+/* Row state styling - Match FunctionalAllocation editing states */
+.vendor-row-editing td {
+  background: var(--background-light) !important;
 }
 
-/* Row Spacing for VendorTracking */
-.vendor-tracking-table .vendor-row-complete td {
-  padding: 0.4rem 0.75rem;
-  vertical-align: middle;
-  max-width: 300px;
+.vendor-row-complete td {
+  background: white;
+}
+
+/* Calculated fields styling */
+.monthly-amount {
+  font-weight: 500;
+  color: var(--primary-green);
+  font-family: var(--font-mono);
+  font-size: 0.75rem; /* Reduced font size for compactness */
+}
+
+/* Vendor labels for read-only display */
+.vendor-label {
+  display: block;
+  padding: var(--spacing-xs) var(--spacing-sm); /* Reduced padding */
+  color: var(--text-primary);
+  overflow: visible;
+  white-space: nowrap;
+  text-overflow: initial;
+  width: auto;
+  min-width: 100%;
+  font-size: 0.85rem; /* Reduced font size */
+}
+
+/* Notes column labels - keep overflow hidden */
+.vendor-col-notes .vendor-label,
+.vendor-label-notes {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  max-width: 200px;
 }
 
-.vendor-tracking-table .vendor-row-editing td {
-  padding: 0.75rem;
-  vertical-align: top;
-}
-
-/* Read-only Label Styles for VendorTracking */
-.vendor-tracking-table .vendor-label {
-  display: inline-block;
-  padding: 0.3rem 0.5rem;
-  font-size: 0.9rem;
-  color: var(--text-primary);
-  background-color: transparent;
-  border-radius: 4px;
-  overflow: visible !important;
-  text-overflow: ellipsis !important;
-  min-height: 1.2rem;
-  line-height: 1.2;
+/* Finance category and vendor name labels - ensure full display */
+.vendor-label-finance,
+.vendor-label-name {
+  overflow: visible;
+  text-overflow: initial;
+  white-space: nowrap;
+  width: max-content;
+  min-width: 100%;
 }
 
 /* Actions Column for VendorTracking */
@@ -262,8 +249,8 @@
 
 /* Update table layout for better handling of many columns */
 .vendor-tracking-table {
-  min-width: 1700px; /* Ensure minimum width for all columns */
-  table-layout: fixed;
+  min-width: 1400px; /* Reduced from 1800px to fit better */
+  table-layout: auto; /* Allow flexible column widths */
 }
 
 /* Sort Header Styles for vendor tracking table */
@@ -335,37 +322,9 @@
   border: 1px solid var(--border-color);
 }
 
-@keyframes slideIn {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
+/* Remove old conflicting styles - using FunctionalAllocation pattern now */
 
-/* Additional input focus styles for navigation */
-.vendor-input:focus {
-  outline: 2px solid var(--primary-green);
-  outline-offset: 1px;
-}
-
-/* Improved table navigation */
-.vendor-tracking-table tbody tr:hover {
-  background-color: var(--background-grey);
-}
-
-.vendor-row-editing {
-  background-color: var(--background-light) !important;
-}
-
-.vendor-row-editing:hover {
-  background-color: var(--background-light) !important;
-}
-
-/* Keyboard navigation hints */
+/* Input focus enhancement for better navigation */
 .vendor-input[data-tracking-id][data-field] {
   transition: all 0.2s ease;
 }
@@ -374,36 +333,6 @@
   transform: scale(1.02);
   z-index: 10;
   position: relative;
-}
-
-/* Footer styles */
-.vendor-tracking-footer {
-  margin-top: 16px;
-  padding: 12px 0;
-  border-top: 1px solid var(--border-color);
-}
-
-.vendor-tracking-footer .keyboard-shortcuts {
-  margin: 0;
-  color: var(--text-muted);
-  font-style: italic;
-  text-align: center;
-}
-
-.vendor-tracking-footer .keyboard-shortcuts small {
-  font-size: 13px;
-  line-height: 1.4;
-}
-
-/* Totals row styles */
-.vendor-totals-row {
-  background-color: var(--background-light) !important;
-  border-top: 2px solid var(--primary-green) !important;
-  font-weight: 600;
-}
-
-.vendor-totals-row:hover {
-  background-color: var(--background-light) !important;
 }
 
 .vendor-totals-row td {
@@ -427,4 +356,153 @@
   color: var(--primary-green);
   font-size: 1.05em;
   letter-spacing: 0.5px;
+}
+
+/* Column-specific styling - Show full text for all columns except Notes and Actions */
+.vendor-col-finance-category,
+.vendor-col-vendor-name {
+  min-width: 150px; /* Reduced from 200px */
+  width: auto;
+  max-width: none;
+  overflow: visible;
+  white-space: nowrap;
+}
+
+.vendor-col-in-budget {
+  width: 80px; /* Reduced from 120px */
+  text-align: center;
+  overflow: visible;
+  white-space: nowrap;
+}
+
+.vendor-col-month {
+  width: 70px; /* Reduced from 100px */
+  min-width: 70px;
+  text-align: center;
+  overflow: visible;
+  white-space: nowrap;
+}
+
+/* Notes column - keep overflow hidden with ellipsis */
+.vendor-col-notes {
+  max-width: 150px; /* Reduced from 200px */
+  min-width: 120px; /* Reduced from 150px */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Actions column - fixed width */
+.vendor-tracking-table th:last-child,
+.vendor-tracking-table td:last-child {
+  width: 100px; /* Reduced from 120px */
+  min-width: 100px;
+  max-width: 100px;
+  overflow: visible;
+}
+
+/* Toggle styling for In Budget column */
+.vendor-toggle-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.vendor-toggle-label {
+  position: relative;
+  display: inline-block;
+  width: 40px; /* Reduced from 50px */
+  height: 20px; /* Reduced from 24px */
+}
+
+.vendor-toggle-input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.vendor-toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 20px; /* Adjusted for smaller size */
+}
+
+.vendor-toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 14px; /* Reduced from 18px */
+  width: 14px; /* Reduced from 18px */
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+.vendor-toggle-input:checked + .vendor-toggle-slider {
+  background-color: var(--primary-green);
+}
+
+.vendor-toggle-input:checked + .vendor-toggle-slider:before {
+  transform: translateX(20px); /* Adjusted for smaller size */
+}
+
+/* Totals row styling */
+.vendor-totals-row td {
+  background: var(--background-light) !important;
+  font-weight: 600;
+  border-top: 2px solid var(--border-color);
+}
+
+/* Paste message styling - Match FunctionalAllocation */
+.paste-message {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  animation: fadeIn 0.3s ease;
+  background: var(--success-bg);
+  color: var(--success-color);
+  border: 1px solid var(--success-color);
+  margin-bottom: var(--spacing-md);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Input styling for different column types */
+.vendor-col-finance-category .vendor-input,
+.vendor-col-vendor-name .vendor-input {
+  min-width: 120px; /* Reduced from 200px */
+  width: 100%;
+  white-space: nowrap;
+  overflow: visible;
+  font-size: 0.8rem; /* Smaller font */
+}
+
+.vendor-col-month .vendor-input {
+  min-width: 60px; /* Reduced from 80px */
+  text-align: center;
+  font-size: 0.8rem; /* Smaller font */
+}
+
+/* Notes input - keep constrained */
+.vendor-col-notes .vendor-input {
+  max-width: 150px; /* Reduced from 200px */
+  overflow: hidden;
+  font-size: 0.8rem; /* Smaller font */
 }
