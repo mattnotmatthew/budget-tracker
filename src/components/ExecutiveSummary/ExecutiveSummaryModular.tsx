@@ -97,8 +97,6 @@ const ExecutiveSummary = () => {
   const [trendTableCollapsed, setTrendTableCollapsed] = useState(true);
   const [monthlyTrendTableCollapsed, setMonthlyTrendTableCollapsed] =
     useState(true);
-  const [rollingTrendTableCollapsed, setRollingTrendTableCollapsed] =
-    useState(true);
   const [
     totalCompCapitalizationCollapsed,
     setTotalCompCapitalizationCollapsed,
@@ -315,6 +313,12 @@ const ExecutiveSummary = () => {
         (tracking) => tracking.year === state.selectedYear
       ) || [];
 
+    // Get vendor budget data for matching
+    const currentYearVendorBudget =
+      state.vendorData?.filter(
+        (vendor) => vendor.year === state.selectedYear
+      ) || [];
+
     return currentYearTrackingData
       .map((vendor) => {
         // Calculate YTD sum for this vendor
@@ -359,16 +363,36 @@ const ExecutiveSummary = () => {
         const currentMonthAmount =
           parseFloat(vendor[currentMonthKey] as string) || 0;
 
+        // Find matching annual budget by matching financeMappedCategory from tracking to financeMappedCategory in vendor budget
+        const matchingBudgetEntries = currentYearVendorBudget.filter(
+          (budgetVendor) =>
+            budgetVendor.financeMappedCategory === vendor.financeMappedCategory
+        );
+
+        // Sum all matching budget entries (in case there are multiple entries for same category)
+        const annualBudget = matchingBudgetEntries.reduce(
+          (sum, budgetVendor) => {
+            return sum + (budgetVendor.budget || 0); // Budget is already in actual dollars
+          },
+          0
+        );
+
         return {
           id: vendor.id,
           vendor: vendor.financeMappedCategory || "Unknown Vendor",
           vendorCategory: vendor.vendorName || "Unknown Category",
           currentMonthSpend: currentMonthAmount,
           ytdSpend: ytdTotal,
+          annualBudget: annualBudget,
         };
       })
       .filter((vendor) => vendor.ytdSpend > 0); // Only show vendors with actual spending
-  }, [state.vendorTrackingData, state.selectedYear, getLastFinalMonthNumber]);
+  }, [
+    state.vendorTrackingData,
+    state.vendorData,
+    state.selectedYear,
+    getLastFinalMonthNumber,
+  ]);
 
   // Tooltip event handlers
   const handleMouseEnter = (event: React.MouseEvent, kpiType: string) => {
@@ -558,7 +582,6 @@ const ExecutiveSummary = () => {
       isVendorPortfolioExpanded,
       trendTableCollapsed,
       monthlyTrendTableCollapsed,
-      rollingTrendTableCollapsed,
       totalCompCapitalizationCollapsed,
       isTeamCompositionExpanded,
       isHistoricalTeamCompositionExpanded,
@@ -577,7 +600,6 @@ const ExecutiveSummary = () => {
     ) {
       setTrendTableCollapsed(false);
       setMonthlyTrendTableCollapsed(false);
-      setRollingTrendTableCollapsed(false);
     } else if (activeTab === "resource-spend") {
       setTotalCompCapitalizationCollapsed(false);
       setIsTeamCompositionExpanded(true);
@@ -611,7 +633,6 @@ const ExecutiveSummary = () => {
       setIsVendorPortfolioExpanded(currentStates.isVendorPortfolioExpanded);
       setTrendTableCollapsed(currentStates.trendTableCollapsed);
       setMonthlyTrendTableCollapsed(currentStates.monthlyTrendTableCollapsed);
-      setRollingTrendTableCollapsed(currentStates.rollingTrendTableCollapsed);
       setTotalCompCapitalizationCollapsed(
         currentStates.totalCompCapitalizationCollapsed
       );
@@ -677,7 +698,6 @@ const ExecutiveSummary = () => {
         isVendorPortfolioExpanded,
         trendTableCollapsed,
         monthlyTrendTableCollapsed,
-        rollingTrendTableCollapsed,
         totalCompCapitalizationCollapsed,
         isTeamCompositionExpanded,
         isHistoricalTeamCompositionExpanded,
@@ -696,7 +716,6 @@ const ExecutiveSummary = () => {
     setIsVendorPortfolioExpanded(true);
     setTrendTableCollapsed(false);
     setMonthlyTrendTableCollapsed(false);
-    setRollingTrendTableCollapsed(false);
     setTotalCompCapitalizationCollapsed(false);
     setIsTeamCompositionExpanded(true);
     setIsHistoricalTeamCompositionExpanded(true);
@@ -737,9 +756,6 @@ const ExecutiveSummary = () => {
       setTrendTableCollapsed(originalSectionStates.trendTableCollapsed);
       setMonthlyTrendTableCollapsed(
         originalSectionStates.monthlyTrendTableCollapsed
-      );
-      setRollingTrendTableCollapsed(
-        originalSectionStates.rollingTrendTableCollapsed
       );
       setTotalCompCapitalizationCollapsed(
         originalSectionStates.totalCompCapitalizationCollapsed
@@ -1003,6 +1019,38 @@ const ExecutiveSummary = () => {
                   </span>
                   Strategic Context
                 </h4>
+                <span
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    fontSize: "0.95rem",
+                    color: "#2d3a4a",
+                    background: "#f5f7fa",
+                    borderRadius: "6px",
+                    padding: "0.25rem 0.75rem",
+                    marginLeft: "1rem",
+                  }}
+                >
+                  <span
+                    style={{
+                      color: "#3498db",
+                      fontSize: "1.2em",
+                      marginRight: "0.25em",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                    aria-label="Info"
+                    title="Summary"
+                  >
+                    ℹ️
+                  </span>
+                  <span>
+                    Annual Budget and YTD Actual Spend both sourced from MM-YYYY
+                    Financial Reporting.xlsx and Vendor Reconciliation
+                    Model.xlsm.{" "}
+                  </span>
+                </span>
                 {!isStrategicContextExpanded && (
                   <div className="compact-summary">
                     <span className="compact-metric">
@@ -1383,135 +1431,6 @@ const ExecutiveSummary = () => {
             aria-labelledby="tab-budget-visuals"
             data-tab-title="Budget Visuals"
           >
-            {/* Budget vs Actual Trend Chart - Rolling */}
-            <div className="trend-chart-section">
-              <h2 className="section-heading">
-                Budget vs Actual Trend, Rolling
-              </h2>
-              <ResponsiveContainer width="100%" height={400}>
-                <ComposedChart data={trend}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="period" />
-                  <YAxis
-                    tickFormatter={(value) =>
-                      `$${(value / 1000).toLocaleString("en-US", {
-                        maximumFractionDigits: 0,
-                      })}k`
-                    }
-                  />
-                  <RechartsTooltip
-                    formatter={(value: number, name: string) => [
-                      formatCurrencyFull(value),
-                      name === "budget"
-                        ? "Rolling Budget"
-                        : name === "actual"
-                        ? "Rolling Actual"
-                        : name === "forecast"
-                        ? "Rolling Forecast"
-                        : name === "adjActual"
-                        ? "Rolling Adj Actual"
-                        : name,
-                    ]}
-                    labelFormatter={(label) => `Through ${label}`}
-                  />
-                  <Legend />
-                  {/* Budget as bar */}
-                  <Bar
-                    dataKey="budget"
-                    fill="#2D78FB"
-                    name="Rolling Budget"
-                    barSize={30}
-                    opacity={0.5}
-                  />
-                  {/* Actual spending line */}
-                  <Line
-                    type="monotone"
-                    dataKey="actual"
-                    stroke="#33CA7F"
-                    strokeWidth={4}
-                    strokeDasharray="5 1"
-                    name="Rolling Actual"
-                    connectNulls={false}
-                  />
-                  {/* Forecast spending line */}
-                  <Line
-                    type="monotone"
-                    dataKey="forecast"
-                    stroke="#FF8C00"
-                    strokeWidth={4}
-                    strokeDasharray="5 1"
-                    name="Rolling Forecast"
-                    connectNulls={false}
-                  />
-                  {/* Rolling Adj Actual line */}
-                  <Line
-                    type="monotone"
-                    dataKey="adjActual"
-                    stroke="#9932CC"
-                    strokeWidth={4}
-                    name="Rolling Adj Actual"
-                    connectNulls={false}
-                  />
-                </ComposedChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* Rolling Trend Data Table - Collapsible */}
-            <div className="trend-data-table-section">
-              <div
-                className="collapsible-header"
-                onClick={() =>
-                  setRollingTrendTableCollapsed(!rollingTrendTableCollapsed)
-                }
-              >
-                <h3>
-                  {rollingTrendTableCollapsed ? "+" : "−"} Rolling Trend Chart
-                  Data
-                </h3>
-              </div>
-
-              {!rollingTrendTableCollapsed && (
-                <div className="trend-data-table">
-                  <table className="trend-table rolling-trend-table">
-                    <thead>
-                      <tr>
-                        <th>Period</th>
-                        <th className="text-blue">Rolling Budget</th>
-                        <th className="text-green">Rolling Actual</th>
-                        <th className="text-orange">Rolling Forecast</th>
-                        <th className="text-purple">Rolling Adj Actual</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {trend.map((data, index) => (
-                        <tr key={index}>
-                          <td>{data.period}</td>
-                          <td>{formatCurrencyFull(data.budget)}</td>
-                          <td>
-                            {data.actual !== null
-                              ? formatCurrencyFull(data.actual)
-                              : "-"}
-                          </td>
-                          <td>
-                            {data.forecast !== null
-                              ? formatCurrencyFull(data.forecast)
-                              : "-"}
-                          </td>
-                          <td>
-                            {data.adjActual !== null
-                              ? formatCurrencyFull(data.adjActual)
-                              : data.adjForecast !== null
-                              ? formatCurrencyFull(data.adjForecast)
-                              : "-"}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-
             {/* Budget vs Actual Trend Chart - Monthly */}
             <div className="trend-chart-section">
               <h2 className="section-heading">
@@ -1519,7 +1438,7 @@ const ExecutiveSummary = () => {
               </h2>
               <ResponsiveContainer width="100%" height={400}>
                 <ComposedChart data={trend}>
-                  <CartesianGrid strokeDasharray="3 3" />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="period" />
                   <YAxis
                     tickFormatter={(value) =>
@@ -1556,7 +1475,7 @@ const ExecutiveSummary = () => {
                   <Line
                     type="monotone"
                     dataKey="monthlyActual"
-                    stroke="#33CA7F"
+                    stroke="#007255ff"
                     strokeWidth={4}
                     strokeDasharray="5 1"
                     name="Monthly Actual"
@@ -1572,15 +1491,15 @@ const ExecutiveSummary = () => {
                     name="Monthly Forecast"
                     connectNulls={false}
                   />
-                  {/* Monthly Adjusted actual line */}
-                  <Line
+                  {/* Monthly Adjusted actual line - HIDDEN */}
+                  {/* <Line
                     type="monotone"
                     dataKey="monthlyAdjusted"
                     stroke="#8B0000"
                     strokeWidth={4}
                     name="Monthly Adj Actual"
                     connectNulls={false}
-                  />
+                  /> */}
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
@@ -1608,7 +1527,8 @@ const ExecutiveSummary = () => {
                         <th className="text-blue">Monthly Budget</th>
                         <th className="text-green">Monthly Actual</th>
                         <th className="text-orange">Monthly Forecast</th>
-                        <th className="text-dark-red">Monthly Adj Actual</th>
+                        {/* <th className="text-dark-red">Monthly Adj Actual</th> */}
+                        <th>Variance</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1635,13 +1555,128 @@ const ExecutiveSummary = () => {
                               ? formatCurrencyFull(data.monthlyReforecast)
                               : "-"}
                           </td>
-                          <td>
+                          {/* <td>
                             {data.monthlyAdjusted !== null
                               ? formatCurrencyFull(data.monthlyAdjusted)
                               : "-"}
+                          </td> */}
+                          <td>
+                            {(() => {
+                              // Calculate variance: if Monthly Actual > 0 use that, otherwise use Monthly Forecast
+                              const budget = data.monthlyBudget;
+                              const actual = data.monthlyActual;
+                              const forecast = data.monthlyReforecast;
+
+                              if (budget === null) return "-";
+
+                              let compareValue = null;
+                              if (actual !== null && actual > 0) {
+                                compareValue = actual;
+                              } else if (forecast !== null) {
+                                compareValue = forecast;
+                              }
+
+                              if (compareValue === null) return "-";
+
+                              const variance = compareValue - budget;
+                              const isPositive = variance >= 0;
+
+                              return (
+                                <span
+                                  style={{
+                                    color: isPositive ? "#e74c3c" : "#27ae60",
+                                    fontWeight: "600",
+                                  }}
+                                >
+                                  {isPositive ? "+" : ""}
+                                  {formatCurrencyFull(variance)}
+                                </span>
+                              );
+                            })()}
                           </td>
                         </tr>
                       ))}
+
+                      {/* Totals Row */}
+                      <tr className="table-row-totals">
+                        <td>
+                          <strong>Total</strong>
+                        </td>
+                        <td>
+                          <strong>
+                            {formatCurrencyFull(
+                              trend.reduce(
+                                (sum, data) => sum + (data.monthlyBudget || 0),
+                                0
+                              )
+                            )}
+                          </strong>
+                        </td>
+                        <td>
+                          <strong>
+                            {formatCurrencyFull(
+                              trend.reduce(
+                                (sum, data) => sum + (data.monthlyActual || 0),
+                                0
+                              )
+                            )}
+                          </strong>
+                        </td>
+                        <td>
+                          <strong>
+                            {formatCurrencyFull(
+                              trend.reduce(
+                                (sum, data) =>
+                                  sum + (data.monthlyReforecast || 0),
+                                0
+                              )
+                            )}
+                          </strong>
+                        </td>
+                        <td>
+                          <strong>
+                            {(() => {
+                              // Calculate total variance by summing individual month variances using same logic as rows
+                              const totalVariance = trend.reduce(
+                                (sum, data) => {
+                                  const budget = data.monthlyBudget;
+                                  const actual = data.monthlyActual;
+                                  const forecast = data.monthlyReforecast;
+
+                                  if (budget === null) return sum;
+
+                                  let compareValue = null;
+                                  if (actual !== null && actual > 0) {
+                                    compareValue = actual;
+                                  } else if (forecast !== null) {
+                                    compareValue = forecast;
+                                  }
+
+                                  if (compareValue === null) return sum;
+
+                                  const monthVariance = compareValue - budget;
+                                  return sum + monthVariance;
+                                },
+                                0
+                              );
+
+                              const isPositive = totalVariance >= 0;
+
+                              return (
+                                <span
+                                  style={{
+                                    color: isPositive ? "#e74c3c" : "#27ae60",
+                                    fontWeight: "600",
+                                  }}
+                                >
+                                  {isPositive ? "+" : ""}
+                                  {formatCurrencyFull(totalVariance)}
+                                </span>
+                              );
+                            })()}
+                          </strong>
+                        </td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>
@@ -2298,12 +2333,12 @@ const ExecutiveSummary = () => {
               onMouseLeave={handleVendorMouseLeave}
             />
 
-            {/* Vendor Breakdown Section */}
+            {/* Top 10 Vendors Section */}
             <div className="section-container">
-              <h2 className="section-heading">Vendor Breakdown</h2>
+              <h2 className="section-heading">Top 10 Vendors</h2>
 
               <div className="vendor-breakdown-subtitle">
-                Detailed vendor spending breakdown by category and month.
+                Top 10 YTD vendor spend in {getLastFinalMonthName(state)}.
               </div>
 
               <div style={{ overflowX: "auto" }}>
@@ -2314,6 +2349,7 @@ const ExecutiveSummary = () => {
                       <th>Vendor Category</th>
                       <th>Spend ({getLastFinalMonthName(state)})</th>
                       <th>Spend YTD</th>
+                      <th>Annual Budget</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -2323,6 +2359,7 @@ const ExecutiveSummary = () => {
                           .sort(
                             (a, b) => b.currentMonthSpend - a.currentMonthSpend
                           ) // Sort by current month spend descending
+                          .slice(0, 10) // Take only top 10 vendors
                           .map((vendor) => (
                             <tr key={vendor.id}>
                               <td>{vendor.vendor}</td>
@@ -2331,6 +2368,7 @@ const ExecutiveSummary = () => {
                                 {formatCurrencyFull(vendor.currentMonthSpend)}
                               </td>
                               <td>{formatCurrencyFull(vendor.ytdSpend)}</td>
+                              <td>{formatCurrencyFull(vendor.annualBudget)}</td>
                             </tr>
                           ))}
                         {/* Totals row */}
@@ -2341,22 +2379,49 @@ const ExecutiveSummary = () => {
                             borderTop: "2px solid #dee2e6",
                           }}
                         >
-                          <td>Total</td>
+                          <td>Total (Top 10)</td>
                           <td>-</td>
                           <td>
                             {formatCurrencyFull(
-                              vendorBreakdownData.reduce(
-                                (sum, vendor) => sum + vendor.currentMonthSpend,
-                                0
-                              )
+                              vendorBreakdownData
+                                .sort(
+                                  (a, b) =>
+                                    b.currentMonthSpend - a.currentMonthSpend
+                                )
+                                .slice(0, 10)
+                                .reduce(
+                                  (sum, vendor) =>
+                                    sum + vendor.currentMonthSpend,
+                                  0
+                                )
                             )}
                           </td>
                           <td>
                             {formatCurrencyFull(
-                              vendorBreakdownData.reduce(
-                                (sum, vendor) => sum + vendor.ytdSpend,
-                                0
-                              )
+                              vendorBreakdownData
+                                .sort(
+                                  (a, b) =>
+                                    b.currentMonthSpend - a.currentMonthSpend
+                                )
+                                .slice(0, 10)
+                                .reduce(
+                                  (sum, vendor) => sum + vendor.ytdSpend,
+                                  0
+                                )
+                            )}
+                          </td>
+                          <td>
+                            {formatCurrencyFull(
+                              vendorBreakdownData
+                                .sort(
+                                  (a, b) =>
+                                    b.currentMonthSpend - a.currentMonthSpend
+                                )
+                                .slice(0, 10)
+                                .reduce(
+                                  (sum, vendor) => sum + vendor.annualBudget,
+                                  0
+                                )
                             )}
                           </td>
                         </tr>
@@ -2364,7 +2429,7 @@ const ExecutiveSummary = () => {
                     ) : (
                       <tr>
                         <td
-                          colSpan={4}
+                          colSpan={5}
                           style={{
                             textAlign: "center",
                             fontStyle: "italic",

@@ -5,9 +5,9 @@ import {
 } from "./kpiCalculations";
 import { ResourceData } from "./resourceCalculations";
 import { VendorData } from "./vendorCalculations";
-import { 
-  VendorSpendVelocity, 
-  calculateVendorSpendVelocity 
+import {
+  VendorSpendVelocity,
+  calculateVendorSpendVelocity,
 } from "./vendorPortfolioCalculations";
 
 export interface TooltipContent {
@@ -42,17 +42,18 @@ export const getKPITooltipContent = (
     case "ytdActual":
       return {
         definition:
-          "Total amount actually spent from the beginning of the fiscal year to date",
+          "Total amount actually spent from the beginning of the fiscal year to date (including adjustments)",
         interpretation: `You have spent ${formatCurrencyFull(
           kpis.ytdActual
         )} so far this year, which is ${(
           (kpis.ytdActual / kpis.annualBudgetTarget) *
           100
         ).toFixed(1)}% of your annual budget`,
-        formula: "Sum of all actual expenses YTD",
+        formula:
+          "Sum of all actual expenses YTD (Net Total line from MonthlyView)",
         calculation: `${formatCurrencyFull(
           kpis.ytdActual
-        )} (actual spend through ${getLastFinalMonthName(state)})`,
+        )} (gross actual spend through ${getLastFinalMonthName(state)})`,
       };
 
     case "remainingBudget":
@@ -153,14 +154,15 @@ export const getKPITooltipContent = (
     case "fullYearForecast":
       return {
         definition:
-          "Projected total spending for the entire fiscal year based on current data",
+          "Projected total spending for the entire fiscal year based on current data (Net Total line from MonthlyView)",
         interpretation: `Based on current trends, you're projected to spend ${formatCurrencyFull(
           kpis.fullYearForecast
         )} by year-end`,
-        formula: "Sum of actual (final months) + forecast (non-final months)",
+        formula:
+          "Sum of actual (final months) + forecast (non-final months) from Net Total line",
         calculation: `${formatCurrencyFull(
           kpis.fullYearForecast
-        )} (calculated using IOSToggle states)`,
+        )} (calculated using gross spend including adjustments)`,
       };
 
     case "forecastVsTarget":
@@ -394,89 +396,145 @@ export const getVendorPortfolioTooltipContent = (
   const selectedYear = state.selectedYear;
 
   switch (metricType) {
-
     case "spendVelocity":
-      const velocity = calculateVendorSpendVelocity(vendorData, vendorTrackingData, selectedYear);
+      const velocity = calculateVendorSpendVelocity(
+        vendorData,
+        vendorTrackingData,
+        selectedYear
+      );
       return {
-        definition: "Rate at which vendor budgets are being consumed throughout the year",
-        interpretation: `Current utilization rate is ${velocity.utilizationRate.toFixed(1)}%. ${
-          velocity.utilizationRate > 90 
-            ? "High burn rate - budget may be exhausted early" 
-            : velocity.utilizationRate < 50 
-            ? "Low utilization - budget may be underallocated" 
+        definition:
+          "Rate at which vendor budgets are being consumed throughout the year",
+        interpretation: `Current utilization rate is ${velocity.utilizationRate.toFixed(
+          1
+        )}%. ${
+          velocity.utilizationRate > 90
+            ? "High burn rate - budget may be exhausted early"
+            : velocity.utilizationRate < 50
+            ? "Low utilization - budget may be underallocated"
             : "Healthy spend velocity"
         }`,
         formula: "Utilization Rate = Actual Spend / Budget Allocated × 100",
-        calculation: `${formatCurrencyFull(velocity.totalActualSpend)} / ${formatCurrencyFull(velocity.totalBudgetAllocated)} = ${velocity.utilizationRate.toFixed(1)}%`
+        calculation: `${formatCurrencyFull(
+          velocity.totalActualSpend
+        )} / ${formatCurrencyFull(
+          velocity.totalBudgetAllocated
+        )} = ${velocity.utilizationRate.toFixed(1)}%`,
       };
 
-
     case "velocityTotalBudget":
-      const velocityBudget = calculateVendorSpendVelocity(vendorData, vendorTrackingData, selectedYear);
+      const velocityBudget = calculateVendorSpendVelocity(
+        vendorData,
+        vendorTrackingData,
+        selectedYear
+      );
       return {
-        definition: "Total budget allocated across all vendors for the fiscal year",
-        interpretation: `You have allocated ${formatCurrencyFull(velocityBudget.totalBudgetAllocated)} for vendor spending this year. ${
-          velocityBudget.totalBudgetAllocated > 0 
-            ? "This represents your full vendor commitment for the year" 
+        definition:
+          "Total budget allocated across all vendors for the fiscal year",
+        interpretation: `You have allocated ${formatCurrencyFull(
+          velocityBudget.totalBudgetAllocated
+        )} for vendor spending this year. ${
+          velocityBudget.totalBudgetAllocated > 0
+            ? "This represents your full vendor commitment for the year"
             : "No vendor budgets have been allocated yet"
         }`,
         formula: "Sum of all individual vendor budgets",
-        calculation: `Total: ${formatCurrencyFull(velocityBudget.totalBudgetAllocated)} across ${vendorData.filter((v: any) => v.year === selectedYear).length} vendors`
+        calculation: `Total: ${formatCurrencyFull(
+          velocityBudget.totalBudgetAllocated
+        )} across ${
+          vendorData.filter((v: any) => v.year === selectedYear).length
+        } vendors`,
       };
 
     case "velocityActualSpend":
-      const velocitySpend = calculateVendorSpendVelocity(vendorData, vendorTrackingData, selectedYear);
+      const velocitySpend = calculateVendorSpendVelocity(
+        vendorData,
+        vendorTrackingData,
+        selectedYear
+      );
       const currentMonth = new Date().getMonth() + 1;
       const monthsElapsed = Math.min(currentMonth, 12);
       return {
         definition: "Total amount actually spent with vendors year-to-date",
-        interpretation: `You have spent ${formatCurrencyFull(velocitySpend.totalActualSpend)} with vendors so far this year (${monthsElapsed} months). ${
-          velocitySpend.totalActualSpend > velocitySpend.totalBudgetAllocated 
-            ? "You are over budget - review vendor spending immediately" 
-            : `You have ${formatCurrencyFull(velocitySpend.totalBudgetAllocated - velocitySpend.totalActualSpend)} remaining`
+        interpretation: `You have spent ${formatCurrencyFull(
+          velocitySpend.totalActualSpend
+        )} with vendors so far this year (${monthsElapsed} months). ${
+          velocitySpend.totalActualSpend > velocitySpend.totalBudgetAllocated
+            ? "You are over budget - review vendor spending immediately"
+            : `You have ${formatCurrencyFull(
+                velocitySpend.totalBudgetAllocated -
+                  velocitySpend.totalActualSpend
+              )} remaining`
         }`,
         formula: "Sum of all vendor tracking data for the year",
-        calculation: `${formatCurrencyFull(velocitySpend.totalActualSpend)} spent through month ${monthsElapsed}`
+        calculation: `${formatCurrencyFull(
+          velocitySpend.totalActualSpend
+        )} spent through month ${monthsElapsed}`,
       };
 
     case "velocityUtilizationRate":
-      const velocityUtil = calculateVendorSpendVelocity(vendorData, vendorTrackingData, selectedYear);
+      const velocityUtil = calculateVendorSpendVelocity(
+        vendorData,
+        vendorTrackingData,
+        selectedYear
+      );
       const currentMonthUtil = new Date().getMonth() + 1;
       const expectedUtilization = (currentMonthUtil / 12) * 100;
       return {
         definition: "Percentage of vendor budget consumed year-to-date",
-        interpretation: `You have used ${velocityUtil.utilizationRate.toFixed(1)}% of your vendor budget. ${
-          velocityUtil.utilizationRate > expectedUtilization + 10 
-            ? "Spending pace is ahead of schedule - may exhaust budget early" 
-            : velocityUtil.utilizationRate < expectedUtilization - 10 
-            ? "Spending pace is behind schedule - budget may be underutilized" 
+        interpretation: `You have used ${velocityUtil.utilizationRate.toFixed(
+          1
+        )}% of your vendor budget. ${
+          velocityUtil.utilizationRate > expectedUtilization + 10
+            ? "Spending pace is ahead of schedule - may exhaust budget early"
+            : velocityUtil.utilizationRate < expectedUtilization - 10
+            ? "Spending pace is behind schedule - budget may be underutilized"
             : "Spending is on track with time elapsed"
         }`,
         formula: "(Actual Spend ÷ Total Budget) × 100",
-        calculation: `(${formatCurrencyFull(velocityUtil.totalActualSpend)} ÷ ${formatCurrencyFull(velocityUtil.totalBudgetAllocated)}) × 100 = ${velocityUtil.utilizationRate.toFixed(1)}%`
+        calculation: `(${formatCurrencyFull(
+          velocityUtil.totalActualSpend
+        )} ÷ ${formatCurrencyFull(
+          velocityUtil.totalBudgetAllocated
+        )}) × 100 = ${velocityUtil.utilizationRate.toFixed(1)}%`,
       };
 
     case "velocityBurnRate":
-      const velocityBurn = calculateVendorSpendVelocity(vendorData, vendorTrackingData, selectedYear);
+      const velocityBurn = calculateVendorSpendVelocity(
+        vendorData,
+        vendorTrackingData,
+        selectedYear
+      );
       const currentMonthBurn = new Date().getMonth() + 1;
       const monthsElapsedBurn = Math.min(currentMonthBurn, 12);
       const remainingMonths = 12 - monthsElapsedBurn;
-      const remainingBudget = velocityBurn.totalBudgetAllocated - velocityBurn.totalActualSpend;
+      const remainingBudget =
+        velocityBurn.totalBudgetAllocated - velocityBurn.totalActualSpend;
       return {
-        definition: "Average monthly vendor spending rate based on year-to-date actuals",
-        interpretation: `You are spending an average of ${formatCurrencyFull(velocityBurn.burnRate)} per month on vendors. ${
-          velocityBurn.burnRate * remainingMonths > remainingBudget 
-            ? "At this rate, you will exceed your budget before year-end" 
-            : `At this rate, your remaining budget will last ${velocityBurn.projectedRunway.toFixed(1)} months`
+        definition:
+          "Average monthly vendor spending rate based on year-to-date actuals",
+        interpretation: `You are spending an average of ${formatCurrencyFull(
+          velocityBurn.burnRate
+        )} per month on vendors. ${
+          velocityBurn.burnRate * remainingMonths > remainingBudget
+            ? "At this rate, you will exceed your budget before year-end"
+            : `At this rate, your remaining budget will last ${velocityBurn.projectedRunway.toFixed(
+                1
+              )} months`
         }`,
         formula: "Total Actual Spend ÷ Months Elapsed",
-        calculation: `${formatCurrencyFull(velocityBurn.totalActualSpend)} ÷ ${monthsElapsedBurn} months = ${formatCurrencyFull(velocityBurn.burnRate)}/month`
+        calculation: `${formatCurrencyFull(
+          velocityBurn.totalActualSpend
+        )} ÷ ${monthsElapsedBurn} months = ${formatCurrencyFull(
+          velocityBurn.burnRate
+        )}/month`,
       };
 
     default:
       return {
         definition: "Vendor portfolio metric",
-        interpretation: "This metric helps analyze vendor portfolio performance and risk",
+        interpretation:
+          "This metric helps analyze vendor portfolio performance and risk",
         formula: "N/A",
         calculation: "N/A",
       };

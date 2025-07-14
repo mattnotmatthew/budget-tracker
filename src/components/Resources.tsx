@@ -545,7 +545,7 @@ const Resources: React.FC = () => {
     <div className="resources-section">
       <div className="resources-header">
         <div>
-          <h2>Team Allocation</h2>
+          <h2>Team Costs</h2>
           <p>Track development team headcount and costs</p>
         </div>
         <div className="header-controls">

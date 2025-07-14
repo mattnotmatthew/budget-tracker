@@ -325,7 +325,9 @@ const Dashboard: React.FC = () => {
         </div>
       )}{" "}
       <div className="dashboard-header">
-        <div className={`view-controls ${currentView ? 'has-active-view' : ''}`}>
+        <div
+          className={`view-controls ${currentView ? "has-active-view" : ""}`}
+        >
           <div className="year-selector">
             <label>Year: </label>{" "}
             <div className="year-selector-container">
@@ -363,18 +365,22 @@ const Dashboard: React.FC = () => {
             Vendor Management
           </button>
           <button
-            className={`view-btn ${currentView === "resources" ? "active" : ""}`}
+            className={`view-btn ${
+              currentView === "resources" ? "active" : ""
+            }`}
             onClick={() => setCurrentView("resources")}
-            title="Team Allocation"
+            title="Team Costs"
           >
-            Team Allocation
+            Team Costs
           </button>
           <button
-            className={`view-btn ${currentView === "functionalAllocation" ? "active" : ""}`}
+            className={`view-btn ${
+              currentView === "functionalAllocation" ? "active" : ""
+            }`}
             onClick={() => setCurrentView("functionalAllocation")}
-            title="Product Allocation"
+            title="Allocations"
           >
-            Product Allocation
+            Allocations
           </button>
           <button
             className={`view-btn ${
@@ -387,7 +393,6 @@ const Dashboard: React.FC = () => {
           </button>
         </div>{" "}
         <div className="action-controls">
-
           <button
             className="file-manager-btn"
             onClick={() => setShowFileManager(!showFileManager)}
@@ -456,7 +461,7 @@ const Dashboard: React.FC = () => {
                 <div className="hotkey-item">
                   <span className="hotkey">Ctrl + S</span>
                   <span className="description">
-                    Cycle Views (Executive→Budget→Vendor→Team Allocation→Product Allocation)
+                    Cycle Views (Executive→Budget→Vendor→Team Costs→Allocations)
                   </span>
                 </div>
                 <div className="hotkey-item">
@@ -501,8 +506,16 @@ const Dashboard: React.FC = () => {
         {currentView === "budget" && (
           <>
             <div className="budget-controls-section">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <div
+                  style={{ display: "flex", gap: "1rem", alignItems: "center" }}
+                >
                   <QuarterSelector
                     selectedQuarters={selectedQuarters}
                     onQuarterToggle={handleQuarterToggle}
@@ -511,7 +524,9 @@ const Dashboard: React.FC = () => {
                     className="input-btn"
                     onClick={handleEditDataClick}
                     title={
-                      isReadOnly ? "View Data (Ctrl+E)" : "Edit/Add Data (Ctrl+E)"
+                      isReadOnly
+                        ? "View Data (Ctrl+E)"
+                        : "Edit/Add Data (Ctrl+E)"
                     }
                   >
                     {showInput
@@ -522,7 +537,9 @@ const Dashboard: React.FC = () => {
                     <small>(Ctrl+E)</small>
                   </button>
                 </div>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                <div
+                  style={{ display: "flex", gap: "1rem", alignItems: "center" }}
+                >
                   <div className="toggle-control">
                     <label className="toggle-label">
                       <span className="toggle-text">

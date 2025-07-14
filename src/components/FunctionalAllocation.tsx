@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useBudget } from "../context/BudgetContext";
 import { FunctionalAllocation as FunctionalAllocationType } from "../types";
 import { getLastFinalMonthNumber } from "../utils/monthUtils";
-import TableActionButtons from "./shared/TableActionButtons";
+import { AllocationTableSection } from "./allocations";
 import "../styles/components/functional-allocation.css";
 
 const FunctionalAllocation: React.FC = () => {
@@ -15,7 +15,18 @@ const FunctionalAllocation: React.FC = () => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   // State for paste messages
   const [pasteMessage, setPasteMessage] = useState<string | null>(null);
-  const tableRef = useRef<HTMLTableElement>(null);
+  // State for sorting
+  const [sortField, setSortField] = useState<
+    keyof FunctionalAllocationType | "costPer" | null
+  >(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  // State for filtering
+  const [filters, setFilters] = useState({
+    product: "",
+    teamName: "",
+    function: "",
+    currentCostCenter: "",
+  });
 
   // Get unique teams from Resources
   const uniqueTeams = Array.from(
@@ -27,13 +38,143 @@ const FunctionalAllocation: React.FC = () => {
     new Set(state.teams?.map((team) => team.currentCostCenter) || [])
   ).sort();
 
+  // Get unique values from allocations for better filter options
+  const uniqueProducts = Array.from(
+    new Set(
+      state.functionalAllocations
+        ?.filter(
+          (a) => a.month === selectedMonth && a.year === state.selectedYear
+        )
+        ?.map((allocation) => allocation.product)
+        ?.filter((product) => product && product.trim() !== "") || []
+    )
+  ).sort();
+
+  const uniqueTeamsFromAllocations = Array.from(
+    new Set(
+      state.functionalAllocations
+        ?.filter(
+          (a) => a.month === selectedMonth && a.year === state.selectedYear
+        )
+        ?.map((allocation) => allocation.teamName)
+        ?.filter((team) => team && team.trim() !== "") || []
+    )
+  ).sort();
+
+  const uniqueCostCentersFromAllocations = Array.from(
+    new Set(
+      state.functionalAllocations
+        ?.filter(
+          (a) => a.month === selectedMonth && a.year === state.selectedYear
+        )
+        ?.map((allocation) => allocation.currentCostCenter)
+        ?.filter((cc) => cc && cc.trim() !== "") || []
+    )
+  ).sort();
+
+  // Combine unique values from both sources for comprehensive filter options
+  const allUniqueTeams = Array.from(
+    new Set([...uniqueTeams, ...uniqueTeamsFromAllocations])
+  ).sort();
+  const allUniqueCostCenters = Array.from(
+    new Set([...uniqueCostCenters, ...uniqueCostCentersFromAllocations])
+  ).sort();
+
   // Filter allocations for selected month and year
-  const monthAllocations =
+  const baseMonthAllocations =
     state.functionalAllocations?.filter(
       (allocation) =>
         allocation.month === selectedMonth &&
         allocation.year === state.selectedYear
     ) || [];
+
+  // Get base allocations that are eligible for Team Allocations table (Development and Support only)
+  const baseTeamAllocations = React.useMemo(() => {
+    return baseMonthAllocations.filter(
+      (allocation) =>
+        allocation.function === "Development" ||
+        allocation.function === "Support"
+    );
+  }, [baseMonthAllocations]);
+
+  // Apply filters and sorting to allocations (excluding Revenue and Infrastructure which have their own tables)
+  const monthAllocations = React.useMemo(() => {
+    // First apply filters and exclude Revenue and Infrastructure allocations
+    let filteredAllocations = baseMonthAllocations.filter((allocation) => {
+      return (
+        allocation.function !== "Revenue" && // Exclude Revenue allocations
+        allocation.function !== "Infrastructure" && // Exclude Infrastructure allocations
+        (!filters.product ||
+          allocation.product
+            .toLowerCase()
+            .includes(filters.product.toLowerCase())) &&
+        (!filters.teamName ||
+          allocation.teamName
+            .toLowerCase()
+            .includes(filters.teamName.toLowerCase())) &&
+        (!filters.function ||
+          allocation.function
+            .toLowerCase()
+            .includes(filters.function.toLowerCase())) &&
+        (!filters.currentCostCenter ||
+          allocation.currentCostCenter
+            .toLowerCase()
+            .includes(filters.currentCostCenter.toLowerCase()))
+      );
+    });
+
+    // Then apply sorting if a sort field is selected
+    if (!sortField) return filteredAllocations;
+
+    return [...filteredAllocations].sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      if (sortField === "costPer") {
+        aValue = calculateCostPer(a);
+        bValue = calculateCostPer(b);
+      } else {
+        aValue = a[sortField];
+        bValue = b[sortField];
+      }
+
+      // Handle null/undefined values
+      if (aValue == null && bValue == null) return 0;
+      if (aValue == null) return sortDirection === "asc" ? 1 : -1;
+      if (bValue == null) return sortDirection === "asc" ? -1 : 1;
+
+      // Handle string comparisons
+      if (typeof aValue === "string" && typeof bValue === "string") {
+        const comparison = aValue
+          .toLowerCase()
+          .localeCompare(bValue.toLowerCase());
+        return sortDirection === "asc" ? comparison : -comparison;
+      }
+
+      // Handle number comparisons
+      if (typeof aValue === "number" && typeof bValue === "number") {
+        return sortDirection === "asc" ? aValue - bValue : bValue - aValue;
+      }
+
+      // Fallback to string comparison
+      const comparison = String(aValue).localeCompare(String(bValue));
+      return sortDirection === "asc" ? comparison : -comparison;
+    });
+  }, [baseMonthAllocations, sortField, sortDirection, filters]);
+
+  // Filter allocations for Revenue function
+  const revenueAllocations = React.useMemo(() => {
+    return baseMonthAllocations.filter(
+      (allocation) => allocation.function === "Revenue"
+    );
+  }, [baseMonthAllocations]);
+
+  // Filter allocations for Infrastructure function
+  const infrastructureAllocations = React.useMemo(() => {
+    return baseMonthAllocations.filter(
+      (allocation) => allocation.function === "Infrastructure"
+    );
+  }, [baseMonthAllocations]);
 
   // Calculate total cost and validation status
   const totalCost = monthAllocations.reduce(
@@ -76,12 +217,118 @@ const FunctionalAllocation: React.FC = () => {
   ];
 
   const handleAddAllocation = () => {
+    // Determine default values based on active filters
+    let defaultFunction = "Development";
+
+    // If only the function filter is active (and no other filters), use that as default
+    const activeFilters = Object.entries(filters).filter(
+      ([key, value]) => value.trim() !== ""
+    );
+    const isFunctionOnlyFilter =
+      activeFilters.length === 1 && activeFilters[0][0] === "function";
+
+    if (isFunctionOnlyFilter && filters.function) {
+      // Find exact match for function filter value
+      const validFunctions = [
+        "Development",
+        "Infrastructure",
+        "Revenue",
+        "Support",
+      ];
+      const matchedFunction = validFunctions.find(
+        (func) => func.toLowerCase() === filters.function.toLowerCase()
+      );
+      if (matchedFunction) {
+        defaultFunction = matchedFunction;
+      }
+    }
+
     const newAllocation: FunctionalAllocationType = {
       id: `fa-${Date.now()}`,
       year: state.selectedYear,
       month: selectedMonth,
       teamName: "",
-      function: "Development",
+      function: defaultFunction as
+        | "Development"
+        | "Infrastructure"
+        | "Revenue"
+        | "Support",
+      currentCostCenter: "",
+      product: "",
+      cost: 0,
+      percentOfWork: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    dispatch({
+      type: "ADD_FUNCTIONAL_ALLOCATION",
+      payload: newAllocation,
+    });
+
+    // Add the new allocation to existing editing rows instead of replacing them
+    setEditingRows((prev) => {
+      const newSet = new Set(prev);
+      newSet.add(newAllocation.id);
+      return newSet;
+    });
+
+    // Auto-focus on the new row - first field
+    setTimeout(() => {
+      const firstInput = document.querySelector(
+        `input[data-allocation-id="${newAllocation.id}"][data-field="product"]`
+      ) as HTMLInputElement;
+      if (firstInput) {
+        firstInput.focus();
+      }
+    }, 100);
+  };
+
+  const handleAddRevenueAllocation = () => {
+    const newAllocation: FunctionalAllocationType = {
+      id: `fa-${Date.now()}`,
+      year: state.selectedYear,
+      month: selectedMonth,
+      teamName: "",
+      function: "Revenue",
+      currentCostCenter: "",
+      product: "",
+      cost: 0,
+      percentOfWork: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    dispatch({
+      type: "ADD_FUNCTIONAL_ALLOCATION",
+      payload: newAllocation,
+    });
+
+    // Add the new allocation to existing editing rows instead of replacing them
+    setEditingRows((prev) => {
+      const newSet = new Set(prev);
+      newSet.add(newAllocation.id);
+      return newSet;
+    });
+
+    // Auto-focus on the new row - first field
+    setTimeout(() => {
+      const firstInput = document.querySelector(
+        `input[data-allocation-id="${newAllocation.id}"][data-field="product"]`
+      ) as HTMLInputElement;
+      if (firstInput) {
+        firstInput.focus();
+      }
+    }, 100);
+  };
+
+  const handleAddInfrastructureAllocation = () => {
+    const newAllocation: FunctionalAllocationType = {
+      id: `fa-${Date.now()}`,
+      year: state.selectedYear,
+      month: selectedMonth,
+      teamName: "",
+      function: "Infrastructure",
       currentCostCenter: "",
       product: "",
       cost: 0,
@@ -132,6 +379,26 @@ const FunctionalAllocation: React.FC = () => {
     }
   };
 
+  // Handle column sorting
+  const handleSort = (field: keyof FunctionalAllocationType | "costPer") => {
+    if (sortField === field) {
+      // If same field, toggle direction
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      // If different field, set new field and default to ascending
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  // Get sort indicator for column headers
+  const getSortIndicator = (
+    field: keyof FunctionalAllocationType | "costPer"
+  ) => {
+    if (sortField !== field) return " ⇅";
+    return sortDirection === "asc" ? " ↑" : " ↓";
+  };
+
   const handleFieldChange = (
     id: string,
     field: keyof FunctionalAllocationType,
@@ -142,10 +409,26 @@ const FunctionalAllocation: React.FC = () => {
 
     let updatedAllocation = { ...allocation, [field]: value };
 
-    // If team is selected, automatically update the cost from Resources
-    if (field === "teamName") {
+    // If team is selected, automatically update the cost from Resources only for Development and Support functions
+    if (
+      field === "teamName" &&
+      (allocation.function === "Development" ||
+        allocation.function === "Support")
+    ) {
       const monthlyCost = getTeamMonthlyCost(value);
       updatedAllocation = { ...updatedAllocation, cost: monthlyCost };
+    }
+
+    // If function is changed to/from Development or Support, update cost accordingly
+    if (field === "function") {
+      if (value === "Development" || value === "Support") {
+        // When changing to Development or Support, auto-calculate cost if team is selected
+        if (allocation.teamName) {
+          const monthlyCost = getTeamMonthlyCost(allocation.teamName);
+          updatedAllocation = { ...updatedAllocation, cost: monthlyCost };
+        }
+      }
+      // For other functions (Infrastructure, Revenue), keep the existing cost value
     }
 
     // Validate the field
@@ -192,7 +475,7 @@ const FunctionalAllocation: React.FC = () => {
         const teamNameRaw = cells[1].trim();
         const functionValueRaw = cells[2].trim();
         const costCenterRaw = cells[3].trim();
-        // Cost will be automatically set from Resources component
+        const costRaw = cells[4].trim(); // Cost from pasted data
         const percentOfWork =
           parseFloat(cells[5].replace(/[^0-9.-]/g, "")) || 0;
 
@@ -201,8 +484,11 @@ const FunctionalAllocation: React.FC = () => {
         const functionValue = findMatchingFunction(functionValueRaw);
         const costCenter = findMatchingCostCenter(costCenterRaw);
 
-        // Get the monthly cost from Resources component
-        const monthlyCost = getTeamMonthlyCost(teamName);
+        // Get the monthly cost from Resources component only for Development and Support
+        const monthlyCost =
+          functionValue === "Development" || functionValue === "Support"
+            ? getTeamMonthlyCost(teamName)
+            : parseFloat(cells[4].replace(/[^0-9.-]/g, "")) || 0;
 
         const newAllocation: FunctionalAllocationType = {
           id: `fa-${Date.now()}-${index}`,
@@ -294,9 +580,13 @@ const FunctionalAllocation: React.FC = () => {
 
   // Update costs when month changes
   useEffect(() => {
-    // Update costs for all allocations when the month changes
+    // Update costs for all allocations when the month changes, but only for Development and Support functions
     monthAllocations.forEach((allocation) => {
-      if (allocation.teamName) {
+      if (
+        allocation.teamName &&
+        (allocation.function === "Development" ||
+          allocation.function === "Support")
+      ) {
         const newMonthlyCost = getTeamMonthlyCost(allocation.teamName);
         if (newMonthlyCost !== allocation.cost) {
           handleUpdateAllocation({
@@ -465,6 +755,9 @@ const FunctionalAllocation: React.FC = () => {
           if (field === "percentOfWork") {
             processedValue =
               parseFloat(cleanExcelNumber(value).toString()) || 0;
+          } else if (field === "cost") {
+            processedValue =
+              parseFloat(cleanExcelNumber(value).toString()) || 0;
           } else if (field === "teamName") {
             processedValue = findMatchingTeam(value);
           } else if (field === "function") {
@@ -501,6 +794,9 @@ const FunctionalAllocation: React.FC = () => {
 
             // Process the value based on field type
             if (field === "percentOfWork") {
+              processedValue =
+                parseFloat(cleanExcelNumber(value).toString()) || 0;
+            } else if (field === "cost") {
               processedValue =
                 parseFloat(cleanExcelNumber(value).toString()) || 0;
             } else if (field === "teamName") {
@@ -551,6 +847,8 @@ const FunctionalAllocation: React.FC = () => {
     // Process based on field type
     if (field === "percentOfWork") {
       processedValue = parseFloat(cleanExcelNumber(pastedData).toString()) || 0;
+    } else if (field === "cost") {
+      processedValue = parseFloat(cleanExcelNumber(pastedData).toString()) || 0;
     } else if (field === "teamName") {
       processedValue = findMatchingTeam(pastedData);
     } else if (field === "function") {
@@ -578,8 +876,8 @@ const FunctionalAllocation: React.FC = () => {
   ) => {
     // Field order for navigation
     const fieldTypes: (keyof FunctionalAllocationType)[] = [
-      "product",
       "teamName",
+      "product",
       "function",
       "currentCostCenter",
       "percentOfWork",
@@ -707,289 +1005,113 @@ const FunctionalAllocation: React.FC = () => {
         </div>
       </div>
 
-      <div className="functional-allocation-actions">
-        <button onClick={handleExportCSV} className="export-btn">
-          Export to CSV
-        </button>
-        {pasteMessage && (
-          <span className="paste-message success">{pasteMessage}</span>
-        )}
-      </div>
+      {/* Team Allocations Section */}
+      <AllocationTableSection
+        title="Team Allocations"
+        allocations={monthAllocations}
+        baseAllocations={baseTeamAllocations}
+        editingRows={editingRows}
+        errors={errors}
+        filters={filters}
+        onFiltersChange={setFilters}
+        uniqueTeams={uniqueTeams}
+        allUniqueTeams={allUniqueTeams}
+        uniqueCostCenters={uniqueCostCenters}
+        allUniqueCostCenters={allUniqueCostCenters}
+        functionOptions={["Development", "Support"]}
+        monthNames={monthNames}
+        selectedMonth={selectedMonth}
+        onSort={handleSort}
+        getSortIndicator={getSortIndicator}
+        onFieldChange={handleFieldChange}
+        onToggleEditMode={toggleEditMode}
+        onDeleteAllocation={handleDeleteAllocation}
+        onKeyDown={handleKeyDown}
+        onMultiRowPaste={handleMultiRowPaste}
+        onPaste={handlePaste}
+        onExportCSV={handleExportCSV}
+        onAddAllocation={handleAddAllocation}
+        calculateCostPer={calculateCostPer}
+        pasteMessage={pasteMessage}
+        showFilters={true}
+        headerClassName="table-section-header-first"
+      />
 
-      <div className="table-section">
-        <div className="table-section-header">
-          <h2>Product Allocation</h2>
-          <button onClick={handleAddAllocation} className="add-btn">
-            Add Allocation
-          </button>
-        </div>
-        <div className="table-container" onPaste={handlePaste}>
-          <table ref={tableRef} className="functional-allocation-table">
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>Team</th>
-                <th>Function</th>
-                <th>Current Cost Center</th>
-                <th>Team Cost ({monthNames[selectedMonth - 1]})</th>
-                <th>% of Work</th>
-                <th>Cost Per Product ({monthNames[selectedMonth - 1]})</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {monthAllocations.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="no-data">
-                    No allocations for {monthNames[selectedMonth - 1]}{" "}
-                    {state.selectedYear}
-                  </td>
-                </tr>
-              ) : (
-                monthAllocations.map((allocation) => (
-                  <tr key={allocation.id}>
-                    <td>
-                      {editingRows.has(allocation.id) ? (
-                        <input
-                          type="text"
-                          value={allocation.product}
-                          data-allocation-id={allocation.id}
-                          data-field="product"
-                          onChange={(e) =>
-                            handleFieldChange(
-                              allocation.id,
-                              "product",
-                              e.target.value
-                            )
-                          }
-                          onKeyDown={(e) =>
-                            handleKeyDown(e, allocation.id, "product")
-                          }
-                          onPaste={(e) =>
-                            handleMultiRowPaste(e, allocation.id, "product")
-                          }
-                          className="form-input"
-                        />
-                      ) : (
-                        <span onClick={() => toggleEditMode(allocation.id)}>
-                          {allocation.product || "-"}
-                        </span>
-                      )}
-                    </td>
-                    <td>
-                      {editingRows.has(allocation.id) ? (
-                        <select
-                          value={allocation.teamName}
-                          data-allocation-id={allocation.id}
-                          data-field="teamName"
-                          onChange={(e) =>
-                            handleFieldChange(
-                              allocation.id,
-                              "teamName",
-                              e.target.value
-                            )
-                          }
-                          onKeyDown={(e) =>
-                            handleKeyDown(e, allocation.id, "teamName")
-                          }
-                          onPaste={(e) =>
-                            handleMultiRowPaste(e, allocation.id, "teamName")
-                          }
-                          className="form-select"
-                        >
-                          <option value="">Select Team</option>
-                          {uniqueTeams.map((team) => (
-                            <option key={team} value={team}>
-                              {team}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <span onClick={() => toggleEditMode(allocation.id)}>
-                          {allocation.teamName || "-"}
-                        </span>
-                      )}
-                    </td>
-                    <td>
-                      {editingRows.has(allocation.id) ? (
-                        <select
-                          value={allocation.function}
-                          data-allocation-id={allocation.id}
-                          data-field="function"
-                          onChange={(e) =>
-                            handleFieldChange(
-                              allocation.id,
-                              "function",
-                              e.target.value
-                            )
-                          }
-                          onKeyDown={(e) =>
-                            handleKeyDown(e, allocation.id, "function")
-                          }
-                          onPaste={(e) =>
-                            handleMultiRowPaste(e, allocation.id, "function")
-                          }
-                          className="form-select"
-                        >
-                          <option value="Development">Development</option>
-                          <option value="Infrastructure">Infrastructure</option>
-                          <option value="Revenue">Revenue</option>
-                          <option value="Support">Support</option>
-                        </select>
-                      ) : (
-                        <span onClick={() => toggleEditMode(allocation.id)}>
-                          {allocation.function}
-                        </span>
-                      )}
-                    </td>
-                    <td>
-                      {editingRows.has(allocation.id) ? (
-                        <select
-                          value={allocation.currentCostCenter}
-                          data-allocation-id={allocation.id}
-                          data-field="currentCostCenter"
-                          onChange={(e) =>
-                            handleFieldChange(
-                              allocation.id,
-                              "currentCostCenter",
-                              e.target.value
-                            )
-                          }
-                          onKeyDown={(e) =>
-                            handleKeyDown(e, allocation.id, "currentCostCenter")
-                          }
-                          onPaste={(e) =>
-                            handleMultiRowPaste(
-                              e,
-                              allocation.id,
-                              "currentCostCenter"
-                            )
-                          }
-                          className="form-select"
-                        >
-                          <option value="">Select Cost Center</option>
-                          {uniqueCostCenters.map((cc) => (
-                            <option key={cc} value={cc}>
-                              {cc}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <span onClick={() => toggleEditMode(allocation.id)}>
-                          {allocation.currentCostCenter || "-"}
-                        </span>
-                      )}
-                    </td>
-                    <td className="calculated-field">
-                      $
-                      {allocation.cost.toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </td>
-                    <td>
-                      {editingRows.has(allocation.id) ? (
-                        <div className="input-with-suffix">
-                          <input
-                            type="number"
-                            value={allocation.percentOfWork}
-                            data-allocation-id={allocation.id}
-                            data-field="percentOfWork"
-                            onChange={(e) =>
-                              handleFieldChange(
-                                allocation.id,
-                                "percentOfWork",
-                                Number(e.target.value)
-                              )
-                            }
-                            onKeyDown={(e) =>
-                              handleKeyDown(e, allocation.id, "percentOfWork")
-                            }
-                            onPaste={(e) =>
-                              handleMultiRowPaste(
-                                e,
-                                allocation.id,
-                                "percentOfWork"
-                              )
-                            }
-                            className={`form-input ${
-                              errors[`${allocation.id}-percentOfWork`]
-                                ? "error"
-                                : ""
-                            }`}
-                            min="0"
-                            max="100"
-                            step="0.01"
-                          />
-                          <span className="suffix">%</span>
-                        </div>
-                      ) : (
-                        <span onClick={() => toggleEditMode(allocation.id)}>
-                          {allocation.percentOfWork}%
-                        </span>
-                      )}
-                    </td>
-                    <td className="calculated-field">
-                      $
-                      {calculateCostPer(allocation).toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </td>
-                    <td>
-                      <TableActionButtons
-                        isEditing={editingRows.has(allocation.id)}
-                        onEdit={() => toggleEditMode(allocation.id)}
-                        onDelete={() => handleDeleteAllocation(allocation.id)}
-                        editTooltip={
-                          editingRows.has(allocation.id)
-                            ? "Save allocation"
-                            : "Edit allocation"
-                        }
-                        deleteTooltip="Delete allocation"
-                      />
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+      {/* Revenue Allocations Section */}
+      <AllocationTableSection
+        title="Revenue Allocations"
+        allocations={revenueAllocations}
+        baseAllocations={revenueAllocations}
+        editingRows={editingRows}
+        errors={errors}
+        filters={{
+          product: "",
+          teamName: "",
+          function: "",
+          currentCostCenter: "",
+        }}
+        onFiltersChange={() => {}} // Revenue section doesn't use main filters
+        uniqueTeams={uniqueTeams}
+        allUniqueTeams={allUniqueTeams}
+        uniqueCostCenters={uniqueCostCenters}
+        allUniqueCostCenters={allUniqueCostCenters}
+        functionOptions={["Revenue"]}
+        monthNames={monthNames}
+        selectedMonth={selectedMonth}
+        onSort={handleSort}
+        getSortIndicator={getSortIndicator}
+        onFieldChange={handleFieldChange}
+        onToggleEditMode={toggleEditMode}
+        onDeleteAllocation={handleDeleteAllocation}
+        onKeyDown={handleKeyDown}
+        onMultiRowPaste={handleMultiRowPaste}
+        onPaste={handlePaste}
+        onExportCSV={handleExportCSV}
+        onAddAllocation={handleAddRevenueAllocation}
+        calculateCostPer={calculateCostPer}
+        pasteMessage={pasteMessage}
+        addButtonText="Add Revenue Allocation"
+        showFilters={false}
+        defaultCollapsed={true}
+      />
 
-        <div className="functional-allocation-help">
-          <p>
-            <strong>Tip:</strong> Product allocations are tracked by month. You
-            can paste data from Excel in two ways:
-          </p>
-          <ul>
-            <li>
-              <strong>Full rows:</strong> Copy rows with columns: Product, Team,
-              Function, Cost Center, Cost, % of Work
-            </li>
-            <li>
-              <strong>Column values:</strong> Copy a column of values (A1, A2,
-              A3, A4) and paste into any field to fill multiple rows vertically
-            </li>
-          </ul>
-          <p>
-            <strong>Smart Dropdown Matching:</strong> When pasting into Team,
-            Function, or Cost Center columns, the system will automatically
-            match your pasted text to available options using case-insensitive
-            and partial matching. For Functions, you can use abbreviations like
-            "dev" for Development, "infra" for Infrastructure, etc.
-          </p>
-          <p>
-            <strong>Keyboard Navigation:</strong> Use Tab/Shift+Tab to move
-            between fields, Enter/↓ to move to next row, ↑ to move to previous
-            row, ←→ to move between columns.
-          </p>
-          <p>
-            <strong>Team Cost:</strong> The Team Cost column is automatically
-            populated from the Resources section based on the selected team and
-            month.
-          </p>
-        </div>
-      </div>
+      {/* Infrastructure Allocations Section */}
+      <AllocationTableSection
+        title="Infrastructure Allocations"
+        allocations={infrastructureAllocations}
+        baseAllocations={infrastructureAllocations}
+        editingRows={editingRows}
+        errors={errors}
+        filters={{
+          product: "",
+          teamName: "",
+          function: "",
+          currentCostCenter: "",
+        }}
+        onFiltersChange={() => {}} // Infrastructure section doesn't use main filters
+        uniqueTeams={uniqueTeams}
+        allUniqueTeams={allUniqueTeams}
+        uniqueCostCenters={uniqueCostCenters}
+        allUniqueCostCenters={allUniqueCostCenters}
+        functionOptions={["Infrastructure"]}
+        monthNames={monthNames}
+        selectedMonth={selectedMonth}
+        onSort={handleSort}
+        getSortIndicator={getSortIndicator}
+        onFieldChange={handleFieldChange}
+        onToggleEditMode={toggleEditMode}
+        onDeleteAllocation={handleDeleteAllocation}
+        onKeyDown={handleKeyDown}
+        onMultiRowPaste={handleMultiRowPaste}
+        onPaste={handlePaste}
+        onExportCSV={handleExportCSV}
+        onAddAllocation={handleAddInfrastructureAllocation}
+        calculateCostPer={calculateCostPer}
+        pasteMessage={pasteMessage}
+        addButtonText="Add Infrastructure Allocation"
+        showFilters={false}
+        defaultCollapsed={true}
+      />
     </div>
   );
 };

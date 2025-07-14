@@ -66,9 +66,8 @@ export const getKPIData = (state: any): KPIData => {
   );
   const ytdData = ytdResult.data;
 
-  // Calculate adjusted YTD actual using budget tracking logic (includes adjustments)
-  const ytdBudgetTracking = calculateBudgetTracking(ytdData.netTotal);
-  const ytdActual = ytdBudgetTracking.actual; // This includes adjustments
+  // Use net total actual directly (no adjustment subtraction) to match MonthlyView Net Total line
+  const ytdActual = ytdData.netTotal.actual; // Use net total directly, including adjustments
   const ytdBudget = ytdData.netTotal.budget;
 
   // Variance calculation: (Actual - Budget) * -1
@@ -77,7 +76,7 @@ export const getKPIData = (state: any): KPIData => {
   const variance = (ytdActual - ytdBudget) * -1;
   const variancePct = ytdBudget ? (variance / ytdBudget) * 100 : 0;
 
-  // Calculate full year forecast by summing monthly "Tracking" totals from Monthly View
+  // Calculate full year forecast by summing monthly "Net Total" from Monthly View
   const calculateFullYearForecast = (): number => {
     let totalForecast = 0;
 
@@ -96,15 +95,12 @@ export const getKPIData = (state: any): KPIData => {
       const isMonthFinal =
         state.monthlyForecastModes?.[state.selectedYear]?.[month] ?? false;
 
-      // Calculate tracking values using the same logic as Monthly View
-      const budgetTracking = calculateBudgetTracking(monthData.netTotal);
-
       if (isMonthFinal) {
-        // Month is final - use actual tracking value
-        totalForecast += budgetTracking.actual || 0;
+        // Month is final - use actual Net Total value (includes adjustments)
+        totalForecast += monthData.netTotal.actual || 0;
       } else {
-        // Month is forecast - use forecast tracking value
-        totalForecast += budgetTracking.reforecast || 0;
+        // Month is forecast - use reforecast Net Total value
+        totalForecast += monthData.netTotal.reforecast || 0;
       }
     });
 

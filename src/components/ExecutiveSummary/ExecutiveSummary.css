@@ -1038,16 +1038,6 @@ team-composition-summary .ytd-performance .kpi-row,
   ) !important; /* Light orange for Monthly Forecast */
 }
 
-.trend-table:not(.rolling-trend-table) th:nth-child(5),
-.trend-table:not(.rolling-trend-table) td:nth-child(5) {
-  background-color: rgba(
-    139,
-    0,
-    0,
-    0.1
-  ) !important; /* Light dark red for Monthly Adj Actual */
-}
-
 /* Hover effects for monthly tables - using chart line colors */
 .trend-table:not(.rolling-trend-table) tbody tr:hover td:nth-child(2) {
   background-color: rgba(
@@ -2196,6 +2186,20 @@ body.print-mode[data-print-tab="resource-allocation"]
 .table-row-forecast {
   font-style: italic;
   opacity: 0.85;
+}
+
+.table-row-totals {
+  border-top: 2px solid #2d3a4a !important;
+  background-color: #f8f9fa !important;
+  font-weight: 600;
+}
+
+.table-row-totals td {
+  border-top: 2px solid #2d3a4a !important;
+  background-color: #f8f9fa !important;
+  padding: 1rem !important;
+  font-weight: 600;
+  color: #2d3a4a;
 }
 
 /* Hiring Analysis Styles */
