@@ -1,5 +1,9 @@
 # VendorManagement Component Refactoring
 
+## Migration Status: ⏳ PENDING
+
+The refactored components have been created but the application is still using the original VendorManagement component. Migration to VendorManagementRefactored is required.
+
 ## Overview
 
 The VendorManagement component has been broken down from a single 2,339-line file into smaller, more manageable components.
