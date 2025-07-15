@@ -6,6 +6,7 @@ import {
   MonthlyData,
   BudgetAlert,
 } from "../types";
+import { getQuarterMonths } from "./dates/dateUtils";
 
 // Define QuarterlyData interface locally since quarterly functions still need it
 interface QuarterlyData {
@@ -233,16 +234,6 @@ export const calculateQuarterlyNonForecastCategorySummary = (
   };
 };
 
-// Helper function to get months for a quarter
-const getQuarterMonths = (quarter: number): number[] => {
-  const quarterToMonths: { [key: number]: number[] } = {
-    1: [1, 2, 3], // Q1: Jan, Feb, Mar
-    2: [4, 5, 6], // Q2: Apr, May, Jun
-    3: [7, 8, 9], // Q3: Jul, Aug, Sep
-    4: [10, 11, 12], // Q4: Oct, Nov, Dec
-  };
-  return quarterToMonths[quarter] || [];
-};
 
 export const calculateQuarterlyData = (
   entries: BudgetEntry[],

@@ -1261,4 +1261,4 @@ const VendorTrackingTable: React.FC<VendorTrackingTableProps> = (props) => {
 
 VendorTrackingTable.displayName = "VendorTrackingTable";
 
-export default VendorTrackingTable;
+export default React.memo(VendorTrackingTable);

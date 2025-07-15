@@ -4,7 +4,7 @@ import { isFeatureEnabled } from "../utils/featureFlags";
 import FirstTimeSetup from "../components/FirstTimeSetup/FirstTimeSetup";
 import PersistenceIndicator from "../components/PersistenceIndicator";
 import Dashboard from "../components/Dashboard";
-import ExecutiveSummary from "../components/ExecutiveSummary/ExecutiveSummary";
+import { ExecutiveSummary } from "../features/reports";
 import PlanningDashboard from "../components/Planning/PlanningDashboard";
 import PlanningCategories from "../components/Planning/PlanningCategories";
 import ScenarioManagement from "../components/Planning/PlanningScenarios";

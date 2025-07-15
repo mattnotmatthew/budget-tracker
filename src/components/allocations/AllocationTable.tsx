@@ -355,4 +355,4 @@ const AllocationTable: React.FC<AllocationTableProps> = ({
   );
 };
 
-export default AllocationTable;
+export default React.memo(AllocationTable);

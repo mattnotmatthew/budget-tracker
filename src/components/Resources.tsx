@@ -885,4 +885,4 @@ const Resources: React.FC = () => {
   );
 };
 
-export default Resources;
+export default React.memo(Resources);

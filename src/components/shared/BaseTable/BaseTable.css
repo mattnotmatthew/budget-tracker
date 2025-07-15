@@ -1,0 +1,59 @@
+/* Base Table Styles */
+.base-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* Sticky header support */
+.base-table.sticky-header thead th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--background-light);
+}
+
+/* Highlight on hover */
+.base-table tbody tr.highlight-on-hover:hover td {
+  background: var(--background-hover);
+}
+
+/* Clickable rows */
+.base-table tbody tr.clickable {
+  cursor: pointer;
+}
+
+/* Actions column */
+.base-table .actions-column {
+  width: auto;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.base-table .actions-cell {
+  text-align: center;
+}
+
+/* Text alignment utilities */
+.base-table .text-left {
+  text-align: left;
+}
+
+.base-table .text-center {
+  text-align: center;
+}
+
+.base-table .text-right {
+  text-align: right;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .base-table {
+    font-size: 0.85rem;
+  }
+  
+  .base-table th,
+  .base-table td {
+    padding: var(--spacing-sm);
+  }
+}

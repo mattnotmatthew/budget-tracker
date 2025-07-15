@@ -6,36 +6,21 @@ import {
   getAvailablePlanningYears,
   getPlanningYearLabel,
 } from "../utils/yearUtils";
-import MonthlyView from "./MonthlyView";
+import { MonthlyView } from "../features/budget";
 import QuarterSelector from "./QuarterSelector";
-import BudgetInput from "./BudgetInput";
+import { BudgetInput } from "../features/budget";
 // import AlertPanel from "./AlertPanel";
 import FileManager from "./FileManager";
-import YearlyBudgetDashboard from "./YearlyBudgetDashboard";
+import { YearlyBudgetDashboard } from "../features/budget";
 
 import "../styles/App-new.css";
 import { useNavigate } from "react-router-dom";
-import ExecutiveSummary from "./ExecutiveSummary/ExecutiveSummary";
-import VendorManagement from "./VendorManagement";
+import { ExecutiveSummary } from "../features/reports";
+import { VendorManagement } from "../features/vendors";
 import Resources from "./Resources";
-import FunctionalAllocation from "./FunctionalAllocation";
+import { FunctionalAllocation } from "../features/budget";
+import { getCurrentQuarter, getQuarterMonths } from "../utils/dates/dateUtils";
 
-// Utility function to get current quarter
-const getCurrentQuarter = (): number => {
-  const currentMonth = new Date().getMonth() + 1; // getMonth() returns 0-11, so add 1
-  return Math.ceil(currentMonth / 3);
-};
-
-// Utility function to get months for a specific quarter
-const getQuarterMonths = (quarter: number): number[] => {
-  const quarterToMonths: { [key: number]: number[] } = {
-    1: [1, 2, 3], // Q1: Jan, Feb, Mar
-    2: [4, 5, 6], // Q2: Apr, May, Jun
-    3: [7, 8, 9], // Q3: Jul, Aug, Sep
-    4: [10, 11, 12], // Q4: Oct, Nov, Dec
-  };
-  return quarterToMonths[quarter] || [];
-};
 
 const Dashboard: React.FC = () => {
   const { state, dispatch } = useBudget();
@@ -88,7 +73,7 @@ const Dashboard: React.FC = () => {
   }, [currentMode, navigate]);
 
   // Handle year change with automatic route navigation
-  const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleYearChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
     const newYear = parseInt(e.target.value);
     dispatch({
       type: "SET_SELECTED_PERIOD",
@@ -96,9 +81,9 @@ const Dashboard: React.FC = () => {
     });
 
     // Navigation will be handled by the useEffect above
-  };
+  }, [dispatch]);
 
-  const handleQuarterToggle = (quarter: number) => {
+  const handleQuarterToggle = useCallback((quarter: number) => {
     setSelectedQuarters((prev) => {
       if (prev.includes(quarter)) {
         return prev.filter((q) => q !== quarter);
@@ -106,9 +91,9 @@ const Dashboard: React.FC = () => {
         return [...prev, quarter].sort();
       }
     });
-  };
+  }, []);
 
-  const handleEditDataClick = () => {
+  const handleEditDataClick = useCallback(() => {
     // Check if a file is attached
     if (!state.currentFile) {
       // No file attached, force file manager first
@@ -117,13 +102,13 @@ const Dashboard: React.FC = () => {
     }
     // File is attached, proceed with edit data
     setShowInput(!showInput);
-  };
+  }, [state.currentFile, showInput]);
 
-  const handleFileManagerToEditTransition = () => {
+  const handleFileManagerToEditTransition = useCallback(() => {
     // Called when user completes file manager and wants to go to edit data
     setShowFileManager(false);
     setShowInput(true);
-  };
+  }, []);
 
   // Hotkey handlers
   const handleKeyDown = useCallback(
