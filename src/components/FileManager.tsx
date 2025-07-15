@@ -6,6 +6,7 @@ import {
   attemptRestoreCachedFile,
 } from "../utils/fileManager";
 import { PersistenceManager } from "../services/persistenceManager";
+import { cleanupTeamData, getDataCorruptionStats } from "../utils/dataCleanup";
 
 interface FileManagerProps {
   onClose: () => void;
@@ -172,7 +173,7 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
         const contentHash = btoa(content.substring(0, 1000))
           .replace(/[^a-zA-Z0-9]/g, "")
           .substring(0, 20);
-        
+
         const fileInfo = {
           name: fileName,
           handle: fileHandle,
@@ -197,7 +198,7 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
         // Also update persistence manager
         const persistenceManager = PersistenceManager.getInstance();
         persistenceManager.saveFileInfo(fileInfo);
-        
+
         // Mark user as no longer first-time user
         persistenceManager.markUserAsReturning();
         dispatch({ type: "SET_FIRST_TIME_USER", payload: false });
@@ -336,16 +337,29 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
     setClearConfirmationText("");
   };
   const handleClearCacheOnly = () => {
-    const persistenceManager = PersistenceManager.getInstance();
-    persistenceManager.clearCache();
-    setMessage({
-      type: "success",
-      text: "✅ Cache cleared successfully! Your JSON file remains intact.",
-    });
-    // Scroll to top to make the message visible
-    const modal = document.querySelector(".file-manager-content");
-    if (modal) {
-      modal.scrollTop = 0;
+    try {
+      const persistenceManager = PersistenceManager.getInstance();
+      persistenceManager.clearCache();
+      setMessage({
+        type: "success",
+        text: "✅ Cache cleared successfully! All cached data (budget data, file info, and persistence state) has been removed. Your JSON file remains intact.",
+      });
+      // Scroll to top to make the message visible
+      const modal = document.querySelector(".file-manager-content");
+      if (modal) {
+        modal.scrollTop = 0;
+      }
+    } catch (error) {
+      console.error("Error clearing cache:", error);
+      setMessage({
+        type: "error",
+        text: "❌ Failed to clear cache. Please check the browser console for more details.",
+      });
+      // Scroll to top to make the message visible
+      const modal = document.querySelector(".file-manager-content");
+      if (modal) {
+        modal.scrollTop = 0;
+      }
     }
   };
   const confirmClearAll = () => {
@@ -414,6 +428,48 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCleanupData = () => {
+    try {
+      // Get corruption stats first
+      const stats = getDataCorruptionStats(state);
+
+      if (stats.teams.invalid === 0) {
+        setMessage({
+          type: "info",
+          text: `✅ No corrupted data found! Your data is clean. Total teams: ${stats.teams.total}`,
+        });
+      } else {
+        // Clean up the data
+        const cleanedState = cleanupTeamData(state);
+
+        // Apply the cleaned state (this will trigger a re-render and save)
+        dispatch({ type: "LOAD_TEAMS", payload: cleanedState.teams || [] });
+
+        setMessage({
+          type: "success",
+          text: `✅ Data cleanup completed! Removed ${stats.teams.invalid} corrupted team entries. Valid teams: ${stats.teams.valid}`,
+        });
+      }
+
+      // Scroll to top to make the message visible
+      const modal = document.querySelector(".file-manager-content");
+      if (modal) {
+        modal.scrollTop = 0;
+      }
+    } catch (error) {
+      console.error("Error during data cleanup:", error);
+      setMessage({
+        type: "error",
+        text: "❌ Failed to cleanup data. Please check the browser console for more details.",
+      });
+      // Scroll to top to make the message visible
+      const modal = document.querySelector(".file-manager-content");
+      if (modal) {
+        modal.scrollTop = 0;
+      }
     }
   };
 
@@ -620,8 +676,7 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
             {!isClearSectionCollapsed && (
               <div className="collapsible-content">
                 <p>
-                  Clear JSON file AND clear cache OR clear cache only and leave
-                  JSON file intact.
+                  Clean up corrupted data, clear cache only, or clear all data.
                 </p>
                 <div
                   style={{
@@ -631,6 +686,19 @@ const FileManager: React.FC<FileManagerProps> = ({ onClose }) => {
                     flexWrap: "wrap",
                   }}
                 >
+                  <button
+                    className="clear-btn"
+                    onClick={handleCleanupData}
+                    style={{
+                      flex: "1",
+                      minWidth: "200px",
+                      backgroundColor: "#007bff",
+                      color: "white",
+                    }}
+                  >
+                    Clean Up Corrupted Data
+                  </button>
+
                   <button
                     className="clear-btn danger-btn"
                     onClick={handleClearCacheOnly}

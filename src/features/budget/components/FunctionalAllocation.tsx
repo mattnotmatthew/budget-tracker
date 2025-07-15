@@ -3,17 +3,23 @@ import { useBudget } from "../../../context/BudgetContext";
 import { FunctionalAllocation as FunctionalAllocationType } from "../../../types";
 import { getLastFinalMonthNumber } from "../../../utils/monthUtils";
 import { AllocationTableSection } from "../../../components/allocations";
+import { useCopyToNextMonth } from "../../../hooks/useCopyToNextMonth";
 import "../../../styles/components/functional-allocation.css";
 
 const FunctionalAllocation: React.FC = () => {
   const { state, dispatch } = useBudget();
+
+  // Use the reusable copy to next month hook
+  const { copyToNextMonth, pasteMessage: copyPasteMessage } =
+    useCopyToNextMonth<FunctionalAllocationType>();
+
   const [selectedMonth, setSelectedMonth] = useState<number>(
     getLastFinalMonthNumber(state)
   );
   // Track which rows are in edit mode (changed from single editingId to Set)
   const [editingRows, setEditingRows] = useState<Set<string>>(new Set());
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  // State for paste messages
+  // State for paste messages (separate from copy messages)
   const [pasteMessage, setPasteMessage] = useState<string | null>(null);
   // State for sorting
   const [sortField, setSortField] = useState<
@@ -377,6 +383,73 @@ const FunctionalAllocation: React.FC = () => {
         payload: id,
       });
     }
+  };
+
+  // Copy allocation functions using the reusable hook
+  const handleCopyTeamAllocationsToNextMonth = () => {
+    copyToNextMonth({
+      items: monthAllocations,
+      selectedMonth,
+      selectedYear: state.selectedYear,
+      allItems: state.functionalAllocations || [],
+      getItemKey: (allocation) => allocation.id,
+      createCopiedItem: (allocation, nextMonth, nextYear) => ({
+        ...allocation,
+        id: `fa-${Date.now()}-${Math.random()}`,
+        month: nextMonth,
+        year: nextYear,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }),
+      addItem: (allocation) =>
+        dispatch({ type: "ADD_FUNCTIONAL_ALLOCATION", payload: allocation }),
+      itemTypeName: "team allocations",
+      itemDisplayName: "team allocations",
+    });
+  };
+
+  const handleCopyRevenueAllocationsToNextMonth = () => {
+    copyToNextMonth({
+      items: revenueAllocations,
+      selectedMonth,
+      selectedYear: state.selectedYear,
+      allItems: state.functionalAllocations || [],
+      getItemKey: (allocation) => allocation.id,
+      createCopiedItem: (allocation, nextMonth, nextYear) => ({
+        ...allocation,
+        id: `fa-${Date.now()}-${Math.random()}`,
+        month: nextMonth,
+        year: nextYear,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }),
+      addItem: (allocation) =>
+        dispatch({ type: "ADD_FUNCTIONAL_ALLOCATION", payload: allocation }),
+      itemTypeName: "revenue allocations",
+      itemDisplayName: "revenue allocations",
+    });
+  };
+
+  const handleCopyInfrastructureAllocationsToNextMonth = () => {
+    copyToNextMonth({
+      items: infrastructureAllocations,
+      selectedMonth,
+      selectedYear: state.selectedYear,
+      allItems: state.functionalAllocations || [],
+      getItemKey: (allocation) => allocation.id,
+      createCopiedItem: (allocation, nextMonth, nextYear) => ({
+        ...allocation,
+        id: `fa-${Date.now()}-${Math.random()}`,
+        month: nextMonth,
+        year: nextYear,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }),
+      addItem: (allocation) =>
+        dispatch({ type: "ADD_FUNCTIONAL_ALLOCATION", payload: allocation }),
+      itemTypeName: "infrastructure allocations",
+      itemDisplayName: "infrastructure allocations",
+    });
   };
 
   // Handle column sorting
@@ -1031,9 +1104,12 @@ const FunctionalAllocation: React.FC = () => {
         onPaste={handlePaste}
         onExportCSV={handleExportCSV}
         onAddAllocation={handleAddAllocation}
+        onCopyToNextMonth={handleCopyTeamAllocationsToNextMonth}
         calculateCostPer={calculateCostPer}
         pasteMessage={pasteMessage}
+        copyPasteMessage={copyPasteMessage}
         showFilters={true}
+        addButtonText="Add Team Allocation"
         headerClassName="table-section-header-first"
       />
 
@@ -1068,8 +1144,10 @@ const FunctionalAllocation: React.FC = () => {
         onPaste={handlePaste}
         onExportCSV={handleExportCSV}
         onAddAllocation={handleAddRevenueAllocation}
+        onCopyToNextMonth={handleCopyRevenueAllocationsToNextMonth}
         calculateCostPer={calculateCostPer}
         pasteMessage={pasteMessage}
+        copyPasteMessage={copyPasteMessage}
         addButtonText="Add Revenue Allocation"
         showFilters={false}
         defaultCollapsed={true}
@@ -1106,8 +1184,10 @@ const FunctionalAllocation: React.FC = () => {
         onPaste={handlePaste}
         onExportCSV={handleExportCSV}
         onAddAllocation={handleAddInfrastructureAllocation}
+        onCopyToNextMonth={handleCopyInfrastructureAllocationsToNextMonth}
         calculateCostPer={calculateCostPer}
         pasteMessage={pasteMessage}
+        copyPasteMessage={copyPasteMessage}
         addButtonText="Add Infrastructure Allocation"
         showFilters={false}
         defaultCollapsed={true}

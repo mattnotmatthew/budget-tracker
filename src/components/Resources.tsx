@@ -4,18 +4,26 @@ import { TeamData } from "../types";
 import { formatCurrencyFull } from "../utils/currencyFormatter";
 import { getLastFinalMonthNumber } from "../utils/monthUtils";
 import { TableActionButtons } from "./shared";
+import { useCopyToNextMonth } from "../hooks/useCopyToNextMonth";
 import "../styles/App-new.css";
 
 const Resources: React.FC = () => {
   const { state, dispatch } = useBudget();
 
-  // Track which rows are in edit mode
+  // Use the reusable copy to next month hook
+  const {
+    copyToNextMonth,
+    pasteMessage: copyPasteMessage,
+    setPasteMessage: setCopyPasteMessage,
+  } = useCopyToNextMonth<TeamData>();
+
+  // Track which rows are in edit mode (changed from single editingId to Set)
   const [editingRows, setEditingRows] = useState<Set<string>>(new Set());
 
   // State for edit all mode
   const [isEditAllMode, setIsEditAllMode] = useState<boolean>(false);
 
-  // State for paste messages
+  // State for paste messages (separate from copy messages)
   const [pasteMessage, setPasteMessage] = useState<string | null>(null);
 
   // Month selection state - default to last final month
@@ -47,9 +55,24 @@ const Resources: React.FC = () => {
 
   // Filter teams for selected month and year
   const allTeams = state.teams || [];
-  const monthTeams = allTeams.filter(
-    (team) => team.month === selectedMonth && team.year === state.selectedYear
-  );
+
+  // Filter out incomplete team data and get teams for selected month/year
+  const monthTeams = allTeams.filter((team) => {
+    // Validate that team has required fields to prevent corrupted data issues
+    const hasRequiredFields =
+      team &&
+      typeof team === "object" &&
+      team.id &&
+      typeof team.month === "number" &&
+      typeof team.year === "number" &&
+      team.teamName !== undefined; // teamName can be empty string but should exist
+
+    return (
+      hasRequiredFields &&
+      team.month === selectedMonth &&
+      team.year === state.selectedYear
+    );
+  });
 
   // Get teams from filtered month teams
   const teams = monthTeams;
@@ -146,6 +169,7 @@ const Resources: React.FC = () => {
     const newTeam: TeamData = {
       id: Date.now().toString(),
       teamName: "",
+      category: "",
       currentCostCenter: "",
       location: "",
       headcount: 0,
@@ -221,7 +245,7 @@ const Resources: React.FC = () => {
 
   // Handle multi-row paste from Excel (for vertical column pasting)
   const handleMultiRowPaste = async (
-    e: React.ClipboardEvent<HTMLInputElement>,
+    e: React.ClipboardEvent<HTMLInputElement | HTMLSelectElement>,
     teamId: string,
     field: keyof TeamData
   ) => {
@@ -266,6 +290,7 @@ const Resources: React.FC = () => {
           processedValue = cleanExcelNumber(value);
         } else if (
           field === "teamName" ||
+          field === "category" ||
           field === "currentCostCenter" ||
           field === "location" ||
           field === "notes"
@@ -333,18 +358,20 @@ const Resources: React.FC = () => {
       rows.forEach((row) => {
         const cells = row.split("\t");
         if (cells.length >= 4) {
-          // Expected: Team Name, Current Cost Center, Location, Headcount, Cost, Notes (optional)
+          // Expected: Team Name, Category, Current Cost Center, Location, Headcount, Cost, Notes (optional)
           const teamName = cells[0].trim();
-          const currentCostCenter = cells[1].trim();
-          const location = cells[2]?.trim() || "";
-          const headcount = parseInt(cells[3]) || 0;
-          const cost = parseFloat(cells[4]) || 0;
-          const notes = cells[5]?.trim() || "";
+          const category = cells[1]?.trim() || "";
+          const currentCostCenter = cells[2].trim();
+          const location = cells[3]?.trim() || "";
+          const headcount = parseInt(cells[4]) || 0;
+          const cost = parseFloat(cells[5]) || 0;
+          const notes = cells[6]?.trim() || "";
 
           if (teamName) {
             newTeams.push({
               id: Date.now().toString() + Math.random(),
               teamName,
+              category,
               currentCostCenter,
               location,
               headcount,
@@ -381,6 +408,7 @@ const Resources: React.FC = () => {
     // Field order for navigation
     const fieldTypes: (keyof TeamData)[] = [
       "teamName",
+      "category",
       "currentCostCenter",
       "location",
       "headcount",
@@ -487,58 +515,26 @@ const Resources: React.FC = () => {
     }
   };
 
-  // Copy teams to next month
+  // Copy teams to next month using the reusable hook
   const handleCopyToNextMonth = () => {
-    if (teams.length === 0) {
-      setPasteMessage("No teams to copy");
-      setTimeout(() => setPasteMessage(null), 3000);
-      return;
-    }
-
-    // Calculate next month and year
-    let nextMonth = selectedMonth + 1;
-    let nextYear = state.selectedYear;
-
-    if (nextMonth > 12) {
-      nextMonth = 1;
-      nextYear = nextYear + 1;
-    }
-
-    // Check if teams already exist for the next month
-    const existingNextMonthTeams = allTeams.filter(
-      (team) => team.month === nextMonth && team.year === nextYear
-    );
-
-    if (existingNextMonthTeams.length > 0) {
-      const confirmOverwrite = confirm(
-        `Teams already exist for ${
-          monthNames[nextMonth - 1]
-        } ${nextYear}. Do you want to add these teams anyway?`
-      );
-      if (!confirmOverwrite) return;
-    }
-
-    // Copy all teams to next month
-    const copiedTeams = teams.map((team) => ({
-      ...team,
-      id: Date.now().toString() + Math.random(), // Generate new ID
-      month: nextMonth,
-      year: nextYear,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }));
-
-    // Add all copied teams
-    copiedTeams.forEach((team) => {
-      dispatch({ type: "ADD_TEAM", payload: team });
+    copyToNextMonth({
+      items: teams,
+      selectedMonth,
+      selectedYear: state.selectedYear,
+      allItems: allTeams,
+      getItemKey: (team) => team.id,
+      createCopiedItem: (team, nextMonth, nextYear) => ({
+        ...team,
+        id: Date.now().toString() + Math.random(), // Generate new ID
+        month: nextMonth,
+        year: nextYear,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }),
+      addItem: (team) => dispatch({ type: "ADD_TEAM", payload: team }),
+      itemTypeName: "teams",
+      itemDisplayName: "teams",
     });
-
-    setPasteMessage(
-      `✅ Copied ${copiedTeams.length} teams to ${
-        monthNames[nextMonth - 1]
-      } ${nextYear}`
-    );
-    setTimeout(() => setPasteMessage(null), 4000);
   };
 
   return (
@@ -607,8 +603,10 @@ const Resources: React.FC = () => {
         <button onClick={handleCopyToNextMonth} className="btn btn-info">
           Copy to Next Month
         </button>
-        {pasteMessage && (
-          <span className="paste-message success">{pasteMessage}</span>
+        {(pasteMessage || copyPasteMessage) && (
+          <span className="paste-message success">
+            {pasteMessage || copyPasteMessage}
+          </span>
         )}
       </div>
 
@@ -620,6 +618,14 @@ const Resources: React.FC = () => {
               <th onClick={() => handleSort("teamName")} className="sortable">
                 Team Name
                 {sortConfig.field === "teamName" && (
+                  <span className="sort-indicator">
+                    {sortConfig.direction === "asc" ? " ▲" : " ▼"}
+                  </span>
+                )}
+              </th>
+              <th onClick={() => handleSort("category")} className="sortable">
+                Category
+                {sortConfig.field === "category" && (
                   <span className="sort-indicator">
                     {sortConfig.direction === "asc" ? " ▲" : " ▼"}
                   </span>
@@ -668,7 +674,7 @@ const Resources: React.FC = () => {
           <tbody>
             {sortedTeams.length === 0 ? (
               <tr>
-                <td colSpan={8} className="empty-state">
+                <td colSpan={9} className="empty-state">
                   No teams added for {monthNames[selectedMonth - 1]}{" "}
                   {state.selectedYear}. Click "Add Team" to get started.
                 </td>
@@ -698,6 +704,57 @@ const Resources: React.FC = () => {
                     ) : (
                       <span onClick={() => toggleEditMode(team.id)}>
                         {team.teamName || "-"}
+                      </span>
+                    )}
+                  </td>
+                  <td>
+                    {editingRows.has(team.id) ? (
+                      <select
+                        value={team.category || ""}
+                        data-team-id={team.id}
+                        data-field="category"
+                        onChange={(e) => {
+                          dispatch({
+                            type: "UPDATE_TEAM",
+                            payload: {
+                              ...team,
+                              category: e.target.value,
+                              updatedAt: new Date(),
+                            },
+                          });
+                        }}
+                        onKeyDown={(e) => handleKeyDown(e, team.id, "category")}
+                        onPaste={(e) =>
+                          handleMultiRowPaste(e, team.id, "category")
+                        }
+                        className="vendor-select"
+                      >
+                        <option value="">Select category</option>
+                        <option value="Application Engineering">
+                          Application Engineering
+                        </option>
+                        <option value="Architecture">Architecture</option>
+                        <option value="DevOps">DevOps</option>
+                        <option value="Implementation/Support">
+                          Implementation/Support
+                        </option>
+                        <option value="Management">Management</option>
+                        <option value="Platform Engineering">
+                          Platform Engineering
+                        </option>
+                        <option value="QA">QA</option>
+                        <option value="UI/UX">UI/UX</option>
+                        <option value="Data Engineering">
+                          Data Engineering
+                        </option>
+                      </select>
+                    ) : (
+                      <span
+                        className="editable-cell"
+                        onClick={() => toggleEditMode(team.id)}
+                        title={team.category || "Click to edit"}
+                      >
+                        {team.category || "-"}
                       </span>
                     )}
                   </td>
@@ -867,8 +924,8 @@ const Resources: React.FC = () => {
         <ul>
           <li>
             <strong>Full rows:</strong> Copy rows with columns: Team Name,
-            Current Cost Center, Location, Headcount, Annual Salary, Notes
-            (optional)
+            Category, Current Cost Center, Location, Headcount, Annual Salary,
+            Notes (optional)
           </li>
           <li>
             <strong>Column values:</strong> Copy a column of values (A1, A2, A3,

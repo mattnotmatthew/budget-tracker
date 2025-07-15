@@ -3,14 +3,18 @@ import React from "react";
 interface AllocationActionsProps {
   onExportCSV: () => void;
   onAddAllocation: () => void;
+  onCopyToNextMonth?: () => void;
   pasteMessage: string | null;
+  copyPasteMessage?: string | null;
   addButtonText?: string;
 }
 
 const AllocationActions: React.FC<AllocationActionsProps> = ({
   onExportCSV,
   onAddAllocation,
+  onCopyToNextMonth,
   pasteMessage,
+  copyPasteMessage,
   addButtonText = "Add Allocation",
 }) => {
   return (
@@ -19,8 +23,10 @@ const AllocationActions: React.FC<AllocationActionsProps> = ({
         <button onClick={onExportCSV} className="export-btn">
           Export to CSV
         </button>
-        {pasteMessage && (
-          <span className="paste-message success">{pasteMessage}</span>
+        {(pasteMessage || copyPasteMessage) && (
+          <span className="paste-message success">
+            {pasteMessage || copyPasteMessage}
+          </span>
         )}
       </div>
 
@@ -29,6 +35,15 @@ const AllocationActions: React.FC<AllocationActionsProps> = ({
           <button onClick={onAddAllocation} className="add-btn">
             {addButtonText}
           </button>
+          {onCopyToNextMonth && (
+            <button
+              onClick={onCopyToNextMonth}
+              className="btn btn-info"
+              style={{ marginLeft: "10px" }}
+            >
+              Copy to Next Month
+            </button>
+          )}
         </div>
       </div>
     </>

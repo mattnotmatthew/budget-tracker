@@ -192,6 +192,7 @@ export interface VendorTracking {
 export interface TeamData {
   id: string;
   teamName: string;
+  category?: string;
   currentCostCenter: string;
   location?: string;
   headcount: number;

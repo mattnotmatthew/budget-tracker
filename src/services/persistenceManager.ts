@@ -1,4 +1,12 @@
-import { BudgetState, BudgetEntry, VendorData, VendorTracking, CategoryAllocation, TeamData, FunctionalAllocation } from "../types";
+import {
+  BudgetState,
+  BudgetEntry,
+  VendorData,
+  VendorTracking,
+  CategoryAllocation,
+  TeamData,
+  FunctionalAllocation,
+} from "../types";
 
 // Cache keys
 const CACHE_KEY = "budget-tracker-data";
@@ -84,7 +92,12 @@ export class PersistenceManager {
   /**
    * Save data to cache
    */
-  public saveToCache(budgetState: BudgetState & { teams?: TeamData[]; functionalAllocations?: FunctionalAllocation[] }): void {
+  public saveToCache(
+    budgetState: BudgetState & {
+      teams?: TeamData[];
+      functionalAllocations?: FunctionalAllocation[];
+    }
+  ): void {
     try {
       const cacheData: CachedBudgetData = {
         entries: budgetState.entries,
@@ -198,11 +211,13 @@ export class PersistenceManager {
         }
         // Convert date strings back to Date objects for functional allocations
         if (data.functionalAllocations) {
-          data.functionalAllocations = data.functionalAllocations.map((allocation: any) => ({
-            ...allocation,
-            createdAt: new Date(allocation.createdAt),
-            updatedAt: new Date(allocation.updatedAt),
-          }));
+          data.functionalAllocations = data.functionalAllocations.map(
+            (allocation: any) => ({
+              ...allocation,
+              createdAt: new Date(allocation.createdAt),
+              updatedAt: new Date(allocation.updatedAt),
+            })
+          );
         }
         return data;
       }
@@ -217,11 +232,18 @@ export class PersistenceManager {
    */
   public clearCache(): void {
     try {
+      // Clear all budget tracker related cache
       localStorage.removeItem(CACHE_KEY);
       localStorage.removeItem(PERSISTENCE_STATE_KEY);
-      // console.log("Cache cleared");
+      localStorage.removeItem(FILE_INFO_KEY);
+
+      // Also clear the file info key used by combinedReducer
+      localStorage.removeItem("budget-tracker-file-info");
+
+      console.log("✅ All cache data cleared successfully");
     } catch (error) {
       console.error("Failed to clear cache:", error);
+      throw error;
     }
   }
 

@@ -53,8 +53,10 @@ interface AllocationTableSectionProps {
   onPaste: (e: React.ClipboardEvent) => void;
   onExportCSV: () => void;
   onAddAllocation: () => void;
+  onCopyToNextMonth?: () => void;
   calculateCostPer: (allocation: FunctionalAllocationType) => number;
   pasteMessage: string | null;
+  copyPasteMessage?: string | null;
   addButtonText?: string;
   showFilters?: boolean;
   defaultCollapsed?: boolean;
@@ -86,8 +88,10 @@ const AllocationTableSection: React.FC<AllocationTableSectionProps> = ({
   onPaste,
   onExportCSV,
   onAddAllocation,
+  onCopyToNextMonth,
   calculateCostPer,
   pasteMessage,
+  copyPasteMessage,
   addButtonText = "Add Allocation",
   showFilters = true,
   defaultCollapsed = false,
@@ -144,7 +148,9 @@ const AllocationTableSection: React.FC<AllocationTableSectionProps> = ({
           <AllocationActions
             onExportCSV={onExportCSV}
             onAddAllocation={onAddAllocation}
+            onCopyToNextMonth={onCopyToNextMonth}
             pasteMessage={pasteMessage}
+            copyPasteMessage={copyPasteMessage}
             addButtonText={addButtonText}
           />
 
