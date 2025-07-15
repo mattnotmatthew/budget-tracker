@@ -138,13 +138,11 @@ tmp/
 *.temp
 
 # Log files specific to budget tracking
-budget-logs/
+budget-logs/ß
 *.log
 
 # Auto-generated reports (in root directory only)
-/reports/
-/export/
-/generated-reports/
+
 
 # Test data files
 test-data/
