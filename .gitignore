@@ -141,10 +141,10 @@ tmp/
 budget-logs/
 *.log
 
-# Auto-generated reports
-reports/
-export/
-generated-reports/
+# Auto-generated reports (in root directory only)
+/reports/
+/export/
+/generated-reports/
 
 # Test data files
 test-data/
