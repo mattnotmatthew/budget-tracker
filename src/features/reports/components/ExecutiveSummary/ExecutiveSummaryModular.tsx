@@ -107,6 +107,8 @@ const ExecutiveSummary = () => {
     isHistoricalTeamCompositionExpanded,
     setIsHistoricalTeamCompositionExpanded,
   ] = useState(true);
+  const [isResourceSpendByFunctionExpanded, setIsResourceSpendByFunctionExpanded] =
+    useState(false);
 
   // Resources tab state for individual sections
   const [isAllTeamsOverviewExpanded, setIsAllTeamsOverviewExpanded] =
@@ -585,6 +587,7 @@ const ExecutiveSummary = () => {
       totalCompCapitalizationCollapsed,
       isTeamCompositionExpanded,
       isHistoricalTeamCompositionExpanded,
+      isResourceSpendByFunctionExpanded,
       costCenterExpanded,
     };
 
@@ -604,6 +607,7 @@ const ExecutiveSummary = () => {
       setTotalCompCapitalizationCollapsed(false);
       setIsTeamCompositionExpanded(true);
       setIsHistoricalTeamCompositionExpanded(true);
+      setIsResourceSpendByFunctionExpanded(true);
       setCostCenterExpanded(
         Object.keys(costCenterExpanded).reduce(
           (acc, key) => ({
@@ -640,6 +644,7 @@ const ExecutiveSummary = () => {
       setIsHistoricalTeamCompositionExpanded(
         currentStates.isHistoricalTeamCompositionExpanded
       );
+      setIsResourceSpendByFunctionExpanded(currentStates.isResourceSpendByFunctionExpanded);
       setCostCenterExpanded(currentStates.costCenterExpanded);
 
       // Remove event listener
@@ -701,6 +706,7 @@ const ExecutiveSummary = () => {
         totalCompCapitalizationCollapsed,
         isTeamCompositionExpanded,
         isHistoricalTeamCompositionExpanded,
+        isResourceSpendByFunctionExpanded,
         isAllTeamsOverviewExpanded,
         isTeamAnalyticsExpanded,
         costCenterExpanded,
@@ -719,6 +725,7 @@ const ExecutiveSummary = () => {
     setTotalCompCapitalizationCollapsed(false);
     setIsTeamCompositionExpanded(true);
     setIsHistoricalTeamCompositionExpanded(true);
+    setIsResourceSpendByFunctionExpanded(true);
     setIsAllTeamsOverviewExpanded(true);
     setIsTeamAnalyticsExpanded(true);
 
@@ -765,6 +772,9 @@ const ExecutiveSummary = () => {
       );
       setIsHistoricalTeamCompositionExpanded(
         originalSectionStates.isHistoricalTeamCompositionExpanded
+      );
+      setIsResourceSpendByFunctionExpanded(
+        originalSectionStates.isResourceSpendByFunctionExpanded
       );
       setIsAllTeamsOverviewExpanded(
         originalSectionStates.isAllTeamsOverviewExpanded
@@ -2607,6 +2617,116 @@ const ExecutiveSummary = () => {
                         </div>
                       </div>
                     )}
+                  </div>
+
+                  {/* Resource Spend by Function Subsection */}
+                  <div className="kpi-section team-composition-summary">
+                    <div
+                      className="section-header"
+                      onClick={() =>
+                        setIsResourceSpendByFunctionExpanded(!isResourceSpendByFunctionExpanded)
+                      }
+                    >
+                      <h4 className="section-title">
+                        <span className="expand-icon">
+                          {isResourceSpendByFunctionExpanded ? "−" : "+"}
+                        </span>
+                        Resource Spend by Function
+                      </h4>
+                      {!isResourceSpendByFunctionExpanded && (() => {
+                        // Group historical teams by category
+                        const functionGroups = historicalTeams.reduce((acc, team) => {
+                          const category = team.category || "Uncategorized";
+                          if (!acc[category]) {
+                            acc[category] = { teams: [], headcount: 0, cost: 0 };
+                          }
+                          acc[category].teams.push(team);
+                          acc[category].headcount += team.headcount;
+                          acc[category].cost += team.cost;
+                          return acc;
+                        }, {} as Record<string, { teams: any[], headcount: number, cost: number }>);
+
+                        const totalFunctions = Object.keys(functionGroups).length;
+                        const totalResources = Object.values(functionGroups).reduce((sum, f) => sum + f.headcount, 0);
+                        const totalCost = Object.values(functionGroups).reduce((sum, f) => sum + f.cost, 0);
+
+                        return (
+                          <div className="compact-summary">
+                            <span className="compact-metric">
+                              Functions: <strong>{totalFunctions}</strong>
+                            </span>
+                            <span className="compact-metric">
+                              Resources: <strong>{totalResources}</strong>
+                            </span>
+                            <span className="compact-metric">
+                              Total Cost: <strong>{formatCurrencyFull(totalCost)}</strong>
+                            </span>
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    {(isResourceSpendByFunctionExpanded || isExportMode) && (() => {
+                      // Group historical teams by category
+                      const functionGroups = historicalTeams.reduce((acc, team) => {
+                        const category = team.category || "Uncategorized";
+                        if (!acc[category]) {
+                          acc[category] = { teams: [], headcount: 0, cost: 0 };
+                        }
+                        acc[category].teams.push(team);
+                        acc[category].headcount += team.headcount;
+                        acc[category].cost += team.cost;
+                        return acc;
+                      }, {} as Record<string, { teams: any[], headcount: number, cost: number }>);
+
+                      // Convert to array and sort by cost descending
+                      const functionData = Object.entries(functionGroups)
+                        .map(([category, data]) => ({
+                          function: category,
+                          resourceCount: data.headcount,
+                          cost: data.cost
+                        }))
+                        .sort((a, b) => b.cost - a.cost);
+
+                      // Calculate totals
+                      const totalResources = functionData.reduce((sum, f) => sum + f.resourceCount, 0);
+                      const totalCost = functionData.reduce((sum, f) => sum + f.cost, 0);
+
+                      return (
+                        <div style={{ overflowX: "auto" }}>
+                          <table className="team-details-table">
+                            <thead>
+                              <tr>
+                                <th>Function</th>
+                                <th>Resource count</th>
+                                <th>Cost</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {functionData.map((func) => (
+                                <tr key={func.function}>
+                                  <td>{func.function}</td>
+                                  <td>{func.resourceCount}</td>
+                                  <td>{formatCurrencyFull(func.cost)}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                            <tfoot>
+                              <tr
+                                style={{
+                                  fontWeight: "bold",
+                                  backgroundColor: "#f8f9fa",
+                                }}
+                              >
+                                <td>Total</td>
+                                <td>{totalResources}</td>
+                                <td>{formatCurrencyFull(totalCost)}</td>
+                              </tr>
+                            </tfoot>
+                          </table>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
 
